@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\Gate;
+use Kakodjenou\Meridian\MeridianApplicationServiceProvider;
+
+class MeridianServiceProvider extends MeridianApplicationServiceProvider
+{
+    /**
+     * Register the Meridian gate.
+     *
+     * This gate determines who can access Meridian in non-local environments.
+     */
+    protected function gate(): void
+    {
+        Gate::define('viewMeridian', function ($user = null) {
+            return in_array(optional($user)->email, [
+                //
+            ]);
+        });
+    }
+}

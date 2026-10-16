@@ -1,0 +1,12 @@
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 5
+    paths:
+        - src
+    tmpDir: build/phpstan
+    ignoreErrors:
+        # Package views ("meridian::...") are registered at runtime, Larastan cannot resolve them.
+        - identifier: argument.type
+          message: '#view-string#'
