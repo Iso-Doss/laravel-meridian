@@ -6,6 +6,7 @@ use Illuminate\Bus\Events\BatchDispatched;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Middleware as InertiaMiddleware;
 use IsoDoss\Meridian\Events\LongWaitDetected;
@@ -15,6 +16,7 @@ use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
 use IsoDoss\Meridian\Listeners\SendLongWaitNotification;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Support\Translator;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -82,6 +84,7 @@ class MeridianServiceProvider extends PackageServiceProvider
 
         $this->registerRoutes();
         $this->registerSchedule();
+        $this->shareTranslationsWithViews();
     }
 
     protected function registerRoutes(): void
@@ -156,6 +159,20 @@ class MeridianServiceProvider extends PackageServiceProvider
                 && $entry !== HandleInertiaRequests::class)
             ->values()
             ->all();
+    }
+
+    /**
+     * The Blade interface translates its texts with $t('English text').
+     */
+    protected function shareTranslationsWithViews(): void
+    {
+        View::composer('meridian::*', function ($view) {
+            $locale = Translator::locale(request());
+
+            $view->with('locale', $locale)
+                ->with('languages', Translator::languages())
+                ->with('t', fn (string $key, array $replace = []) => Translator::get($key, $replace, $locale));
+        });
     }
 
     protected function registerSchedule(): void

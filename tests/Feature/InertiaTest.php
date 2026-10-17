@@ -11,6 +11,7 @@ use IsoDoss\Meridian\Http\Controllers\MetricsController;
 use IsoDoss\Meridian\MeridianServiceProvider;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Support\Assets;
+use IsoDoss\Meridian\Support\Format;
 use IsoDoss\Meridian\Support\Translator;
 use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
@@ -206,7 +207,7 @@ it('keeps the Blade interface when configured', function () {
     $this->get('/meridian')->assertOk()->assertSee('Current workload')->assertDontSee('data-page="meridian"', false);
 });
 
-it('translates every text of the interface in French', function () {
+it('translates every text of both interfaces in French', function () {
     $keys = collect(glob(__DIR__.'/../../resources/js/{,*/,*/*/}*.{ts,tsx}', GLOB_BRACE))
         ->flatMap(function (string $file) {
             $source = file_get_contents($file);
@@ -218,6 +219,15 @@ it('translates every text of the interface in French', function () {
             return array_merge($calls[1], $labels[1], $mapped->all());
         })
         ->merge(array_values(MetricsController::PERIODS))
+        // The Blade interface: its $t('...') calls, the label maps of its views and the statuses.
+        ->merge(collect(glob(__DIR__.'/../../resources/views/{,*/}*.blade.php', GLOB_BRACE))->flatMap(function (string $file) {
+            $source = file_get_contents($file);
+            preg_match_all("/\\\$t\\('((?:[^'\\\\]|\\\\.)+)'/", $source, $calls);
+            preg_match_all("/=>\\s*'([A-Z][^']*)'/", $source, $labels);
+
+            return array_merge($calls[1], $labels[1]);
+        }))
+        ->merge(array_values(Format::STATUSES))
         ->unique()
         ->values();
 

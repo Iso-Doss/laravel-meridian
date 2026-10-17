@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Vite;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\Translator;
 use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 use IsoDoss\Meridian\Tests\Fixtures\TaggedJob;
@@ -134,4 +135,44 @@ it('puts the CSP nonce of the application on the Blade interface', function () {
 
     expect($html)->toContain('<style nonce="meridian-test-nonce">')
         ->and($html)->toContain('<script nonce="meridian-test-nonce">');
+});
+
+it('shows the Blade interface in the language of the visitor', function () {
+    FailingJob::dispatch();
+    $this->work();
+    $job = MonitoredJob::sole();
+
+    $this->withCookie(Translator::COOKIE, 'fr')
+        ->get('/meridian')
+        ->assertOk()
+        ->assertSee('<html lang="fr">', false)
+        ->assertSee('Tableau de bord')
+        ->assertSee('Charge actuelle')
+        ->assertSee('Thème')
+        ->assertDontSee('Current workload');
+
+    $this->withCookie(Translator::COOKIE, 'fr')
+        ->get('/meridian/jobs/'.$job->uuid)
+        ->assertSee('En échec')
+        ->assertSee('Relancer')
+        ->assertSee('Relancer ce job ?');
+});
+
+it('offers the theme and language switchers on the Blade interface', function () {
+    $this->get('/meridian')
+        ->assertOk()
+        ->assertSee('data-theme-choice="light"', false)
+        ->assertSee('data-theme-choice="dark"', false)
+        ->assertSee('data-theme-choice="system"', false)
+        ->assertSee('action="'.route('meridian.locale').'"', false)
+        ->assertSee('<option value="fr" >Français</option>', false);
+});
+
+it('uses no inline event handler on the Blade interface (strict CSP)', function () {
+    FailingJob::dispatch();
+    $this->work();
+
+    foreach (['/meridian', '/meridian/jobs', '/meridian/jobs/'.MonitoredJob::sole()->uuid] as $uri) {
+        $this->get($uri)->assertOk()->assertDontSee('onchange=', false)->assertDontSee('onsubmit=', false)->assertDontSee('onclick=', false);
+    }
 });

@@ -15,6 +15,11 @@ class Translator
     public const COOKIE = 'meridian_locale';
 
     /**
+     * Native names of the languages offered by the switchers.
+     */
+    public const LANGUAGES = ['en' => 'English', 'fr' => 'Français'];
+
+    /**
      * @var array<string, array<string, string>>
      */
     protected static array $loaded = [];
@@ -27,6 +32,19 @@ class Translator
         $locales = array_values(array_filter((array) config('meridian.locales', ['en'])));
 
         return $locales === [] ? ['en'] : $locales;
+    }
+
+    /**
+     * The offered languages with their native name.
+     *
+     * @return array<int, array{code: string, label: string}>
+     */
+    public static function languages(): array
+    {
+        return array_map(fn (string $code) => [
+            'code' => $code,
+            'label' => self::LANGUAGES[$code] ?? strtoupper($code),
+        ], static::locales());
     }
 
     /**

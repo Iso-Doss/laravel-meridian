@@ -19,11 +19,6 @@ class HandleInertiaRequests extends Middleware
 {
     protected $rootView = 'meridian::inertia';
 
-    /**
-     * Native names of the languages offered by the switcher.
-     */
-    public const LANGUAGES = ['en' => 'English', 'fr' => 'Français'];
-
     public function handle(Request $request, Closure $next): Response
     {
         if (Meridian::ui() !== 'inertia') {
@@ -50,10 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
                 'poll' => (int) config('meridian.poll', 5),
                 'locale' => $locale,
-                'locales' => array_map(fn (string $code) => [
-                    'code' => $code,
-                    'label' => self::LANGUAGES[$code] ?? strtoupper($code),
-                ], Translator::locales()),
+                'locales' => Translator::languages(),
                 'translations' => Translator::messages($locale),
             ],
             'nav' => [

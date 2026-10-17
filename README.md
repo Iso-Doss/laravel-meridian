@@ -23,7 +23,7 @@ experience to applications using the `database` queue driver:
 Two dashboard interfaces ship with the package:
 
 - **Inertia** (default): React + Inertia + shadcn/ui, light / dark / system theme, English and French. Its compiled assets are part of the package and served by Meridian itself: nothing to install, build or publish in your application, which does not need Node, React nor Inertia of its own.
-- **Blade**: the lightweight server-rendered interface (`MERIDIAN_UI=blade`).
+- **Blade**: the lightweight server-rendered interface (`MERIDIAN_UI=blade`), with the same themes and languages.
 
 ## How it works
 
@@ -90,7 +90,7 @@ MERIDIAN_UI=blade
 
 or, when `config/meridian.php` is published, `'ui' => 'blade'` (republish the config with `php artisan vendor:publish --tag=meridian-config --force` to get the new `ui` and `locales` keys). Clear the cached configuration afterwards if needed (`php artisan config:clear`).
 
-Both interfaces share the same URLs, route names, actions (retry, cancel, delete) and JSON API; only the pages change. The Blade interface is in English only.
+Both interfaces share the same URLs, route names, actions (retry, cancel, delete) and JSON API; only the pages change. The Blade interface also has the light / dark / system theme and the English / French language switcher (same browser setting and cookie as the Inertia interface).
 
 ## Dashboard authorization
 

@@ -6,31 +6,84 @@ use DateTimeInterface;
 use Illuminate\Support\Carbon;
 
 /**
- * Small formatting helpers used by the dashboard views.
+ * Formatting helpers of the Blade interface, in the visitor's language.
  */
 class Format
 {
-    public static function runtime(?int $milliseconds): string
+    /**
+     * English labels of the statuses (translated by the views).
+     */
+    public const STATUSES = [
+        'pending' => 'Pending',
+        'delayed' => 'Delayed',
+        'processing' => 'Processing',
+        'working' => 'Working',
+        'paused' => 'Paused',
+        'completed' => 'Completed',
+        'running' => 'Running',
+        'finished' => 'Finished',
+        'idle' => 'Idle',
+        'failed' => 'Failed',
+        'cancelled' => 'Cancelled',
+        'inactive' => 'Inactive',
+    ];
+
+    public static function status(string $status): string
+    {
+        return self::STATUSES[$status] ?? ucfirst($status);
+    }
+
+    public static function integer(int|float $value, string $locale = 'en'): string
+    {
+        return number_format($value, 0, static::decimalSeparator($locale), static::thousandsSeparator($locale));
+    }
+
+    public static function decimal(int|float $value, int $decimals, string $locale = 'en'): string
+    {
+        $formatted = number_format($value, $decimals, static::decimalSeparator($locale), static::thousandsSeparator($locale));
+
+        return str_contains($formatted, static::decimalSeparator($locale))
+            ? rtrim(rtrim($formatted, '0'), static::decimalSeparator($locale))
+            : $formatted;
+    }
+
+    /**
+     * Short form of big numbers: "12.3k".
+     */
+    public static function number(int|float $value, string $locale = 'en'): string
+    {
+        return $value >= 10000
+            ? static::decimal($value / 1000, 1, $locale).'k'
+            : static::decimal($value, 2, $locale);
+    }
+
+    /**
+     * Milliseconds: "120 ms", "1.25 s", "2 min 5 s".
+     */
+    public static function runtime(?int $milliseconds, string $locale = 'en'): string
     {
         if ($milliseconds === null) {
             return '—';
         }
 
         if ($milliseconds < 1000) {
-            return $milliseconds.' ms';
+            return static::integer($milliseconds, $locale).' ms';
         }
 
-        return static::seconds((int) round($milliseconds / 1000), $milliseconds < 60_000 ? $milliseconds / 1000 : null);
+        if ($milliseconds < 60_000) {
+            return static::decimal($milliseconds / 1000, 2, $locale).' s';
+        }
+
+        return static::seconds((int) round($milliseconds / 1000));
     }
 
-    public static function seconds(?int $seconds, ?float $precise = null): string
+    /**
+     * Seconds: "45 s", "2 min 5 s", "1 h 4 min".
+     */
+    public static function seconds(?int $seconds): string
     {
         if ($seconds === null) {
             return '—';
-        }
-
-        if ($precise !== null) {
-            return number_format($precise, 2).' s';
         }
 
         if ($seconds < 60) {
@@ -38,29 +91,44 @@ class Format
         }
 
         if ($seconds < 3600) {
-            return intdiv($seconds, 60).'m '.($seconds % 60).'s';
+            return intdiv($seconds, 60).' min '.($seconds % 60).' s';
         }
 
-        return intdiv($seconds, 3600).'h '.intdiv($seconds % 3600, 60).'m';
+        return intdiv($seconds, 3600).' h '.intdiv($seconds % 3600, 60).' min';
     }
 
-    public static function date(?DateTimeInterface $date): string
+    public static function date(?DateTimeInterface $date, string $locale = 'en'): string
     {
-        return $date ? Carbon::instance($date)->format('Y-m-d H:i:s') : '—';
+        return $date ? Carbon::instance($date)->format($locale === 'fr' ? 'd/m/Y H:i:s' : 'Y-m-d H:i:s') : '—';
     }
 
-    public static function ago(?DateTimeInterface $date): string
+    public static function time(int $timestamp): string
     {
-        return $date ? Carbon::instance($date)->diffForHumans(short: true) : '—';
+        return date('H:i', $timestamp);
     }
 
-    public static function bytes(int $bytes): string
+    /**
+     * "3 minutes ago" / "il y a 3 minutes".
+     */
+    public static function ago(?DateTimeInterface $date, string $locale = 'en'): string
     {
-        return $bytes >= 1048576 ? round($bytes / 1048576, 1).' MB' : round($bytes / 1024).' KB';
+        return $date ? Carbon::instance($date)->locale($locale)->diffForHumans() : '—';
     }
 
-    public static function number(int|float $value): string
+    public static function bytes(int $bytes, string $locale = 'en'): string
     {
-        return $value >= 10000 ? round($value / 1000, 1).'k' : (string) $value;
+        return $bytes >= 1048576
+            ? static::decimal($bytes / 1048576, 1, $locale).' MB'
+            : static::integer(round($bytes / 1024), $locale).' KB';
+    }
+
+    protected static function decimalSeparator(string $locale): string
+    {
+        return $locale === 'fr' ? ',' : '.';
+    }
+
+    protected static function thousandsSeparator(string $locale): string
+    {
+        return $locale === 'fr' ? "\u{202F}" : ',';
     }
 }

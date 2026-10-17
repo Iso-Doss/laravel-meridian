@@ -1,11 +1,21 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ $locale }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
-    <title>Meridian{{ isset($title) ? ' · '.$title : '' }} · {{ config('app.name') }}</title>
+    <title>{{ isset($title) ? $title.' · ' : '' }}Meridian · {{ config('app.name') }}</title>
     @php($nonce = \IsoDoss\Meridian\Support\Assets::nonceAttribute())
+    {{-- Same theme setting as the Inertia interface (light, dark or system), applied before the first paint. --}}
+    <script{!! $nonce !!}>
+        (function () {
+            var theme = 'system';
+            try { theme = localStorage.getItem('meridian.theme') || 'system'; } catch (e) {}
+            var dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            document.documentElement.classList.add(dark ? 'dark' : 'light');
+            document.documentElement.dataset.theme = theme;
+        })();
+    </script>
     <style{!! $nonce !!}>@include('meridian::partials.styles')</style>
 </head>
 <body>
@@ -17,19 +27,38 @@
         </a>
         @php($route = request()->route()?->getName())
         <nav>
-            <a href="{{ route('meridian.dashboard') }}" @class(['active' => $route === 'meridian.dashboard'])>Dashboard</a>
-            <div class="nav-title">Jobs</div>
-            <a href="{{ route('meridian.jobs.index', 'pending') }}" @class(['active' => request()->route('status') === 'pending'])>Pending</a>
-            <a href="{{ route('meridian.jobs.index', 'processing') }}" @class(['active' => request()->route('status') === 'processing'])>Processing</a>
-            <a href="{{ route('meridian.jobs.index', 'completed') }}" @class(['active' => request()->route('status') === 'completed'])>Completed</a>
-            <a href="{{ route('meridian.jobs.index', 'failed') }}" @class(['active' => request()->route('status') === 'failed'])>Failed</a>
-            <a href="{{ route('meridian.jobs.index') }}" @class(['active' => $route === 'meridian.jobs.index' && ! request()->route('status')])>All jobs</a>
-            <div class="nav-title">Insights</div>
-            <a href="{{ route('meridian.batches.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.batches')])>Batches</a>
-            <a href="{{ route('meridian.metrics.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.metrics')])>Metrics</a>
+            <a href="{{ route('meridian.dashboard') }}" @class(['active' => $route === 'meridian.dashboard'])>{{ $t('Dashboard') }}</a>
+            <div class="nav-title">{{ $t('Jobs') }}</div>
+            <a href="{{ route('meridian.jobs.index', 'pending') }}" @class(['active' => request()->route('status') === 'pending'])>{{ $t('Pending') }}</a>
+            <a href="{{ route('meridian.jobs.index', 'processing') }}" @class(['active' => request()->route('status') === 'processing'])>{{ $t('Processing') }}</a>
+            <a href="{{ route('meridian.jobs.index', 'completed') }}" @class(['active' => request()->route('status') === 'completed'])>{{ $t('Completed') }}</a>
+            <a href="{{ route('meridian.jobs.index', 'failed') }}" @class(['active' => request()->route('status') === 'failed'])>{{ $t('Failed') }}</a>
+            <a href="{{ route('meridian.jobs.index') }}" @class(['active' => $route === 'meridian.jobs.index' && ! request()->route('status')])>{{ $t('All jobs') }}</a>
+            <div class="nav-title">{{ $t('Insights') }}</div>
+            <a href="{{ route('meridian.batches.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.batches')])>{{ $t('Batches') }}</a>
+            <a href="{{ route('meridian.metrics.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.metrics')])>{{ $t('Metrics') }}</a>
         </nav>
         <div class="sidebar-foot">
-            <label class="toggle"><input type="checkbox" id="meridian-poll" checked> Auto-refresh</label>
+            <div class="setting">
+                <span class="setting-label">{{ $t('Theme') }}</span>
+                <div class="segmented" role="group" aria-label="{{ $t('Theme') }}">
+                    @foreach (['light' => 'Light', 'dark' => 'Dark', 'system' => 'System'] as $value => $label)
+                        <button type="button" data-theme-choice="{{ $value }}" aria-pressed="false">{{ $t($label) }}</button>
+                    @endforeach
+                </div>
+            </div>
+            @if (count($languages) > 1)
+                <form class="setting" method="post" action="{{ route('meridian.locale') }}">
+                    @csrf
+                    <label class="setting-label" for="meridian-locale">{{ $t('Language') }}</label>
+                    <select id="meridian-locale" name="locale" data-autosubmit>
+                        @foreach ($languages as $language)
+                            <option value="{{ $language['code'] }}" @selected($language['code'] === $locale)>{{ $language['label'] }}</option>
+                        @endforeach
+                    </select>
+                </form>
+            @endif
+            <label class="toggle"><input type="checkbox" id="meridian-poll" checked> {{ $t('Auto-refresh') }}</label>
         </div>
     </aside>
 
@@ -47,8 +76,46 @@
     </main>
 </div>
 
+{{-- No inline event handler (refused by a strict CSP): everything is wired here. --}}
 <script{!! $nonce !!}>
 (function () {
+    var root = document.documentElement;
+
+    // Theme: light, dark or system, kept in the browser.
+    function applyTheme(theme) {
+        var dark = theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        root.classList.toggle('dark', dark);
+        root.classList.toggle('light', !dark);
+        root.dataset.theme = theme;
+        document.querySelectorAll('[data-theme-choice]').forEach(function (button) {
+            button.setAttribute('aria-pressed', button.dataset.themeChoice === theme ? 'true' : 'false');
+        });
+    }
+
+    applyTheme(root.dataset.theme || 'system');
+
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () {
+        if (root.dataset.theme === 'system') applyTheme('system');
+    });
+
+    document.addEventListener('click', function (event) {
+        var button = event.target.closest('[data-theme-choice]');
+        if (!button) return;
+        try { localStorage.setItem('meridian.theme', button.dataset.themeChoice); } catch (e) {}
+        applyTheme(button.dataset.themeChoice);
+    });
+
+    // Selects that submit their form, confirmations before destructive actions.
+    document.addEventListener('change', function (event) {
+        if (event.target.matches('[data-autosubmit]')) event.target.form.submit();
+    });
+
+    document.addEventListener('submit', function (event) {
+        var message = event.target.dataset.confirm;
+        if (message && !window.confirm(message)) event.preventDefault();
+    });
+
+    // Auto-refresh of the content.
     var interval = {{ (int) config('meridian.poll', 5) }} * 1000;
     var toggle = document.getElementById('meridian-poll');
     try { toggle.checked = localStorage.getItem('meridian.poll') !== '0'; } catch (e) {}
@@ -56,7 +123,7 @@
         try { localStorage.setItem('meridian.poll', toggle.checked ? '1' : '0'); } catch (e) {}
     });
 
-    if (!interval) { toggle.parentElement.style.display = 'none'; return; }
+    if (!interval) { toggle.parentElement.hidden = true; return; }
 
     setInterval(function () {
         var region = document.querySelector('[data-poll]');
