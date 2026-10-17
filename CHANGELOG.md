@@ -2,11 +2,16 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
-## Unreleased
+## v1.1.0 - 2026-10-17
 
 ### Added
 
-- **New dashboard interface** built with React, Inertia and shadcn/ui: light, dark and system themes, English and French (follows the application locale, switcher in the header), auto-refresh, confirmation dialogs. Its compiled assets ship with the package and are served by Meridian: nothing to build or publish, and the application's own Inertia setup is never involved.
+- **New dashboard interface** built with React, Inertia and shadcn/ui (Tailwind CSS v4):
+  - light, dark and system themes, kept in the browser;
+  - English and French: the language follows the application locale and can be changed from the header (kept in a cookie); dates and numbers are formatted in the chosen language;
+  - auto-refresh every `meridian.poll` seconds (« Live » switch in the header), confirmation dialogs for retry / cancel / delete, responsive layout.
+- Its compiled assets ship with the package and are served by Meridian itself: nothing to install, build or publish in your application, which needs neither Node, React nor an Inertia setup of its own.
+- Meridian uses its own root view, Inertia middleware and asset version: your application's Inertia middleware is excluded from Meridian's routes and its SSR server never renders Meridian's pages.
 - `meridian.ui` (`MERIDIAN_UI`) and `meridian.locales` configuration keys.
 - New dependency: `inertiajs/inertia-laravel` ^3.0.
 
@@ -22,7 +27,15 @@ The Blade interface is still available. To keep it, set in your `.env`:
 MERIDIAN_UI=blade
 ```
 
-(or `'ui' => 'blade'` in a published `config/meridian.php`, then `php artisan config:clear` if the configuration is cached).
+or `'ui' => 'blade'` in a published `config/meridian.php` (republish it with `php artisan vendor:publish --tag=meridian-config --force` to get the new keys), then `php artisan config:clear` if the configuration is cached.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration. Applications still on Inertia v2 cannot install this version.
 
 ## v1.0.1 - 2026-10-17
 
