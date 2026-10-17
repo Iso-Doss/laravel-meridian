@@ -5,6 +5,7 @@ namespace IsoDoss\Meridian\Console;
 use Illuminate\Console\Command;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\MonitoredTagRepository;
 
 class PruneCommand extends Command
@@ -55,9 +56,10 @@ class PruneCommand extends Command
                         ->orWhere(fn ($query) => $query->whereNot(fn ($query) => $query->withAnyTag($tags)));
                 }))
                 ->limit(1000)
-                ->pluck('id');
+                ->pluck('uuid', 'id');
 
-            $total += $ids->isEmpty() ? 0 : Meridian::table('jobs')->whereIn('id', $ids)->delete();
+            app(JobRetryRepository::class)->forget($ids->values());
+            $total += $ids->isEmpty() ? 0 : Meridian::table('jobs')->whereIn('id', $ids->keys())->delete();
         } while ($ids->count() === 1000);
 
         return $total;

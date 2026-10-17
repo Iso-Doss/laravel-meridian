@@ -162,31 +162,69 @@ class MasterSupervisor
     protected function processPendingCommands(): void
     {
         try {
-            $command = SupervisorModel::query()
+            $commands = SupervisorModel::query()
                 ->where('master', $this->name)
                 ->whereNotNull('command')
-                ->value('command');
+                ->pluck('command', 'name');
 
-            if (! $command) {
+            if ($commands->isEmpty()) {
                 return;
             }
 
-            SupervisorModel::query()->where('master', $this->name)->update(['command' => null]);
+            SupervisorModel::query()->whereIn('name', $commands->keys())->update(['command' => null]);
         } catch (Throwable $e) {
             report($e);
 
             return;
         }
 
-        $this->info("Received command [{$command}].");
+        // A command written on every row of this master (meridian:pause...)
+        // applies to the master; on some rows only, to those supervisors.
+        if ($commands->unique()->count() === 1 && $commands->count() === count($this->supervisors)) {
+            $command = (string) $commands->first();
+            $this->info("Received command [{$command}].");
 
-        match ($command) {
-            'pause' => $this->pause(),
-            'continue' => $this->continue(),
-            'restart' => $this->restart(),
-            'terminate' => $this->terminate(),
-            default => null,
-        };
+            match ($command) {
+                'pause' => $this->pause(),
+                'continue' => $this->continue(),
+                'restart' => $this->restart(),
+                'terminate' => $this->terminate(),
+                default => null,
+            };
+
+            return;
+        }
+
+        foreach ($commands as $row => $command) {
+            $supervisor = $this->supervisorNamed(substr((string) $row, strlen($this->name) + 1));
+
+            if ($supervisor === null) {
+                continue;
+            }
+
+            $this->info("Received command [{$command}] for [{$supervisor->options->name}].");
+
+            match ($command) {
+                'pause' => $supervisor->pause(),
+                'continue' => $supervisor->continue(),
+                'restart' => $supervisor->restart(),
+                'terminate' => $this->terminate(),
+                default => null,
+            };
+        }
+
+        $this->persist();
+    }
+
+    protected function supervisorNamed(string $name): ?Supervisor
+    {
+        foreach ($this->supervisors as $supervisor) {
+            if ($supervisor->options->name === $name) {
+                return $supervisor;
+            }
+        }
+
+        return null;
     }
 
     /**
@@ -202,7 +240,7 @@ class MasterSupervisor
                 'master' => $this->name,
                 'hostname' => Meridian::hostname(),
                 'pid' => getmypid(),
-                'status' => $this->working ? 'running' : 'paused',
+                'status' => $supervisor->paused ? 'paused' : 'running',
                 'processes' => json_encode($supervisor->processCounts()),
                 'options' => json_encode($supervisor->options->toArray()),
                 'started_at' => $this->startedAt,

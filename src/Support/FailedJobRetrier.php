@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 
 /**
  * Pushes failed jobs back onto their queue: through "queue:retry" when they
@@ -94,6 +95,7 @@ class FailedJobRetrier
                 'failed_at' => null,
                 'available_at' => now(),
             ]);
+            app(JobRetryRepository::class)->retried([$job->uuid]);
 
             $retried++;
         }

@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Supervisor;
 use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobData;
 
 /**
@@ -53,6 +54,7 @@ class Present
             'reserved_at' => static::time($job->reserved_at),
             'payload' => $job->prettyPayload(),
             'data' => JobData::describe($job->payload),
+            'retry_history' => app(JobRetryRepository::class)->history($job->uuid),
             'exception' => $job->exception,
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
             'delete_url' => $job->status !== MonitoredJob::PROCESSING ? route('meridian.jobs.destroy', $job->uuid) : null,

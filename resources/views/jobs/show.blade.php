@@ -44,6 +44,30 @@
         </div>
     @endif
 
+    @php($history = app(\IsoDoss\Meridian\Repositories\JobRetryRepository::class)->history($job->uuid))
+    @if ($history !== [])
+        <div class="panel">
+            <div class="panel-head"><h2>{{ $t('Retries') }}</h2><span class="muted">{{ $t(':count manual retry(ies)', ['count' => count($history)]) }}</span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>#</th><th>{{ $t('Retried at') }}</th><th>{{ $t('Status') }}</th><th>{{ $t('Finished at') }}</th><th class="num">{{ $t('Runtime') }}</th><th>{{ $t('Exception') }}</th></tr></thead>
+                    <tbody>
+                    @foreach ($history as $index => $attempt)
+                        <tr>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ Format::date(\Illuminate\Support\Carbon::createFromTimestamp($attempt['retried_at']), $locale) }}</td>
+                            <td><span class="badge {{ $attempt['status'] }}">{{ $t(Format::status($attempt['status'])) }}</span></td>
+                            <td>{{ $attempt['finished_at'] ? Format::date(\Illuminate\Support\Carbon::createFromTimestamp($attempt['finished_at']), $locale) : '—' }}</td>
+                            <td class="num">{{ Format::runtime($attempt['runtime'], $locale) }}</td>
+                            <td class="wrap mono" title="{{ $attempt['exception'] }}">{{ $attempt['exception'] ? \Illuminate\Support\Str::limit(strtok($attempt['exception'], "\n"), 120) : '—' }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
+
     @if ($data = \IsoDoss\Meridian\Support\JobData::describe($job->payload))
         <div class="panel">
             <div class="panel-head"><h2>{{ $t('Data') }}</h2></div>

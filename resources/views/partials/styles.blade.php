@@ -51,6 +51,7 @@ nav a.active { background: var(--accent-soft); color: var(--accent); font-weight
 h1 { font-size: 20px; margin: 0 0 18px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 h2 { font-size: 15px; margin: 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 20px; }
+@media (min-width: 1100px) { .cards { grid-template-columns: repeat(4, 1fr); } }
 .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 14px 16px; }
 .card .label { color: var(--muted); font-size: 12px; }
 .card .value { font-size: 22px; font-weight: 650; margin-top: 4px; font-variant-numeric: tabular-nums; }

@@ -16,6 +16,7 @@ use Illuminate\Queue\Events\JobRetryRequested;
 use Illuminate\Support\Carbon;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobPayload;
 use IsoDoss\Meridian\Support\Tags;
 use Throwable;
@@ -43,7 +44,7 @@ class RecordJobLifecycle
      */
     protected array $exceptions = [];
 
-    public function __construct(protected WorkerHeartbeat $heartbeat) {}
+    public function __construct(protected WorkerHeartbeat $heartbeat, protected JobRetryRepository $retries) {}
 
     /**
      * @return array<class-string, string>
@@ -123,6 +124,8 @@ class RecordJobLifecycle
             if ($updated === 0) {
                 $this->recordFromJob($event->connectionName, $event->job, MonitoredJob::PROCESSING);
             }
+
+            $this->retries->update($uuid, ['status' => MonitoredJob::PROCESSING]);
         });
     }
 
@@ -153,9 +156,12 @@ class RecordJobLifecycle
                     'runtime' => $runtime,
                     'updated_at' => time(),
                 ]);
+                $this->retries->update($uuid, ['status' => MonitoredJob::PENDING]);
 
                 return;
             }
+
+            $this->retries->update($uuid, ['status' => MonitoredJob::COMPLETED, 'runtime' => $runtime, 'finished_at' => time()]);
 
             $record = $query->first(['id', 'name', 'tags']);
 
@@ -192,13 +198,17 @@ class RecordJobLifecycle
         $runtime = $this->stopTimer($uuid);
         $exception = $this->pullException($uuid);
 
-        $this->safely(fn () => MonitoredJob::query()->where('uuid', $uuid)->update([
-            'status' => MonitoredJob::PENDING,
-            'runtime' => $runtime,
-            'exception' => $exception,
-            'available_at' => time() + (int) ($event->backoff ?? 0),
-            'updated_at' => time(),
-        ]));
+        $this->safely(function () use ($uuid, $runtime, $exception, $event) {
+            MonitoredJob::query()->where('uuid', $uuid)->update([
+                'status' => MonitoredJob::PENDING,
+                'runtime' => $runtime,
+                'exception' => $exception,
+                'available_at' => time() + (int) ($event->backoff ?? 0),
+                'updated_at' => time(),
+            ]);
+
+            $this->retries->update($uuid, ['status' => MonitoredJob::PENDING]);
+        });
     }
 
     public function failed(JobFailed $event): void
@@ -227,6 +237,13 @@ class RecordJobLifecycle
             if ($updated === 0) {
                 $this->recordFromJob($event->connectionName, $job, MonitoredJob::FAILED, (string) $event->exception);
             }
+
+            $this->retries->update($uuid, [
+                'status' => MonitoredJob::FAILED,
+                'runtime' => $runtime,
+                'exception' => (string) $event->exception,
+                'finished_at' => time(),
+            ]);
         });
     }
 
@@ -238,14 +255,20 @@ class RecordJobLifecycle
             return;
         }
 
-        $this->safely(fn () => MonitoredJob::query()->where('uuid', $uuid)->update([
-            'status' => MonitoredJob::PENDING,
-            'attempts' => 0,
-            'retries' => Meridian::db()->raw('retries + 1'),
-            'failed_at' => null,
-            'available_at' => time(),
-            'updated_at' => time(),
-        ]));
+        $this->safely(function () use ($uuid) {
+            $updated = MonitoredJob::query()->where('uuid', $uuid)->update([
+                'status' => MonitoredJob::PENDING,
+                'attempts' => 0,
+                'retries' => Meridian::db()->raw('retries + 1'),
+                'failed_at' => null,
+                'available_at' => time(),
+                'updated_at' => time(),
+            ]);
+
+            if ($updated > 0) {
+                $this->retries->retried([$uuid]);
+            }
+        });
     }
 
     protected function recordFromJob(string $connection, Job $job, string $status, ?string $exception = null): void

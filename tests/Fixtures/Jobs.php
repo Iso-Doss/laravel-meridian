@@ -93,3 +93,19 @@ class EncryptedJob implements ShouldBeEncrypted, ShouldQueue
 
     public function handle(): void {}
 }
+
+class FlakyJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public $tries = 1;
+
+    public static bool $fails = true;
+
+    public function handle(): void
+    {
+        if (static::$fails) {
+            throw new RuntimeException('Flaky failure');
+        }
+    }
+}

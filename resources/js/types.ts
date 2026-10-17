@@ -47,6 +47,14 @@ export interface Job {
     retry_url: string | null;
 }
 
+export interface RetryAttempt {
+    status: JobStatus;
+    runtime: number | null;
+    exception: string | null;
+    retried_at: number;
+    finished_at: number | null;
+}
+
 export interface JobDetails extends Job {
     job_id: string | null;
     worker: string | null;
@@ -54,6 +62,7 @@ export interface JobDetails extends Job {
     reserved_at: number | null;
     payload: string | null;
     data: { properties: { name: string; value: string }[]; error: string | null } | null;
+    retry_history: RetryAttempt[];
     exception: string | null;
     batch_url: string | null;
     delete_url: string | null;

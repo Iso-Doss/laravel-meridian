@@ -22,6 +22,7 @@ class TestCase extends Orchestra
 
         (include __DIR__.'/../database/migrations/create_meridian_tables.php.stub')->up();
         (include __DIR__.'/../database/migrations/create_meridian_monitored_tags_table.php.stub')->up();
+        (include __DIR__.'/../database/migrations/create_meridian_job_retries_table.php.stub')->up();
     }
 
     protected function getPackageProviders($app)

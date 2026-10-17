@@ -58,7 +58,7 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 - **Job history**: pending, processing, completed and failed jobs, with their tags, readable data (the properties of the job), payload, exception, attempts, wait time and runtime.
 - **Monitored tags**: watch a customer, an order or any tag; its jobs are listed together and kept longer.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
-- **Actions**: retry one failed job or all of them (those matching the filters of the list), cancel a pending job, retry the failed jobs of a batch.
+- **Actions**: retry one failed job or all of them, with the history of each retry, (those matching the filters of the list), cancel a pending job, retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
@@ -75,17 +75,24 @@ Horizon only works with Redis. If your application runs its queues on the `datab
                 <source media="(prefers-color-scheme: dark)" srcset="art/jobs-dark.png">
                 <img src="art/jobs-light.png" alt="Completed jobs, with their tags, queue, wait time and runtime">
             </picture>
-            <p align="center"><b>Jobs</b>: by status, filtered by queue, searched by class, tag or UUID</p>
+            <p align="center"><b>Jobs</b>: by status, filtered by queue or tag, searched by class, tag or UUID</p>
         </td>
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/job-dark.png">
-                <img src="art/job-light.png" alt="A failed job with its exception, payload and the retry and delete actions">
+                <img src="art/job-light.png" alt="A failed job with its exception, retry history, data and the retry and delete actions">
             </picture>
-            <p align="center"><b>Job details</b>: exception, payload, timings, retry and delete</p>
+            <p align="center"><b>Job details</b>: exception, retry history, readable data, payload</p>
         </td>
     </tr>
     <tr>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/monitoring-dark.png">
+                <img src="art/monitoring-light.png" alt="Monitored tags with their number of jobs, pending and failed jobs">
+            </picture>
+            <p align="center"><b>Monitoring</b>: watch tags, keep their jobs longer</p>
+        </td>
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/batches-dark.png">
@@ -93,12 +100,21 @@ Horizon only works with Redis. If your application runs its queues on the `datab
             </picture>
             <p align="center"><b>Batches</b>: progress, pending and failed jobs</p>
         </td>
+    </tr>
+    <tr>
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/metrics-dark.png">
                 <img src="art/metrics-light.png" alt="Metrics per job: processed, failure rate, average and max runtime, average wait">
             </picture>
             <p align="center"><b>Metrics</b>: per job or per queue, over 1 hour to 7 days</p>
+        </td>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/blade-dark.png">
+                <img src="art/blade-light.png" alt="The Blade interface of the dashboard, with its theme and language switchers">
+            </picture>
+            <p align="center"><b>Blade interface</b>: the same pages, server-rendered (<code>MERIDIAN_UI=blade</code>)</p>
         </td>
     </tr>
 </table>
@@ -223,9 +239,15 @@ php artisan meridian
 | `meridian` | Start the master supervisor |
 | `meridian:status` | Show the status, the supervisors and the workload |
 | `meridian:pause` / `meridian:continue` | Pause or resume the workers (`--all` for every host) |
+| `meridian:pause-supervisor {name}` / `meridian:continue-supervisor {name}` | Pause or resume the workers of one supervisor (`--all` for every host) |
+| `meridian:supervisors` | List the running supervisors |
+| `meridian:supervisor-status {name}` | Show the status of a supervisor |
 | `meridian:terminate` | Finish the running jobs, then stop the master supervisor (`--all` for every host) |
 | `meridian:snapshot` | Store a metrics snapshot, import the jobs pushed without event, check the wait times |
 | `meridian:prune` | Delete old completed and failed jobs, metrics and stale heartbeats |
+| `meridian:forget {uuid}` / `meridian:forget --all` | Delete a failed job, or all of them, from Meridian and from the failed jobs table |
+| `meridian:clear {connection?} --queue=` | Delete the jobs waiting on a queue (asks for confirmation in production, `--force` to skip it) |
+| `meridian:clear-metrics` | Delete every metrics snapshot |
 
 `php artisan meridian` requires the `pcntl` and `posix` extensions.
 
@@ -307,13 +329,13 @@ class RenderVideo implements ShouldQueue
 }
 ```
 
-Click a tag anywhere in the dashboard to list every job carrying it. On the failed jobs page, « Retry all » pushes back every failed job matching the current filters (queue, search): retry all the failed jobs of a queue, or of a customer by searching its tag.
+Click a tag anywhere in the dashboard to list every job carrying it. The page of a retried job lists every retry with its outcome, runtime and exception. On the failed jobs page, « Retry all » pushes back every failed job matching the current filters (queue, search): retry all the failed jobs of a queue, or of a customer by searching its tag.
 
 ### Monitored tags
 
 Like Horizon, the « Monitoring » page lets you watch tags: add `App\Models\User:42` or `customer:42` and its jobs are listed together, with their number of pending and failed jobs. The jobs carrying a monitored tag are kept `trim.monitored` minutes (7 days by default) instead of `trim.completed`.
 
-Monitored tags are stored in the `meridian_monitored_tags` table. When upgrading from a version older than 1.4.0, publish and run the new migration:
+Monitored tags are stored in the `meridian_monitored_tags` table. When upgrading from a version older than 1.4.0 (monitored tags) or 1.5.0 (retry history), publish and run the new migrations:
 
 ```bash
 php artisan vendor:publish --tag=meridian-migrations

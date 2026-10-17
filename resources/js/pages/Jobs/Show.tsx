@@ -5,7 +5,8 @@ import { ConfirmAction } from '@/components/confirm-action';
 import { Tags } from '@/components/jobs-table';
 import { Layout } from '@/components/layout';
 import { StatusBadge } from '@/components/status-badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAutoRefresh } from '@/hooks/use-auto-refresh';
 import { formatDateTime, formatRuntime, formatSeconds } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
@@ -109,6 +110,43 @@ export default function JobShow({ job }: { job: JobDetails }) {
                             {job.exception}
                         </pre>
                     </CardContent>
+                </Card>
+            )}
+
+            {job.retry_history.length > 0 && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>{t('Retries')}</CardTitle>
+                        <CardDescription>{t(':count manual retry(ies)', { count: job.retry_history.length })}</CardDescription>
+                    </CardHeader>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>#</TableHead>
+                                <TableHead>{t('Retried at')}</TableHead>
+                                <TableHead>{t('Status')}</TableHead>
+                                <TableHead>{t('Finished at')}</TableHead>
+                                <TableHead className="text-right">{t('Runtime')}</TableHead>
+                                <TableHead>{t('Exception')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {job.retry_history.map((attempt, index) => (
+                                <TableRow key={index}>
+                                    <TableCell className="tabular-nums">{index + 1}</TableCell>
+                                    <TableCell>{formatDateTime(attempt.retried_at, locale)}</TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={attempt.status} />
+                                    </TableCell>
+                                    <TableCell>{formatDateTime(attempt.finished_at, locale)}</TableCell>
+                                    <TableCell className="text-right tabular-nums">{formatRuntime(attempt.runtime, locale)}</TableCell>
+                                    <TableCell className="max-w-md truncate font-mono text-xs" title={attempt.exception ?? undefined}>
+                                        {attempt.exception ? attempt.exception.split('\n')[0] : '—'}
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 </Card>
             )}
 

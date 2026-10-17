@@ -15,6 +15,7 @@ use IsoDoss\Meridian\Http\Middleware\HandleInertiaRequests;
 use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
 use IsoDoss\Meridian\Listeners\SendLongWaitNotification;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
@@ -29,7 +30,7 @@ class MeridianServiceProvider extends PackageServiceProvider
             ->name('meridian')
             ->hasConfigFile()
             ->hasViews('meridian')
-            ->hasMigrations(['create_meridian_tables', 'create_meridian_monitored_tags_table'])
+            ->hasMigrations(['create_meridian_tables', 'create_meridian_monitored_tags_table', 'create_meridian_job_retries_table'])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
                 Console\MeridianCommand::class,
@@ -39,6 +40,13 @@ class MeridianServiceProvider extends PackageServiceProvider
                 Console\StatusCommand::class,
                 Console\SnapshotCommand::class,
                 Console\PruneCommand::class,
+                Console\PauseSupervisorCommand::class,
+                Console\ContinueSupervisorCommand::class,
+                Console\SupervisorsCommand::class,
+                Console\SupervisorStatusCommand::class,
+                Console\ForgetCommand::class,
+                Console\ClearCommand::class,
+                Console\ClearMetricsCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
@@ -69,6 +77,7 @@ class MeridianServiceProvider extends PackageServiceProvider
     {
         $this->app->singleton(WorkerHeartbeat::class);
         $this->app->singleton(RecordJobLifecycle::class);
+        $this->app->singleton(JobRetryRepository::class);
     }
 
     public function packageBooted(): void

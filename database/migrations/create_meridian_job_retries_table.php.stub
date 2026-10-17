@@ -1,0 +1,33 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function getConnection(): ?string
+    {
+        return config('meridian.database');
+    }
+
+    public function up(): void
+    {
+        if (! Schema::connection($this->getConnection())->hasTable('meridian_job_retries')) {
+            Schema::connection($this->getConnection())->create('meridian_job_retries', function (Blueprint $table) {
+                $table->id();
+                $table->uuid('job_uuid')->index();
+                $table->string('status', 20);
+                $table->unsignedInteger('runtime')->nullable()->comment('milliseconds');
+                $table->longText('exception')->nullable();
+                $table->unsignedInteger('retried_at');
+                $table->unsignedInteger('finished_at')->nullable();
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::connection($this->getConnection())->dropIfExists('meridian_job_retries');
+    }
+};

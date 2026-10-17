@@ -12,6 +12,7 @@ use Inertia\Response;
 use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
 use IsoDoss\Meridian\Http\Presenters\Present;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\QueueRepository;
 use IsoDoss\Meridian\Support\FailedJobRetrier;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
@@ -114,6 +115,7 @@ class JobsController extends Controller
         }
 
         $job->delete();
+        app(JobRetryRepository::class)->forget([$uuid]);
 
         return redirect()->route('meridian.jobs.index')->with('meridian.success', Translator::get('The job has been deleted.'));
     }
