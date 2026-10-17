@@ -2,20 +2,28 @@
 
 namespace IsoDoss\Meridian\Listeners;
 
-use Illuminate\Support\Facades\Notification;
+use Illuminate\Notifications\AnonymousNotifiable;
 use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Notifications\LongWaitDetected as LongWaitNotification;
 
 class SendLongWaitNotification
 {
     public function handle(LongWaitDetected $event): void
     {
-        if (! $mail = config('meridian.notifications.mail')) {
+        $routes = Meridian::notificationRoutes();
+        $notifiable = new AnonymousNotifiable;
+
+        foreach (['mail' => 'mail', 'slack' => 'slack', 'sms' => 'vonage'] as $key => $channel) {
+            if ($routes[$key]) {
+                $notifiable->route($channel, $routes[$key]);
+            }
+        }
+
+        if ($notifiable->routes === []) {
             return;
         }
 
-        Notification::route('mail', $mail)->notify(
-            new LongWaitNotification($event->connection, $event->queue, $event->seconds)
-        );
+        $notifiable->notify(new LongWaitNotification($event->connection, $event->queue, $event->seconds));
     }
 }

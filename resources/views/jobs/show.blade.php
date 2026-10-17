@@ -24,7 +24,7 @@
             <dt>{{ $t('Class') }}</dt><dd class="mono">{{ $job->name }}</dd>
             <dt>UUID</dt><dd class="mono">{{ $job->uuid }}</dd>
             <dt>{{ $t('Queue') }}</dt><dd>{{ $job->connection }}:{{ $job->queue }} @if($job->job_id)<span class="muted">(jobs.id {{ $job->job_id }})</span>@endif</dd>
-            <dt>{{ $t('Tags') }}</dt><dd>@forelse ($job->tags ?? [] as $tag)<a class="tag" href="{{ route('meridian.jobs.index', ['search' => $tag]) }}">{{ $tag }}</a>@empty<span class="muted">—</span>@endforelse</dd>
+            <dt>{{ $t('Tags') }}</dt><dd>@forelse ($job->tags ?? [] as $tag)<a class="tag" href="{{ route('meridian.jobs.index', ['tag' => $tag]) }}">{{ $tag }}</a>@empty<span class="muted">—</span>@endforelse</dd>
             @if ($job->batch_id)<dt>{{ $t('Batch') }}</dt><dd><a class="mono" href="{{ route('meridian.batches.show', $job->batch_id) }}">{{ $job->batch_id }}</a></dd>@endif
             <dt>{{ $t('Attempts') }}</dt><dd>{{ $job->attempts }} @if($job->retries)<span class="muted">· {{ $t('retried manually :count time(s)', ['count' => $job->retries]) }}</span>@endif</dd>
             <dt>{{ $t('Queued at') }}</dt><dd>{{ Format::date($job->queued_at, $locale) }}</dd>
@@ -41,6 +41,23 @@
         <div class="panel">
             <div class="panel-head"><h2>{{ $t('Exception') }}</h2></div>
             <div class="panel-body"><pre>{{ $job->exception }}</pre></div>
+        </div>
+    @endif
+
+    @if ($data = \IsoDoss\Meridian\Support\JobData::describe($job->payload))
+        <div class="panel">
+            <div class="panel-head"><h2>{{ $t('Data') }}</h2></div>
+            @if ($data['error'])
+                <div class="panel-body muted">{{ $t('The data of this job cannot be read: :error', ['error' => $data['error']]) }}</div>
+            @elseif ($data['properties'] === [])
+                <div class="panel-body muted">{{ $t('This job has no data.') }}</div>
+            @else
+                <dl class="meta">
+                    @foreach ($data['properties'] as $property)
+                        <dt class="mono">{{ $property['name'] }}</dt><dd class="mono">{{ $property['value'] }}</dd>
+                    @endforeach
+                </dl>
+            @endif
         </div>
     @endif
 

@@ -42,6 +42,7 @@ All of your worker configuration lives in a single, simple configuration file. `
   - [Content-Security-Policy](#content-security-policy)
   - [JSON API](#json-api)
 - [Tags](#tags)
+  - [Monitored tags](#monitored-tags)
 - [Notifications](#notifications)
 - [Metrics](#metrics)
 - [Retention](#retention)
@@ -53,15 +54,16 @@ All of your worker configuration lives in a single, simple configuration file. `
 
 Horizon only works with Redis. If your application runs its queues on the `database` driver, you usually have no visibility on what runs in the background: the `jobs` table only holds pending jobs, and a job leaves no trace once it is processed. Meridian records the whole life of every job and brings the Horizon experience to the database driver:
 
-- **Dashboard**: jobs per minute, jobs of the past hour, failures, pending and delayed jobs, max wait time, throughput chart, workload per queue, supervisors and workers.
-- **Job history**: pending, processing, completed and failed jobs, with their tags, payload, exception, attempts, wait time and runtime.
+- **Dashboard**: jobs per minute, jobs of the past hour, failures, pending and delayed jobs, max wait time, slowest and busiest queues, throughput chart, workload per queue, supervisors and workers.
+- **Job history**: pending, processing, completed and failed jobs, with their tags, readable data (the properties of the job), payload, exception, attempts, wait time and runtime.
+- **Monitored tags**: watch a customer, an order or any tag; its jobs are listed together and kept longer.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
 - **Actions**: retry one failed job or all of them (those matching the filters of the list), cancel a pending job, retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
 - **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`.
-- **Notifications** when a queue waits too long.
+- **Notifications** by e-mail, Slack or SMS when a queue waits too long.
 - **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, English and French, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
 
 ## Screenshots
@@ -305,11 +307,39 @@ class RenderVideo implements ShouldQueue
 }
 ```
 
-Search a tag from the jobs page to find every job carrying it. On the failed jobs page, « Retry all » pushes back every failed job matching the current filters (queue, search): retry all the failed jobs of a queue, or of a customer by searching its tag.
+Click a tag anywhere in the dashboard to list every job carrying it. On the failed jobs page, « Retry all » pushes back every failed job matching the current filters (queue, search): retry all the failed jobs of a queue, or of a customer by searching its tag.
+
+### Monitored tags
+
+Like Horizon, the « Monitoring » page lets you watch tags: add `App\Models\User:42` or `customer:42` and its jobs are listed together, with their number of pending and failed jobs. The jobs carrying a monitored tag are kept `trim.monitored` minutes (7 days by default) instead of `trim.completed`.
+
+Monitored tags are stored in the `meridian_monitored_tags` table. When upgrading from a version older than 1.4.0, publish and run the new migration:
+
+```bash
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
 
 ## Notifications
 
-When the oldest job of a queue waits longer than its threshold, Meridian fires an `IsoDoss\Meridian\Events\LongWaitDetected` event and, if `MERIDIAN_NOTIFY_MAIL` is set, sends an e-mail (at most once every `notifications.cooldown` minutes per queue). The thresholds, in seconds, are set per `connection:queue` in the `waits` option, `'*'` being the default one:
+When the oldest job of a queue waits longer than its threshold, Meridian fires an `IsoDoss\Meridian\Events\LongWaitDetected` event and notifies the configured routes, at most once every `notifications.cooldown` minutes per queue. Like with Horizon, set the routes in the `boot` method of `App\Providers\MeridianServiceProvider`:
+
+```php
+use IsoDoss\Meridian\Meridian;
+
+public function boot(): void
+{
+    parent::boot();
+
+    Meridian::routeMailNotificationsTo('ops@example.com');
+    Meridian::routeSlackNotificationsTo('https://hooks.slack.com/services/…', '#queues');
+    Meridian::routeSmsNotificationsTo('+15555550123');
+}
+```
+
+or in your `.env`: `MERIDIAN_NOTIFY_MAIL`, `MERIDIAN_NOTIFY_SLACK_WEBHOOK` (and `MERIDIAN_NOTIFY_SLACK_CHANNEL`), `MERIDIAN_NOTIFY_SMS`. Slack requires `laravel/slack-notification-channel` and SMS `laravel/vonage-notification-channel`.
+
+The thresholds, in seconds, are set per `connection:queue` in the `waits` option, `'*'` being the default one:
 
 ```php
 'waits' => [
@@ -319,11 +349,9 @@ When the oldest job of a queue waits longer than its threshold, Meridian fires a
 ],
 ```
 
-Listen to the event to notify Slack or any other channel.
-
 ## Metrics
 
-The metrics page shows, per job class and per queue, the jobs processed and failed, the failure rate, the average and max runtime and the average wait, over the last hour to the last seven days. Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
+The dashboard shows the slowest queue (highest average runtime) and the busiest one (most jobs processed) of the last hour. The metrics page shows, per job class and per queue, the jobs processed and failed, the failure rate, the average and max runtime and the average wait, over the last hour to the last seven days. Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
 
 ## Retention
 

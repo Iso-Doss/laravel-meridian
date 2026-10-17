@@ -16,6 +16,67 @@ class Meridian
     public static ?Closure $authUsing = null;
 
     /**
+     * Routes of the long wait notifications, set in a service provider.
+     *
+     * @var array{mail?: string|array<int, string>, slack?: string, slack_channel?: string|null, sms?: string}
+     */
+    public static array $notificationRoutes = [];
+
+    /**
+     * Send the long wait notifications by e-mail.
+     *
+     * @param  string|array<int, string>  $email
+     */
+    public static function routeMailNotificationsTo(string|array $email): self
+    {
+        static::$notificationRoutes['mail'] = $email;
+
+        return new self;
+    }
+
+    /**
+     * Send the long wait notifications to a Slack webhook
+     * (requires laravel/slack-notification-channel).
+     */
+    public static function routeSlackNotificationsTo(string $webhookUrl, ?string $channel = null): self
+    {
+        static::$notificationRoutes['slack'] = $webhookUrl;
+        static::$notificationRoutes['slack_channel'] = $channel;
+
+        return new self;
+    }
+
+    /**
+     * Send the long wait notifications by SMS
+     * (requires laravel/vonage-notification-channel).
+     */
+    public static function routeSmsNotificationsTo(string $number): self
+    {
+        static::$notificationRoutes['sms'] = $number;
+
+        return new self;
+    }
+
+    /**
+     * The notification routes: those set in code, else those of the configuration.
+     *
+     * @return array{mail: string|array<int, string>|null, slack: string|null, slack_channel: string|null, sms: string|null}
+     */
+    public static function notificationRoutes(): array
+    {
+        $config = (array) config('meridian.notifications', []);
+
+        return [
+            'mail' => static::$notificationRoutes['mail'] ?? ($config['mail'] ?? null) ?: null,
+            'slack' => static::$notificationRoutes['slack'] ?? ($config['slack'] ?? null) ?: null,
+            'slack_channel' => array_key_exists('slack_channel', static::$notificationRoutes)
+                ? static::$notificationRoutes['slack_channel']
+                : (($config['slack_channel'] ?? null) ?: null),
+            'sms' => static::$notificationRoutes['sms'] ?? ($config['sms'] ?? null) ?: null,
+        ];
+    }
+
+    /**
      * Register the dashboard authentication callback.
      */
     public static function auth(Closure $callback): self

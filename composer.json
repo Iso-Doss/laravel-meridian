@@ -30,6 +30,8 @@
     "require-dev": {
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
+        "laravel/slack-notification-channel": "^3.0",
+        "laravel/vonage-notification-channel": "^3.0",
         "nunomaduro/collision": "^8.8",
         "orchestra/testbench": "^11.0.0||^10.0.0",
         "pestphp/pest": "^4.0",
@@ -41,7 +43,9 @@
     },
     "suggest": {
         "ext-pcntl": "Required to pause / continue / gracefully terminate workers.",
-        "ext-posix": "Required to signal worker processes."
+        "ext-posix": "Required to signal worker processes.",
+        "laravel/slack-notification-channel": "Required to send the long wait notifications to Slack.",
+        "laravel/vonage-notification-channel": "Required to send the long wait notifications by SMS."
     },
     "autoload": {
         "psr-4": {

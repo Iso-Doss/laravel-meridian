@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Tests\Fixtures;
 
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -66,6 +67,29 @@ class RetriedJob implements ShouldQueue
 class SilencedJob implements ShouldQueue, Silenced
 {
     use Dispatchable, InteractsWithQueue, Queueable;
+
+    public function handle(): void {}
+}
+
+enum Plan: string
+{
+    case Pro = 'pro';
+}
+
+class DataJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
+    public function __construct(public User $user, public string $reason, public array $options = [], public Plan $plan = Plan::Pro, protected int $attemptsLeft = 3) {}
+
+    public function handle(): void {}
+}
+
+class EncryptedJob implements ShouldBeEncrypted, ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public function __construct(public string $secret) {}
 
     public function handle(): void {}
 }

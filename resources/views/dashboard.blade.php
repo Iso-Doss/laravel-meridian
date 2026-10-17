@@ -11,6 +11,8 @@
         <div class="card"><div class="label">{{ $t('Pending') }}</div><div class="value">{{ Format::number($stats['pendingJobs'], $locale) }}</div><div class="sub">{{ $t('+ :count delayed', ['count' => Format::integer($stats['delayedJobs'], $locale)]) }}</div></div>
         <div class="card"><div class="label">{{ $t('Processing') }}</div><div class="value">{{ Format::integer($stats['processing'], $locale) }}</div><div class="sub">{{ $t(':count live worker(s)', ['count' => $stats['processes']]) }}</div></div>
         <div class="card"><div class="label">{{ $t('Max wait time') }}</div><div class="value">{{ $stats['maxWait'] ? Format::seconds($stats['maxWait']['seconds']) : '—' }}</div><div class="sub">{{ $stats['maxWait']['queue'] ?? $t('no pending jobs') }}</div></div>
+        <div class="card"><div class="label">{{ $t('Max runtime') }}</div><div class="value">{{ $stats['maxRuntime'] ? Format::runtime($stats['maxRuntime']['runtime'], $locale) : '—' }}</div><div class="sub">{{ $stats['maxRuntime']['queue'] ?? $t('no job in the last hour') }}</div></div>
+        <div class="card"><div class="label">{{ $t('Max throughput') }}</div><div class="value">{{ $stats['maxThroughput'] ? $t(':count jobs', ['count' => Format::integer($stats['maxThroughput']['count'], $locale)]) : '—' }}</div><div class="sub">{{ $stats['maxThroughput'] ? $t(':queue, last hour', ['queue' => $stats['maxThroughput']['queue']]) : $t('no job in the last hour') }}</div></div>
     </div>
 
     <div class="panel">

@@ -8,6 +8,7 @@ use Illuminate\Support\Carbon;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Supervisor;
 use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Support\JobData;
 
 /**
  * Turns Meridian records into the props of the Inertia pages.
@@ -51,6 +52,7 @@ class Present
             'available_at' => static::time($job->available_at),
             'reserved_at' => static::time($job->reserved_at),
             'payload' => $job->prettyPayload(),
+            'data' => JobData::describe($job->payload),
             'exception' => $job->exception,
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
             'delete_url' => $job->status !== MonitoredJob::PROCESSING ? route('meridian.jobs.destroy', $job->uuid) : null,

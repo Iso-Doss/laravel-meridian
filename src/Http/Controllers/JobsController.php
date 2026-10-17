@@ -35,6 +35,7 @@ class JobsController extends Controller
             'filters' => [
                 'search' => (string) $request->query('search', ''),
                 'queue' => (string) $request->query('queue', ''),
+                'tag' => (string) $request->query('tag', ''),
             ],
             'jobs' => Present::paginated($data['jobs'], fn (MonitoredJob $job) => Present::job($job)),
             'queues' => $data['queues']->values(),
@@ -77,6 +78,7 @@ class JobsController extends Controller
             MonitoredJob::query()
                 ->search($request->input('search'))
                 ->when($request->input('queue'), fn ($query, $queue) => $query->where('queue', $queue))
+                ->when($request->input('tag'), fn ($query, $tag) => $query->withTag((string) $tag))
         );
 
         $redirect = back();
@@ -138,6 +140,7 @@ class JobsController extends Controller
             ->status($status)
             ->search($request->query('search'))
             ->when($request->query('queue'), fn ($q, $queue) => $q->where('queue', $queue))
+            ->when($request->query('tag'), fn ($q, $tag) => $q->withTag((string) $tag))
             ->when($request->query('batch'), fn ($q, $batch) => $q->where('batch_id', $batch))
             ->orderByDesc('id');
     }

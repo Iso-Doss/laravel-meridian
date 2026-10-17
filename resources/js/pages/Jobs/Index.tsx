@@ -1,5 +1,5 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { RotateCcw, Search } from 'lucide-react';
+import { RotateCcw, Search, X } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { ConfirmAction } from '@/components/confirm-action';
 import { JobsTable } from '@/components/jobs-table';
@@ -14,7 +14,7 @@ import type { Job, JobStatus, Paginated, SharedProps } from '@/types';
 
 interface Props {
     status: JobStatus | null;
-    filters: { search: string; queue: string };
+    filters: { search: string; queue: string; tag: string };
     jobs: Paginated<Job>;
     queues: string[];
     counts: Record<JobStatus, number>;
@@ -67,7 +67,7 @@ export default function JobsIndex({ status, filters, jobs, queues, counts, retry
                         label={t('Retry all')}
                         title={t('Retry :count failed job(s)?', { count: formatNumber(jobs.meta.total, locale) })}
                         description={
-                            filters.queue || filters.search
+                            filters.queue || filters.search || filters.tag
                                 ? t('Every failed job matching the current filters will be pushed back onto its queue.')
                                 : t('Every failed job will be pushed back onto its queue.')
                         }
@@ -95,7 +95,18 @@ export default function JobsIndex({ status, filters, jobs, queues, counts, retry
                             </Link>
                         ))}
                     </nav>
-                    <form onSubmit={submit} className="flex flex-wrap gap-2">
+                    <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
+                        {filters.tag && (
+                            <Link
+                                href={nav.jobs[current]}
+                                data={query({ tag: '' })}
+                                className="inline-flex items-center gap-1 rounded-md border bg-accent px-2 py-1 font-mono text-xs text-accent-foreground"
+                                title={t('Remove the tag filter')}
+                            >
+                                {filters.tag}
+                                <X className="size-3" />
+                            </Link>
+                        )}
                         <NativeSelect
                             aria-label={t('Filter by queue')}
                             value={filters.queue}

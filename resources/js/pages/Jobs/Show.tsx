@@ -112,6 +112,33 @@ export default function JobShow({ job }: { job: JobDetails }) {
                 </Card>
             )}
 
+            {job.data && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>{t('Data')}</CardTitle>
+                    </CardHeader>
+                    {job.data.error ? (
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">
+                                {t('The data of this job cannot be read: :error', { error: job.data.error })}
+                            </p>
+                        </CardContent>
+                    ) : job.data.properties.length === 0 ? (
+                        <CardContent>
+                            <p className="text-sm text-muted-foreground">{t('This job has no data.')}</p>
+                        </CardContent>
+                    ) : (
+                        <dl>
+                            {job.data.properties.map((property) => (
+                                <Row key={property.name} label={property.name}>
+                                    <span className="font-mono text-xs break-all">{property.value}</span>
+                                </Row>
+                            ))}
+                        </dl>
+                    )}
+                </Card>
+            )}
+
             <Card className="mt-6">
                 <CardHeader>
                     <CardTitle>{t('Payload')}</CardTitle>

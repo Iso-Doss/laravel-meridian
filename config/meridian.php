@@ -113,6 +113,7 @@ return [
         'failed' => 10080,    // 7 days
         'metrics' => 10080,   // 7 days of metric snapshots
         'workers' => 60,      // stale worker / supervisor heartbeats
+        'monitored' => 10080, // jobs carrying a monitored tag (7 days)
     ],
 
     /*
@@ -131,7 +132,14 @@ return [
     ],
 
     'notifications' => [
+        // Or, like Horizon, in a service provider: Meridian::routeMailNotificationsTo(),
+        // routeSlackNotificationsTo() and routeSmsNotificationsTo().
         'mail' => env('MERIDIAN_NOTIFY_MAIL'),
+        // A Slack incoming webhook (requires laravel/slack-notification-channel).
+        'slack' => env('MERIDIAN_NOTIFY_SLACK_WEBHOOK'),
+        'slack_channel' => env('MERIDIAN_NOTIFY_SLACK_CHANNEL'),
+        // A phone number (requires laravel/vonage-notification-channel).
+        'sms' => env('MERIDIAN_NOTIFY_SMS'),
         // Minimum number of minutes between two notifications for the same queue.
         'cooldown' => 5,
     ],

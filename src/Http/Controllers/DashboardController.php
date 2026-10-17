@@ -58,6 +58,8 @@ class DashboardController extends Controller
             'processing' => MonitoredJob::query()->where('status', MonitoredJob::PROCESSING)->count(),
             'processes' => Worker::query()->alive()->count(),
             'maxWait' => $longest ? ['queue' => $longest['connection'].':'.$longest['queue'], 'seconds' => $longest['wait']] : null,
+            'maxRuntime' => $this->metrics->queueWithMaximumRuntime(60),
+            'maxThroughput' => $this->metrics->queueWithMaximumThroughput(60),
         ];
     }
 

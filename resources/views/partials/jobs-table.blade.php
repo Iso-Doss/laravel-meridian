@@ -19,7 +19,7 @@
             <tr>
                 <td class="wrap">
                     <a href="{{ route('meridian.jobs.show', $job->uuid) }}" title="{{ $job->name }}">{{ $job->shortName() }}</a>
-                    <div>@foreach (array_slice($job->tags ?? [], 0, 4) as $tag)<span class="tag">{{ $tag }}</span>@endforeach</div>
+                    <div>@foreach (array_slice($job->tags ?? [], 0, 4) as $tag)<a class="tag" href="{{ route('meridian.jobs.index', ['tag' => $tag]) }}">{{ $tag }}</a>@endforeach</div>
                 </td>
                 <td><span class="muted">{{ $job->connection }}:</span>{{ $job->queue }}</td>
                 <td>

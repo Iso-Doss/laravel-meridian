@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    Bookmark,
     BarChart3,
     CheckCircle2,
     Clock,
@@ -54,6 +55,7 @@ function useNavigation(): { title: string; items: NavItem[] }[] {
         {
             title: 'Insights',
             items: [
+                { label: 'Monitoring', href: nav.monitoring, icon: Bookmark },
                 { label: 'Batches', href: nav.batches, icon: Layers },
                 { label: 'Metrics', href: nav.metrics, icon: BarChart3 },
             ],

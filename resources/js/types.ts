@@ -16,6 +16,7 @@ export interface SharedProps {
     nav: {
         dashboard: string;
         jobs: Record<'all' | JobStatus, string>;
+        monitoring: string;
         batches: string;
         metrics: string;
         locale: string;
@@ -52,6 +53,7 @@ export interface JobDetails extends Job {
     available_at: number | null;
     reserved_at: number | null;
     payload: string | null;
+    data: { properties: { name: string; value: string }[]; error: string | null } | null;
     exception: string | null;
     batch_url: string | null;
     delete_url: string | null;

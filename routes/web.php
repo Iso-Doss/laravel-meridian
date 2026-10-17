@@ -6,6 +6,7 @@ use IsoDoss\Meridian\Http\Controllers\DashboardController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\LocaleController;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
+use IsoDoss\Meridian\Http\Controllers\MonitoringController;
 
 // Group attributes come from config("meridian.route.web"), names are prefixed with "meridian.".
 
@@ -22,6 +23,13 @@ Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(f
     Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
     Route::post('{uuid}/retry', 'retry')->whereUuid('uuid')->name('retry');
     Route::delete('{uuid}', 'destroy')->whereUuid('uuid')->name('destroy');
+});
+
+// Monitored tags...
+Route::prefix('monitoring')->name('monitoring.')->controller(MonitoringController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::post('/', 'store')->name('store');
+    Route::delete('/', 'destroy')->name('destroy');
 });
 
 // Batches...

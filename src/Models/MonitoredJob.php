@@ -129,7 +129,41 @@ class MonitoredJob extends Model
         $query->where(function (Builder $query) use ($term) {
             $query->where('name', 'like', '%'.$term.'%')
                 ->orWhere('uuid', $term)
-                ->orWhere('tags', 'like', '%'.trim(json_encode($term), '"').'%');
+                ->orWhereRaw("tags LIKE ? ESCAPE '!'", ['%'.static::likeEscape(trim((string) json_encode($term), '"')).'%']);
         });
+    }
+
+    /**
+     * Jobs carrying exactly this tag.
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeWithTag(Builder $query, string $tag): void
+    {
+        $query->whereRaw("tags LIKE ? ESCAPE '!'", ['%'.static::likeEscape((string) json_encode($tag)).'%']);
+    }
+
+    /**
+     * Jobs carrying at least one of the tags.
+     *
+     * @param  Builder<self>  $query
+     * @param  array<int, string>  $tags
+     */
+    public function scopeWithAnyTag(Builder $query, array $tags): void
+    {
+        $query->where(function (Builder $query) use ($tags) {
+            foreach ($tags as $tag) {
+                $query->orWhereRaw("tags LIKE ? ESCAPE '!'", ['%'.static::likeEscape((string) json_encode($tag)).'%']);
+            }
+        });
+    }
+
+    /**
+     * Escape a LIKE pattern with "!" (an explicit ESCAPE behaves the same on
+     * MySQL, PostgreSQL and SQLite, unlike their default backslash handling).
+     */
+    public static function likeEscape(string $value): string
+    {
+        return str_replace(['!', '%', '_'], ['!!', '!%', '!_'], $value);
     }
 }

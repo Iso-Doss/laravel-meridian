@@ -29,7 +29,7 @@ class MeridianServiceProvider extends PackageServiceProvider
             ->name('meridian')
             ->hasConfigFile()
             ->hasViews('meridian')
-            ->hasMigration('create_meridian_tables')
+            ->hasMigrations(['create_meridian_tables', 'create_meridian_monitored_tags_table'])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
                 Console\MeridianCommand::class,

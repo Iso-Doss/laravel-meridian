@@ -1,6 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import type { ReactNode } from 'react';
-import { AlertTriangle, Clock, Cpu, Gauge, Hourglass, Loader, Server, Timer, Users } from 'lucide-react';
+import { AlertTriangle, Clock, Cpu, Gauge, Hourglass, Loader, Server, Snail, Timer, TrendingUp, Users } from 'lucide-react';
 import { BarChart } from '@/components/bar-chart';
 import { Layout } from '@/components/layout';
 import { StatCard } from '@/components/stat-card';
@@ -8,7 +8,7 @@ import { StatusBadge } from '@/components/status-badge';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAutoRefresh } from '@/hooks/use-auto-refresh';
-import { formatBytes, formatCompact, formatNumber, formatRelative, formatSeconds, formatTime } from '@/lib/format';
+import { formatBytes, formatCompact, formatNumber, formatRelative, formatRuntime, formatSeconds, formatTime } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import type { SharedProps, Supervisor, Worker, Workload } from '@/types';
 
@@ -22,6 +22,8 @@ interface Stats {
     processing: number;
     processes: number;
     maxWait: { queue: string; seconds: number } | null;
+    maxRuntime: { queue: string; runtime: number } | null;
+    maxThroughput: { queue: string; count: number } | null;
 }
 
 interface Props {
@@ -51,7 +53,7 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
 
     return (
         <Layout title={t('Dashboard')} badge={<StatusBadge status={stats.status} />}>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <StatCard icon={Gauge} label={t('Jobs per minute')} value={formatNumber(stats.jobsPerMinute, locale)} hint={t('average, last hour')} />
                 <StatCard icon={Timer} label={t('Jobs past hour')} value={formatCompact(stats.recentJobs, locale)} hint={t('completed + failed')} />
                 <StatCard
@@ -81,6 +83,18 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                     label={t('Max wait time')}
                     value={stats.maxWait ? formatSeconds(stats.maxWait.seconds) : '—'}
                     hint={stats.maxWait?.queue ?? t('no pending jobs')}
+                />
+                <StatCard
+                    icon={Snail}
+                    label={t('Max runtime')}
+                    value={stats.maxRuntime ? formatRuntime(stats.maxRuntime.runtime, locale) : '—'}
+                    hint={stats.maxRuntime?.queue ?? t('no job in the last hour')}
+                />
+                <StatCard
+                    icon={TrendingUp}
+                    label={t('Max throughput')}
+                    value={stats.maxThroughput ? t(':count jobs', { count: formatNumber(stats.maxThroughput.count, locale) }) : '—'}
+                    hint={stats.maxThroughput ? t(':queue, last hour', { queue: stats.maxThroughput.queue }) : t('no job in the last hour')}
                 />
             </div>
 

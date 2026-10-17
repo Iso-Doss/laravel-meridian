@@ -244,3 +244,17 @@ class ApplicationInertiaMiddleware extends InertiaMiddleware
         return ['application' => 'shared by the application'];
     }
 }
+
+it('shows the slowest and the busiest queues of the last hour', function () {
+    SuccessfulJob::dispatch();
+    SuccessfulJob::dispatch()->onQueue('emails');
+    SuccessfulJob::dispatch()->onQueue('emails');
+    $this->work(1);
+    $this->work(2, ['--queue' => 'emails']);
+    MonitoredJob::where('queue', 'default')->update(['runtime' => 5000]);
+    MonitoredJob::where('queue', 'emails')->update(['runtime' => 100]);
+
+    $this->getJson('/meridian/api/stats')
+        ->assertJsonPath('maxRuntime', ['queue' => 'database:default', 'runtime' => 5000])
+        ->assertJsonPath('maxThroughput', ['queue' => 'database:emails', 'count' => 2]);
+});

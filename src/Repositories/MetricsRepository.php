@@ -50,6 +50,45 @@ class MetricsRepository
     }
 
     /**
+     * The queue whose completed jobs ran the longest on average during the last $minutes.
+     *
+     * @return array{queue: string, runtime: int}|null
+     */
+    public function queueWithMaximumRuntime(int $minutes = 60): ?array
+    {
+        $row = Meridian::table('jobs')
+            ->select(['connection', 'queue'])
+            ->selectRaw('AVG(runtime) AS average')
+            ->where('status', MonitoredJob::COMPLETED)
+            ->where('completed_at', '>=', time() - $minutes * 60)
+            ->groupBy('connection', 'queue')
+            ->orderByDesc('average')
+            ->first();
+
+        return $row ? ['queue' => $row->connection.':'.$row->queue, 'runtime' => (int) round((float) $row->average)] : null;
+    }
+
+    /**
+     * The queue that processed the most jobs (completed or failed) during the last $minutes.
+     *
+     * @return array{queue: string, count: int}|null
+     */
+    public function queueWithMaximumThroughput(int $minutes = 60): ?array
+    {
+        $since = time() - $minutes * 60;
+
+        $row = Meridian::table('jobs')
+            ->select(['connection', 'queue'])
+            ->selectRaw('COUNT(*) AS processed')
+            ->where(fn ($q) => $q->where('completed_at', '>=', $since)->orWhere('failed_at', '>=', $since))
+            ->groupBy('connection', 'queue')
+            ->orderByDesc('processed')
+            ->first();
+
+        return $row ? ['queue' => $row->connection.':'.$row->queue, 'count' => (int) $row->processed] : null;
+    }
+
+    /**
      * Number of jobs processed per minute over the last $minutes (for charts).
      *
      * @return array<int, int> minute timestamp => count

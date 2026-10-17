@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
 import { ConfirmAction } from '@/components/confirm-action';
 import { Pagination } from '@/components/pagination';
@@ -7,15 +7,23 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { formatDateTime, formatRelative, formatRuntime, formatSeconds } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
-import type { Job, Paginated } from '@/types';
+import type { Job, Paginated, SharedProps } from '@/types';
 
+/** Tags of a job; each one opens the jobs carrying it. */
 export function Tags({ tags, limit = 4 }: { tags: string[]; limit?: number }) {
+    const { nav } = usePage<SharedProps>().props;
+
     return (
         <span className="flex flex-wrap gap-1">
             {tags.slice(0, limit).map((tag) => (
-                <span key={tag} className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
+                <Link
+                    key={tag}
+                    href={nav.jobs.all}
+                    data={{ tag }}
+                    className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground"
+                >
                     {tag}
-                </span>
+                </Link>
             ))}
         </span>
     );

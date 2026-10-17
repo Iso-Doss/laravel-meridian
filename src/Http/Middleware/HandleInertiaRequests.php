@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                     ['all' => route('meridian.jobs.index')],
                     collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $status) => [$status => route('meridian.jobs.index', $status)])->all(),
                 ),
+                'monitoring' => route('meridian.monitoring.index'),
                 'batches' => route('meridian.batches.index'),
                 'metrics' => route('meridian.metrics.index'),
                 'locale' => route('meridian.locale'),
