@@ -2,6 +2,31 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.6.0 - 2026-10-17
+
+Completes the parity with Laravel Horizon.
+
+### Added
+
+- **`log` auto-scaling strategy**: with `'autoScalingStrategy' => 'log'`, the processes are shared by the logarithm of the pending jobs of each queue, so that one huge queue does not take every process.
+- **`php artisan meridian:listen`** for local development: runs Meridian and restarts it whenever a PHP file of the directories listed in the new `watch` option changes. Unlike `horizon:listen`, it needs neither Node nor any npm package (it polls the files, `--poll=` seconds). Cache, `vendor` and `storage` directories are skipped.
+- **« Silenced » tab**: like Horizon, silenced jobs (`silenced`, `silenced_tags`, `Silenced` contract) now leave the « Completed » list for their own tab, in both interfaces.
+- **Master memory limit**: when `php artisan meridian` exceeds `memory_limit` (64 MB by default, `0` to disable), it finishes the running jobs and exits with the code 12 so that your process monitor restarts it; a `MasterSupervisorOutOfMemory` event is fired.
+
+### Changed
+
+- **Silenced jobs are kept** (status `silenced`) until `meridian:prune` removes them like the completed jobs, instead of being deleted as soon as they complete. They now count in the metrics.
+- **Long waits**: a queue not listed in `waits` now uses `'*'`, or **60 seconds** when `'*'` is not set (it was ignored before), like Horizon. `0` disables a queue. Notifications are only sent when routes are configured.
+- README: updated screenshots.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration. If you published `config/meridian.php`, you may add the new `memory_limit` and `watch` keys (defaults apply when they are missing). If you published the Blade views, republish them.
+
 ## v1.5.0 - 2026-10-17
 
 ### Added
