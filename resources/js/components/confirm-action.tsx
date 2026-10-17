@@ -23,6 +23,8 @@ export function ConfirmAction({
     description,
     confirmLabel,
     tone = 'default',
+    data,
+    compact = false,
 }: {
     url: string;
     method: 'post' | 'delete';
@@ -32,6 +34,10 @@ export function ConfirmAction({
     description: string;
     confirmLabel: string;
     tone?: 'default' | 'destructive';
+    /** Sent with the request (e.g. the filters of a list). */
+    data?: Record<string, string>;
+    /** A small outline button, for table rows. */
+    compact?: boolean;
 }) {
     const { t } = useTranslation();
     const [open, setOpen] = useState(false);
@@ -40,6 +46,7 @@ export function ConfirmAction({
     const confirm = () => {
         router.visit(url, {
             method,
+            data,
             preserveScroll: true,
             onStart: () => setProcessing(true),
             onFinish: () => {
@@ -52,7 +59,11 @@ export function ConfirmAction({
     return (
         <AlertDialog open={open} onOpenChange={setOpen}>
             <AlertDialogTrigger asChild>
-                <Button variant={tone === 'destructive' ? 'outline' : 'default'} className={tone === 'destructive' ? 'text-destructive' : undefined}>
+                <Button
+                    variant={compact || tone === 'destructive' ? 'outline' : 'default'}
+                    size={compact ? 'sm' : 'default'}
+                    className={tone === 'destructive' ? 'text-destructive' : undefined}
+                >
                     <Icon /> {label}
                 </Button>
             </AlertDialogTrigger>

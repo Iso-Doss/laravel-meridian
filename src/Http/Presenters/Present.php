@@ -38,6 +38,7 @@ class Present
             'completed_at' => static::time($job->completed_at),
             'failed_at' => static::time($job->failed_at),
             'url' => route('meridian.jobs.show', $job->uuid),
+            'retry_url' => $job->status === MonitoredJob::FAILED ? route('meridian.jobs.retry', $job->uuid) : null,
         ];
 
         if (! $details) {
@@ -52,7 +53,6 @@ class Present
             'payload' => $job->prettyPayload(),
             'exception' => $job->exception,
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
-            'retry_url' => $job->status === MonitoredJob::FAILED ? route('meridian.jobs.retry', $job->uuid) : null,
             'delete_url' => $job->status !== MonitoredJob::PROCESSING ? route('meridian.jobs.destroy', $job->uuid) : null,
         ]);
     }

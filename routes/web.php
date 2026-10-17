@@ -18,6 +18,7 @@ Route::post('locale', [LocaleController::class, 'update'])->name('locale');
 // Jobs...
 Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () {
     Route::get('{status?}', 'index')->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->name('index');
+    Route::post('retry', 'retryAll')->name('retry-all');
     Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
     Route::post('{uuid}/retry', 'retry')->whereUuid('uuid')->name('retry');
     Route::delete('{uuid}', 'destroy')->whereUuid('uuid')->name('destroy');

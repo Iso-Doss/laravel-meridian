@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
-import { Search } from 'lucide-react';
+import { RotateCcw, Search } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
+import { ConfirmAction } from '@/components/confirm-action';
 import { JobsTable } from '@/components/jobs-table';
 import { Layout } from '@/components/layout';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -17,6 +18,7 @@ interface Props {
     jobs: Paginated<Job>;
     queues: string[];
     counts: Record<JobStatus, number>;
+    retry_all_url: string;
 }
 
 const TITLES: Record<'all' | JobStatus, string> = {
@@ -36,7 +38,7 @@ const TAB_LABELS: Record<'all' | JobStatus, string> = {
     failed: 'Failed',
 };
 
-export default function JobsIndex({ status, filters, jobs, queues, counts }: Props) {
+export default function JobsIndex({ status, filters, jobs, queues, counts, retry_all_url }: Props) {
     const { t, locale } = useTranslation();
     const { nav } = usePage<SharedProps>().props;
     const [search, setSearch] = useState(filters.search);
@@ -52,7 +54,28 @@ export default function JobsIndex({ status, filters, jobs, queues, counts }: Pro
     };
 
     return (
-        <Layout title={t(TITLES[current])}>
+        <Layout
+            title={t(TITLES[current])}
+            actions={
+                current === 'failed' &&
+                jobs.meta.total > 0 && (
+                    <ConfirmAction
+                        url={retry_all_url}
+                        method="post"
+                        data={query({})}
+                        icon={RotateCcw}
+                        label={t('Retry all')}
+                        title={t('Retry :count failed job(s)?', { count: formatNumber(jobs.meta.total, locale) })}
+                        description={
+                            filters.queue || filters.search
+                                ? t('Every failed job matching the current filters will be pushed back onto its queue.')
+                                : t('Every failed job will be pushed back onto its queue.')
+                        }
+                        confirmLabel={t('Retry all')}
+                    />
+                )
+            }
+        >
             <Card>
                 <CardHeader>
                     <nav className="flex flex-wrap gap-1">

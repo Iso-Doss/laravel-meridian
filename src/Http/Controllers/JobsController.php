@@ -8,13 +8,12 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\Artisan;
-use Illuminate\Support\Facades\Queue;
 use Inertia\Response;
 use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
 use IsoDoss\Meridian\Http\Presenters\Present;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\FailedJobRetrier;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
 
@@ -40,6 +39,7 @@ class JobsController extends Controller
             'jobs' => Present::paginated($data['jobs'], fn (MonitoredJob $job) => Present::job($job)),
             'queues' => $data['queues']->values(),
             'counts' => collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $s) => [$s => (int) ($data['counts'][$s] ?? 0)]),
+            'retry_all_url' => route('meridian.jobs.retry-all'),
         ]);
     }
 
@@ -53,29 +53,45 @@ class JobsController extends Controller
     }
 
     /**
-     * Retry a failed job: through "queue:retry" when it is still in the
-     * failed_jobs table, otherwise by pushing its payload again.
+     * Retry a failed job.
      */
-    public function retry(string $uuid): RedirectResponse
+    public function retry(string $uuid, FailedJobRetrier $retrier): RedirectResponse
     {
         $job = MonitoredJob::query()->where('uuid', $uuid)->firstOrFail();
 
         abort_unless($job->status === MonitoredJob::FAILED, 422, 'Only failed jobs can be retried.');
 
-        if (app('queue.failer')->find($uuid)) {
-            Artisan::call('queue:retry', ['id' => [$uuid]]);
-        } elseif ($job->payload) {
-            $payload = json_decode($job->payload, true);
-            $payload['attempts'] = 0;
-
-            Queue::connection($job->connection)->pushRaw(json_encode($payload), $job->queue);
-
-            $job->update(['status' => MonitoredJob::PENDING, 'retries' => $job->retries + 1, 'failed_at' => null, 'available_at' => now()]);
-        } else {
+        if (! $retrier->retry($job)) {
             return back()->with('meridian.error', Translator::get('This job cannot be retried: its payload was not stored.'));
         }
 
         return back()->with('meridian.success', Translator::get('The job has been pushed back onto the queue.'));
+    }
+
+    /**
+     * Retry every failed job matching the filters of the list (queue, search).
+     */
+    public function retryAll(Request $request, FailedJobRetrier $retrier): RedirectResponse
+    {
+        $result = $retrier->retryQuery(
+            MonitoredJob::query()
+                ->search($request->input('search'))
+                ->when($request->input('queue'), fn ($query, $queue) => $query->where('queue', $queue))
+        );
+
+        $redirect = back();
+
+        if ($result['retried'] > 0) {
+            $redirect->with('meridian.success', Translator::get(':count failed job(s) pushed back onto the queue.', ['count' => $result['retried']]));
+        }
+
+        if ($result['skipped'] > 0) {
+            $redirect->with('meridian.error', Translator::get(':count job(s) could not be retried: their payload was not stored.', ['count' => $result['skipped']]));
+        } elseif ($result['retried'] === 0) {
+            $redirect->with('meridian.error', Translator::get('There is no failed job to retry.'));
+        }
+
+        return $redirect;
     }
 
     /**

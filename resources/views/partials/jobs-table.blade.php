@@ -1,4 +1,5 @@
 @use('IsoDoss\Meridian\Support\Format')
+@php($retryable = collect($jobs->items())->contains(fn ($job) => $job->status === 'failed'))
 <div class="table-wrap">
     <table>
         <thead>
@@ -10,6 +11,7 @@
             <th>{{ $t('Queued') }}</th>
             <th class="num">{{ $t('Wait') }}</th>
             <th class="num">{{ $t('Runtime') }}</th>
+            @if ($retryable)<th class="num sticky-actions">{{ $t('Actions') }}</th>@endif
         </tr>
         </thead>
         <tbody>
@@ -28,9 +30,16 @@
                 <td title="{{ Format::date($job->queued_at, $locale) }}">{{ Format::ago($job->queued_at, $locale) }}</td>
                 <td class="num">{{ Format::seconds($job->wait) }}</td>
                 <td class="num">{{ Format::runtime($job->runtime, $locale) }}</td>
+                @if ($retryable)
+                    <td class="num sticky-actions">
+                        @if ($job->status === 'failed')
+                            <form class="inline" method="post" action="{{ route('meridian.jobs.retry', $job->uuid) }}" data-confirm="{{ $t('Retry this job?') }}">@csrf <button class="btn">↻ {{ $t('Retry') }}</button></form>
+                        @endif
+                    </td>
+                @endif
             </tr>
         @empty
-            <tr><td colspan="7" class="empty">{{ $t('No jobs to show.') }}</td></tr>
+            <tr><td colspan="{{ $retryable ? 8 : 7 }}" class="empty">{{ $t('No jobs to show.') }}</td></tr>
         @endforelse
         </tbody>
     </table>

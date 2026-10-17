@@ -3,7 +3,18 @@
 @use('IsoDoss\Meridian\Support\Format')
 
 @section('content')
-    <h1>{{ $t($titles[$status ?? 'all']) }}</h1>
+    <h1>
+        {{ $t($titles[$status ?? 'all']) }}
+        @if ($status === 'failed' && $jobs->total() > 0)
+            <form class="inline actions" method="post" action="{{ route('meridian.jobs.retry-all') }}"
+                  data-confirm="{{ $t('Retry :count failed job(s)?', ['count' => Format::integer($jobs->total(), $locale)]) }}">
+                @csrf
+                @if (request('queue'))<input type="hidden" name="queue" value="{{ request('queue') }}">@endif
+                @if (request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
+                <button class="btn primary">↻ {{ $t('Retry all') }}</button>
+            </form>
+        @endif
+    </h1>
 
     <div class="panel">
         <div class="panel-head">

@@ -1,10 +1,12 @@
 import { Link } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
+import { ConfirmAction } from '@/components/confirm-action';
 import { Pagination } from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { formatDateTime, formatRelative, formatRuntime, formatSeconds } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
+import { cn } from '@/lib/utils';
 import type { Job, Paginated } from '@/types';
 
 export function Tags({ tags, limit = 4 }: { tags: string[]; limit?: number }) {
@@ -19,8 +21,13 @@ export function Tags({ tags, limit = 4 }: { tags: string[]; limit?: number }) {
     );
 }
 
+/** The actions column stays visible when the table scrolls horizontally (small screens). */
+const STICKY = 'sticky right-0 z-10 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]';
+
 export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
     const { t, locale } = useTranslation();
+    const retryable = jobs.data.some((job) => job.retry_url);
+    const columns = retryable ? 8 : 7;
 
     return (
         <>
@@ -34,12 +41,13 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                         <TableHead>{t('Queued')}</TableHead>
                         <TableHead className="text-right">{t('Wait')}</TableHead>
                         <TableHead className="text-right">{t('Runtime')}</TableHead>
+                        {retryable && <TableHead className={cn(STICKY, 'bg-muted text-right')}>{t('Actions')}</TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {jobs.data.length === 0 && (
                         <TableRow>
-                            <TableCell colSpan={7} className="py-10 text-center text-muted-foreground">
+                            <TableCell colSpan={columns} className="py-10 text-center text-muted-foreground">
                                 {t('No jobs to show.')}
                             </TableCell>
                         </TableRow>
@@ -75,6 +83,22 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                             <TableCell title={formatDateTime(job.queued_at, locale)}>{formatRelative(job.queued_at, locale)}</TableCell>
                             <TableCell className="text-right tabular-nums">{formatSeconds(job.wait)}</TableCell>
                             <TableCell className="text-right tabular-nums">{formatRuntime(job.runtime, locale)}</TableCell>
+                            {retryable && (
+                                <TableCell className={cn(STICKY, 'bg-card text-right')}>
+                                    {job.retry_url && (
+                                        <ConfirmAction
+                                            compact
+                                            url={job.retry_url}
+                                            method="post"
+                                            icon={RotateCcw}
+                                            label={t('Retry')}
+                                            title={t('Retry this job?')}
+                                            description={t('The job will be pushed back onto the :queue queue.', { queue: job.queue })}
+                                            confirmLabel={t('Retry the job')}
+                                        />
+                                    )}
+                                </TableCell>
+                            )}
                         </TableRow>
                     ))}
                 </TableBody>

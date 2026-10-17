@@ -43,6 +43,7 @@ export interface Job {
     completed_at: number | null;
     failed_at: number | null;
     url: string;
+    retry_url: string | null;
 }
 
 export interface JobDetails extends Job {
@@ -53,7 +54,6 @@ export interface JobDetails extends Job {
     payload: string | null;
     exception: string | null;
     batch_url: string | null;
-    retry_url: string | null;
     delete_url: string | null;
 }
 

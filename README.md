@@ -56,7 +56,7 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 - **Dashboard**: jobs per minute, jobs of the past hour, failures, pending and delayed jobs, max wait time, throughput chart, workload per queue, supervisors and workers.
 - **Job history**: pending, processing, completed and failed jobs, with their tags, payload, exception, attempts, wait time and runtime.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
-- **Actions**: retry a failed job, cancel a pending job, retry the failed jobs of a batch.
+- **Actions**: retry one failed job or all of them (those matching the filters of the list), cancel a pending job, retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
@@ -305,7 +305,7 @@ class RenderVideo implements ShouldQueue
 }
 ```
 
-Search a tag from the jobs page to find every job carrying it.
+Search a tag from the jobs page to find every job carrying it. On the failed jobs page, « Retry all » pushes back every failed job matching the current filters (queue, search): retry all the failed jobs of a queue, or of a customer by searching its tag.
 
 ## Notifications
 

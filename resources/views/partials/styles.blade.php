@@ -65,6 +65,9 @@ th { font-size: 12px; font-weight: 600; color: var(--muted); background: var(--b
 tr:last-child td { border-bottom: 0; }
 td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
 td.wrap { white-space: normal; }
+/* The actions column stays visible when the table scrolls horizontally. */
+.sticky-actions { position: sticky; right: 0; z-index: 1; background: var(--panel); box-shadow: -8px 0 8px -8px rgba(0, 0, 0, .15); }
+th.sticky-actions { background: var(--bg); }
 .empty { padding: 28px 16px; text-align: center; color: var(--muted); }
 .muted { color: var(--muted); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
@@ -94,6 +97,7 @@ dl.meta dt { color: var(--muted); }
 .chart { width: 100%; height: 120px; display: block; }
 .chart-legend { display: flex; justify-content: space-between; font-size: 12px; }
 h1 .actions { margin-left: auto; }
+h1 .btn { font-size: 14px; font-weight: 500; }
 .chart rect { fill: var(--accent); opacity: .85; }
 .chart rect.zero { opacity: .15; }
 .progress { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; min-width: 120px; display: flex; }
