@@ -1,6 +1,7 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import {
     Activity,
+    BellOff,
     Bookmark,
     BarChart3,
     CheckCircle2,
@@ -49,6 +50,7 @@ function useNavigation(): { title: string; items: NavItem[] }[] {
                 { label: 'Processing', href: nav.jobs.processing, icon: Loader },
                 { label: 'Completed', href: nav.jobs.completed, icon: CheckCircle2 },
                 { label: 'Failed', href: nav.jobs.failed, icon: XCircle },
+                { label: 'Silenced', href: nav.jobs.silenced, icon: BellOff },
                 { label: 'All jobs', href: nav.jobs.all, icon: ListChecks, exact: true },
             ],
         },

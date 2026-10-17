@@ -33,6 +33,7 @@
             <a href="{{ route('meridian.jobs.index', 'processing') }}" @class(['active' => request()->route('status') === 'processing'])>{{ $t('Processing') }}</a>
             <a href="{{ route('meridian.jobs.index', 'completed') }}" @class(['active' => request()->route('status') === 'completed'])>{{ $t('Completed') }}</a>
             <a href="{{ route('meridian.jobs.index', 'failed') }}" @class(['active' => request()->route('status') === 'failed'])>{{ $t('Failed') }}</a>
+            <a href="{{ route('meridian.jobs.index', 'silenced') }}" @class(['active' => request()->route('status') === 'silenced'])>{{ $t('Silenced') }}</a>
             <a href="{{ route('meridian.jobs.index') }}" @class(['active' => $route === 'meridian.jobs.index' && ! request()->route('status')])>{{ $t('All jobs') }}</a>
             <div class="nav-title">{{ $t('Insights') }}</div>
             <a href="{{ route('meridian.monitoring.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.monitoring')])>{{ $t('Monitoring') }}</a>

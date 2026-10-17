@@ -39,7 +39,18 @@ class MonitoredJob extends Model
 
     public const FAILED = 'failed';
 
-    public const STATUSES = [self::PENDING, self::PROCESSING, self::COMPLETED, self::FAILED];
+    /**
+     * Completed jobs that are silenced (meridian.silenced, silenced_tags or the
+     * Silenced contract): listed apart from the completed ones, like Horizon.
+     */
+    public const SILENCED = 'silenced';
+
+    public const STATUSES = [self::PENDING, self::PROCESSING, self::COMPLETED, self::FAILED, self::SILENCED];
+
+    /**
+     * Statuses of the jobs that ran successfully (for the metrics).
+     */
+    public const SUCCEEDED = [self::COMPLETED, self::SILENCED];
 
     protected $table = 'meridian_jobs';
 

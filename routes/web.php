@@ -7,6 +7,7 @@ use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\LocaleController;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
 use IsoDoss\Meridian\Http\Controllers\MonitoringController;
+use IsoDoss\Meridian\Models\MonitoredJob;
 
 // Group attributes come from config("meridian.route.web"), names are prefixed with "meridian.".
 
@@ -18,7 +19,7 @@ Route::post('locale', [LocaleController::class, 'update'])->name('locale');
 
 // Jobs...
 Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () {
-    Route::get('{status?}', 'index')->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->name('index');
+    Route::get('{status?}', 'index')->whereIn('status', MonitoredJob::STATUSES)->name('index');
     Route::post('retry', 'retryAll')->name('retry-all');
     Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
     Route::post('{uuid}/retry', 'retry')->whereUuid('uuid')->name('retry');

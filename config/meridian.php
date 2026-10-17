@@ -169,6 +169,33 @@ return [
 
     'heartbeat' => 5,
 
+    // Memory (MB) above which "php artisan meridian" restarts itself: it
+    // terminates gracefully with the exit code 12 and your process monitor
+    // starts it again. 0 disables the check.
+    'memory_limit' => 64,
+
+    /*
+    |--------------------------------------------------------------------------
+    | Files watched by meridian:listen
+    |--------------------------------------------------------------------------
+    |
+    | In local development, "php artisan meridian:listen" restarts Meridian
+    | whenever a PHP file of these directories (or one of these files)
+    | changes. vendor, node_modules, storage and cache directories are skipped.
+    |
+    */
+
+    'watch' => [
+        'app',
+        'bootstrap',
+        'config',
+        'database',
+        'resources',
+        'routes',
+        'composer.lock',
+        '.env',
+    ],
+
     'worker_timeout' => 90,
 
     /*
@@ -190,7 +217,7 @@ return [
             'connection' => 'database',
             'queue' => ['default'],
             'balance' => 'auto',
-            'autoScalingStrategy' => 'time', // "time" or "size"
+            'autoScalingStrategy' => 'time', // "time", "size" or "log"
             'minProcesses' => 1,
             'maxProcesses' => 1,
             'balanceCooldown' => 3,

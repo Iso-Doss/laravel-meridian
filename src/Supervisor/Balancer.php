@@ -38,7 +38,12 @@ class Balancer
             $size = $workload[$pool]['size'] ?? 0;
             $runtime = max(1.0, $workload[$pool]['runtime'] ?? 1.0);
 
-            $weights[$pool] = $options->autoScalingStrategy === 'size' ? $size : $size * $runtime;
+            $weights[$pool] = match ($options->autoScalingStrategy) {
+                'size' => $size,
+                // log1p() keeps one huge queue from taking every process.
+                'log' => log1p($size),
+                default => $size * $runtime,
+            };
         }
 
         $desired = $this->distribute($pools, $weights, $options->maxProcesses, $options->minProcesses);

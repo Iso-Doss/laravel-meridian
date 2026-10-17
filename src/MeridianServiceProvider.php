@@ -47,6 +47,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 Console\ForgetCommand::class,
                 Console\ClearCommand::class,
                 Console\ClearMetricsCommand::class,
+                Console\ListenCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command

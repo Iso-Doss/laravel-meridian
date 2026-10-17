@@ -42,9 +42,10 @@ class SnapshotCommand extends Command
         $thresholds = config('meridian.waits', []);
 
         foreach ($queues->waitTimes() as $key => $seconds) {
-            $threshold = $thresholds[$key] ?? $thresholds['*'] ?? null;
+            // Like Horizon, 60 seconds for the queues not listed; 0 disables a queue.
+            $threshold = (int) ($thresholds[$key] ?? $thresholds['*'] ?? 60);
 
-            if ($threshold === null || $threshold <= 0 || $seconds < $threshold) {
+            if ($threshold <= 0 || $seconds < $threshold) {
                 continue;
             }
 

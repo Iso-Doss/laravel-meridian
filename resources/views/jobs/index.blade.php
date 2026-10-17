@@ -1,4 +1,4 @@
-@php($titles = ['all' => 'All jobs', 'pending' => 'Pending jobs', 'processing' => 'Processing jobs', 'completed' => 'Completed jobs', 'failed' => 'Failed jobs'])
+@php($titles = ['all' => 'All jobs', 'pending' => 'Pending jobs', 'processing' => 'Processing jobs', 'completed' => 'Completed jobs', 'failed' => 'Failed jobs', 'silenced' => 'Silenced jobs'])
 @extends('meridian::layout', ['title' => $t($titles[$status ?? 'all']), 'poll' => true])
 @use('IsoDoss\Meridian\Support\Format')
 

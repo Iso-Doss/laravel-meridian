@@ -22,7 +22,8 @@ class PruneCommand extends Command
         $minutes = fn (string $key) => (int) ($this->option($key) ?? config("meridian.trim.{$key}"));
 
         $monitoredBefore = $now - (int) config('meridian.trim.monitored', 10080) * 60;
-        $completed = $this->chunkDelete(MonitoredJob::COMPLETED, 'completed_at', $now - $minutes('completed') * 60, $monitoredBefore);
+        $completed = $this->chunkDelete(MonitoredJob::COMPLETED, 'completed_at', $now - $minutes('completed') * 60, $monitoredBefore)
+            + $this->chunkDelete(MonitoredJob::SILENCED, 'completed_at', $now - $minutes('completed') * 60, $monitoredBefore);
         $failed = $this->chunkDelete(MonitoredJob::FAILED, 'failed_at', $now - $minutes('failed') * 60, $monitoredBefore);
 
         $metrics = Meridian::table('metrics')

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use IsoDoss\Meridian\Http\Controllers\DashboardController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\MonitoringController;
+use IsoDoss\Meridian\Models\MonitoredJob;
 
 // Group attributes come from config("meridian.route.api"), names are prefixed with "meridian.api.".
 
@@ -15,7 +16,7 @@ Route::controller(DashboardController::class)->group(function () {
 
 // Jobs...
 Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () {
-    Route::get('{status?}', 'apiIndex')->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->name('index');
+    Route::get('{status?}', 'apiIndex')->whereIn('status', MonitoredJob::STATUSES)->name('index');
     Route::get('{uuid}', 'apiShow')->whereUuid('uuid')->name('show');
 });
 

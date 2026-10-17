@@ -188,7 +188,7 @@ The `defaults` option holds the values shared by every supervisor of the same na
 
 | `balance` | Behaviour |
 | --- | --- |
-| `auto` (default) | Each queue gets its own pool of processes; Meridian moves processes towards the queues with the most work, between `minProcesses` per queue and `maxProcesses` in total. With `autoScalingStrategy: time` (default) the work of a queue is its pending jobs × their average runtime, with `size` only its number of pending jobs. `balanceMaxShift` processes are added or removed every `balanceCooldown` seconds. |
+| `auto` (default) | Each queue gets its own pool of processes; Meridian moves processes towards the queues with the most work, between `minProcesses` per queue and `maxProcesses` in total. With `autoScalingStrategy: time` (default) the work of a queue is its pending jobs × their average runtime, with `size` only its number of pending jobs, and with `log` the logarithm of that number, so that one huge queue does not take every process. `balanceMaxShift` processes are added or removed every `balanceCooldown` seconds. |
 | `simple` | `maxProcesses` is split evenly between the queues. |
 | `false` | `maxProcesses` workers process the queues in the order they are listed, like `queue:work --queue=high,default`. |
 
@@ -211,7 +211,7 @@ Like with Horizon, the order of the queues does not set priorities with `auto` b
 
 ### Silenced jobs
 
-Completed jobs listed in the `silenced` option, implementing `IsoDoss\Meridian\Contracts\Silenced`, or carrying a tag of the `silenced_tags` option are not kept in the dashboard. Their failures always are.
+Completed jobs listed in the `silenced` option, implementing `IsoDoss\Meridian\Contracts\Silenced`, or carrying a tag of the `silenced_tags` option leave the « Completed » list for the « Silenced » one, like with Horizon. They still count in the metrics and are pruned like the completed jobs. Their failures are always listed with the other failures.
 
 ```php
 'silenced' => [
@@ -248,8 +248,11 @@ php artisan meridian
 | `meridian:forget {uuid}` / `meridian:forget --all` | Delete a failed job, or all of them, from Meridian and from the failed jobs table |
 | `meridian:clear {connection?} --queue=` | Delete the jobs waiting on a queue (asks for confirmation in production, `--force` to skip it) |
 | `meridian:clear-metrics` | Delete every metrics snapshot |
+| `meridian:listen` | Local development: run Meridian and restart it whenever a PHP file of the application changes |
 
-`php artisan meridian` requires the `pcntl` and `posix` extensions.
+`php artisan meridian` requires the `pcntl` and `posix` extensions. When its memory exceeds `memory_limit` (64 MB by default, `0` to disable), it finishes the running jobs and exits with the code 12, so that your process monitor starts it again with fresh memory.
+
+In local development, `php artisan meridian:listen` runs Meridian and restarts it whenever a PHP file of the directories listed in the `watch` option changes (`app`, `config`, `routes`…). Unlike `horizon:listen`, it needs neither Node nor any npm package: it polls the files every second (`--poll=` to change it).
 
 ### Deploying Meridian
 
@@ -361,7 +364,7 @@ public function boot(): void
 
 or in your `.env`: `MERIDIAN_NOTIFY_MAIL`, `MERIDIAN_NOTIFY_SLACK_WEBHOOK` (and `MERIDIAN_NOTIFY_SLACK_CHANNEL`), `MERIDIAN_NOTIFY_SMS`. Slack requires `laravel/slack-notification-channel` and SMS `laravel/vonage-notification-channel`.
 
-The thresholds, in seconds, are set per `connection:queue` in the `waits` option, `'*'` being the default one:
+The thresholds, in seconds, are set per `connection:queue` in the `waits` option. Like with Horizon, a queue not listed uses `'*'`, or 60 seconds when `'*'` is not set; `0` disables the notifications of a queue:
 
 ```php
 'waits' => [

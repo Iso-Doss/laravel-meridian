@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Supervisor;
 
 use Closure;
 use Illuminate\Support\Str;
+use IsoDoss\Meridian\Events\MasterSupervisorOutOfMemory;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\Supervisor as SupervisorModel;
 use Throwable;
@@ -25,6 +26,11 @@ class MasterSupervisor
     public array $supervisors = [];
 
     public bool $working = true;
+
+    /**
+     * Exit code of run(): 12 when the master restarts because of its memory.
+     */
+    public int $exitCode = 0;
 
     protected bool $terminating = false;
 
@@ -59,7 +65,9 @@ class MasterSupervisor
             usleep(1_000_000);
 
             if ($this->terminating) {
-                return $this->shutdown();
+                $this->shutdown();
+
+                return $this->exitCode;
             }
 
             $this->processPendingCommands();
@@ -71,7 +79,21 @@ class MasterSupervisor
             if (microtime(true) - $this->lastPersistedAt >= 3) {
                 $this->persist();
             }
+
+            if ($this->exceedsMemoryLimit()) {
+                $this->info('Memory limit exceeded: terminating so that the process monitor restarts Meridian.');
+                event(new MasterSupervisorOutOfMemory($this, memory_get_usage(true)));
+                $this->terminate();
+                $this->exitCode = 12;
+            }
         }
+    }
+
+    public function exceedsMemoryLimit(): bool
+    {
+        $limit = (int) config('meridian.memory_limit', 64);
+
+        return $limit > 0 && memory_get_usage(true) / 1024 / 1024 > $limit;
     }
 
     public function pause(): void

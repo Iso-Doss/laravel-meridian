@@ -164,15 +164,10 @@ class RecordJobLifecycle
             $this->retries->update($uuid, ['status' => MonitoredJob::COMPLETED, 'runtime' => $runtime, 'finished_at' => time()]);
 
             $record = $query->first(['id', 'name', 'tags']);
-
-            if ($record && Meridian::isSilenced($record->name, $record->tags ?? [])) {
-                $record->delete();
-
-                return;
-            }
+            $silenced = $record && Meridian::isSilenced($record->name, $record->tags ?? []);
 
             $query->update([
-                'status' => MonitoredJob::COMPLETED,
+                'status' => $silenced ? MonitoredJob::SILENCED : MonitoredJob::COMPLETED,
                 'runtime' => $runtime,
                 'completed_at' => time(),
                 'updated_at' => time(),

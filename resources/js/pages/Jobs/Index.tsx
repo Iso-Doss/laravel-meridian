@@ -27,15 +27,17 @@ const TITLES: Record<'all' | JobStatus, string> = {
     processing: 'Processing jobs',
     completed: 'Completed jobs',
     failed: 'Failed jobs',
+    silenced: 'Silenced jobs',
 };
 
-const TABS: ('all' | JobStatus)[] = ['all', 'pending', 'processing', 'completed', 'failed'];
+const TABS: ('all' | JobStatus)[] = ['all', 'pending', 'processing', 'completed', 'failed', 'silenced'];
 const TAB_LABELS: Record<'all' | JobStatus, string> = {
     all: 'All',
     pending: 'Pending',
     processing: 'Processing',
     completed: 'Completed',
     failed: 'Failed',
+    silenced: 'Silenced',
 };
 
 export default function JobsIndex({ status, filters, jobs, queues, counts, retry_all_url }: Props) {

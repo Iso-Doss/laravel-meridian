@@ -25,6 +25,7 @@ class Format
         'idle' => 'Idle',
         'failed' => 'Failed',
         'cancelled' => 'Cancelled',
+        'silenced' => 'Silenced',
         'inactive' => 'Inactive',
     ];
 

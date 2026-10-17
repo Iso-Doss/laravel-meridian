@@ -44,7 +44,7 @@ class MetricsRepository
     {
         return (float) MonitoredJob::query()
             ->where('queue', $queue)
-            ->where('status', MonitoredJob::COMPLETED)
+            ->whereIn('status', MonitoredJob::SUCCEEDED)
             ->where('completed_at', '>=', time() - $minutes * 60)
             ->avg('runtime');
     }
@@ -59,7 +59,7 @@ class MetricsRepository
         $row = Meridian::table('jobs')
             ->select(['connection', 'queue'])
             ->selectRaw('AVG(runtime) AS average')
-            ->where('status', MonitoredJob::COMPLETED)
+            ->whereIn('status', MonitoredJob::SUCCEEDED)
             ->where('completed_at', '>=', time() - $minutes * 60)
             ->groupBy('connection', 'queue')
             ->orderByDesc('average')
@@ -126,9 +126,9 @@ class MetricsRepository
 
         return Meridian::table('jobs')
             ->select($groupBy.' as key')
-            ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS processed")
+            ->selectRaw("SUM(CASE WHEN status IN ('completed', 'silenced') THEN 1 ELSE 0 END) AS processed")
             ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed")
-            ->selectRaw("AVG(CASE WHEN status = 'completed' THEN runtime END) AS runtime")
+            ->selectRaw("AVG(CASE WHEN status IN ('completed', 'silenced') THEN runtime END) AS runtime")
             ->selectRaw('MAX(runtime) AS max_runtime')
             ->selectRaw('AVG(wait) AS wait')
             ->where(fn ($q) => $q->where('completed_at', '>=', $since)->orWhere('failed_at', '>=', $since))
@@ -165,9 +165,9 @@ class MetricsRepository
         foreach (['job' => 'name', 'queue' => 'queue'] as $type => $column) {
             Meridian::table('jobs')
                 ->select($column.' as key')
-                ->selectRaw("SUM(CASE WHEN status = 'completed' THEN 1 ELSE 0 END) AS processed")
+                ->selectRaw("SUM(CASE WHEN status IN ('completed', 'silenced') THEN 1 ELSE 0 END) AS processed")
                 ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed")
-                ->selectRaw("AVG(CASE WHEN status = 'completed' THEN runtime END) AS runtime")
+                ->selectRaw("AVG(CASE WHEN status IN ('completed', 'silenced') THEN runtime END) AS runtime")
                 ->selectRaw('AVG(wait) AS wait')
                 ->where(function ($q) use ($from, $to) {
                     $q->whereBetween('completed_at', [$from, $to - 1])

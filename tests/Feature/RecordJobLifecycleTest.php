@@ -87,13 +87,15 @@ it('puts a released job back to pending, then completes it', function () {
         ->attempts->toBe(2);
 });
 
-it('forgets silenced jobs once completed', function () {
+it('keeps silenced jobs apart from the completed ones', function () {
     SilencedJob::dispatch();
-    expect(MonitoredJob::count())->toBe(1);
-
     $this->work();
 
-    expect(MonitoredJob::count())->toBe(0);
+    expect(MonitoredJob::sole())
+        ->status->toBe(MonitoredJob::SILENCED)
+        ->completed_at->not->toBeNull()
+        ->and(MonitoredJob::status('completed')->count())->toBe(0)
+        ->and(MonitoredJob::status('silenced')->count())->toBe(1);
 });
 
 it('silences jobs by class from the configuration', function () {
@@ -102,7 +104,18 @@ it('silences jobs by class from the configuration', function () {
     TaggedJob::dispatch();
     $this->work();
 
-    expect(MonitoredJob::count())->toBe(0);
+    expect(MonitoredJob::sole()->status)->toBe(MonitoredJob::SILENCED);
+});
+
+it('silences jobs by tag from the configuration', function () {
+    config()->set('meridian.silenced_tags', ['invoices']);
+
+    TaggedJob::dispatch();
+    SuccessfulJob::dispatch();
+    $this->work(2);
+
+    expect(MonitoredJob::where('status', 'silenced')->sole()->name)->toBe(TaggedJob::class)
+        ->and(MonitoredJob::where('status', 'completed')->sole()->name)->toBe(SuccessfulJob::class);
 });
 
 it('records jobs pushed before meridian was installed', function () {
