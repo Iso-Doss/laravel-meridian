@@ -12,8 +12,8 @@ All notable changes to `laravel-meridian` will be documented in this file.
 
 ```bash
 composer update iso-doss/laravel-meridian
-
 ```
+
 No migration nor configuration change.
 
 ## v1.0.0 - 2026-10-17
