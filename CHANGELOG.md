@@ -2,6 +2,28 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- **New dashboard interface** built with React, Inertia and shadcn/ui: light, dark and system themes, English and French (follows the application locale, switcher in the header), auto-refresh, confirmation dialogs. Its compiled assets ship with the package and are served by Meridian: nothing to build or publish, and the application's own Inertia setup is never involved.
+- `meridian.ui` (`MERIDIAN_UI`) and `meridian.locales` configuration keys.
+- New dependency: `inertiajs/inertia-laravel` ^3.0.
+
+### Changed
+
+- The new interface is the default one. The URLs, route names, actions and JSON API are unchanged.
+
+### Switching back to the previous interface
+
+The Blade interface is still available. To keep it, set in your `.env`:
+
+```dotenv
+MERIDIAN_UI=blade
+```
+
+(or `'ui' => 'blade'` in a published `config/meridian.php`, then `php artisan config:clear` if the configuration is cached).
+
 ## v1.0.1 - 2026-10-17
 
 ### Fixed

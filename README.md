@@ -20,7 +20,10 @@ experience to applications using the `database` queue driver:
 - **Supervisor** (optional): `php artisan meridian` starts and supervises `queue:work` processes, auto-balancing them between queues according to the number of pending jobs, exactly like Horizon. `meridian:pause`, `meridian:continue`, `meridian:terminate` included.
 - **Long wait notifications** per `connection:queue`.
 
-The UI is plain Blade + a few lines of vanilla JS: no front-end build, no CDN.
+Two dashboard interfaces ship with the package:
+
+- **Inertia** (default): React + Inertia + shadcn/ui, light / dark / system theme, English and French. Its compiled assets are part of the package and served by Meridian itself: nothing to install, build or publish in your application, which does not need Node, React nor Inertia of its own.
+- **Blade**: the lightweight server-rendered interface (`MERIDIAN_UI=blade`).
 
 ## How it works
 
@@ -59,6 +62,31 @@ php artisan migrate
 
 Make sure the scheduler runs (`php artisan schedule:work` locally, a cron entry in production): Meridian registers
 `meridian:snapshot` and `meridian:prune` automatically (disable with `meridian.schedule = false`).
+
+## Dashboard interface
+
+```dotenv
+MERIDIAN_UI=inertia   # or blade
+```
+
+The Inertia interface:
+
+- has its own root view, Inertia middleware and asset version: your application's Inertia setup (shared props, SSR, root view) is never involved, even when it uses Inertia too. It requires `inertiajs/inertia-laravel` v3, installed with the package;
+- offers a light, dark or system theme (kept in the browser);
+- is translated in English and French: the language follows the application locale and can be changed from the header (kept in a cookie). Restrict the offered languages with `meridian.locales`;
+- refreshes its data every `meridian.poll` seconds (switch « Live » in the header).
+
+### Switching back to the Blade interface
+
+Since v1.1.0 the React / Inertia interface is the default. To keep the previous Blade interface, set in your `.env`:
+
+```dotenv
+MERIDIAN_UI=blade
+```
+
+or, when `config/meridian.php` is published, `'ui' => 'blade'` (republish the config with `php artisan vendor:publish --tag=meridian-config --force` to get the new `ui` and `locales` keys). Clear the cached configuration afterwards if needed (`php artisan config:clear`).
+
+Both interfaces share the same URLs, route names, actions (retry, cancel, delete) and JSON API; only the pages change. The Blade interface is in English only.
 
 ## Dashboard authorization
 
@@ -200,6 +228,19 @@ waits longer, a `IsoDoss\Meridian\Events\LongWaitDetected` event is fired and, i
 composer test
 composer analyse
 ```
+
+### Front-end
+
+The interface lives in `resources/js` (React, TypeScript, Tailwind CSS v4, shadcn/ui) and is compiled into `dist/`, which is committed:
+
+```bash
+npm ci
+npm run build      # or npm run dev to rebuild on change
+npm run typecheck
+npm test
+```
+
+Texts go through `t('English text')`; add the French translation to `lang/fr.json` (a test fails when one is missing). The CI checks that `dist/` matches the sources.
 
 ## Credits
 

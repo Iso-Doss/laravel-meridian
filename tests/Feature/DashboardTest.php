@@ -8,6 +8,9 @@ use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 use IsoDoss\Meridian\Tests\Fixtures\TaggedJob;
 
+// These tests cover the Blade interface; the Inertia one is covered by InertiaTest.
+beforeEach(fn () => config()->set('meridian.ui', 'blade'));
+
 it('forbids access when the auth callback refuses', function () {
     Meridian::auth(fn () => false);
 

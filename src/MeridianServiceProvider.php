@@ -7,8 +7,10 @@ use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Inertia\Middleware as InertiaMiddleware;
 use IsoDoss\Meridian\Events\LongWaitDetected;
 use IsoDoss\Meridian\Http\Middleware\Authorize;
+use IsoDoss\Meridian\Http\Middleware\HandleInertiaRequests;
 use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
 use IsoDoss\Meridian\Listeners\SendLongWaitNotification;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
@@ -92,8 +94,18 @@ class MeridianServiceProvider extends PackageServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
         });
 
-        Route::group($this->routeGroup('web', 'meridian.'), function () {
+        Route::group($this->routeGroup('web', 'meridian.', [HandleInertiaRequests::class]), function () {
             $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+        });
+
+        $web = (array) config('meridian.route.web', []);
+
+        Route::group(array_filter([
+            'prefix' => trim((string) ($web['prefix'] ?? ''), '/'),
+            'domain' => $web['domain'] ?? null,
+            'as' => 'meridian.',
+        ], fn ($value) => $value !== null && $value !== ''), function () {
+            $this->loadRoutesFrom(__DIR__.'/../routes/assets.php');
         });
     }
 
@@ -102,17 +114,48 @@ class MeridianServiceProvider extends PackageServiceProvider
      *
      * @return array<string, mixed>
      */
-    protected function routeGroup(string $type, string $name): array
+    /**
+     * @param  array<int, class-string>  $extraMiddleware
+     * @return array<string, mixed>
+     */
+    protected function routeGroup(string $type, string $name, array $extraMiddleware = []): array
     {
         $config = (array) config("meridian.route.{$type}", []);
+        $middleware = (array) ($config['middleware'] ?? []);
 
         return array_filter([
             'namespace' => $config['namespace'] ?? null,
             'prefix' => trim((string) ($config['prefix'] ?? ''), '/'),
             'domain' => $config['domain'] ?? null,
-            'middleware' => array_merge((array) ($config['middleware'] ?? []), [Authorize::class]),
+            'middleware' => array_merge($middleware, [Authorize::class], $extraMiddleware),
+            'excluded_middleware' => $this->applicationInertiaMiddleware($middleware),
             'as' => $name,
-        ], fn ($value) => $value !== null && $value !== '');
+        ], fn ($value) => $value !== null && $value !== '' && $value !== []);
+    }
+
+    /**
+     * The application's own Inertia middleware (usually appended to the "web"
+     * group) must not run on Meridian's routes: Meridian has its own.
+     *
+     * @param  array<int, mixed>  $middleware
+     * @return array<int, class-string>
+     */
+    protected function applicationInertiaMiddleware(array $middleware): array
+    {
+        if (! class_exists(InertiaMiddleware::class)) {
+            return [];
+        }
+
+        $groups = $this->app['router']->getMiddlewareGroups();
+
+        return collect($middleware)
+            ->flatMap(fn ($entry) => is_string($entry) && isset($groups[$entry]) ? $groups[$entry] : [$entry])
+            ->filter(fn ($entry) => is_string($entry)
+                && class_exists($entry)
+                && is_subclass_of($entry, InertiaMiddleware::class)
+                && $entry !== HandleInertiaRequests::class)
+            ->values()
+            ->all();
     }
 
     protected function registerSchedule(): void

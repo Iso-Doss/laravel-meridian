@@ -36,6 +36,14 @@ class Meridian
     }
 
     /**
+     * The dashboard interface: "inertia" (default) or "blade".
+     */
+    public static function ui(): string
+    {
+        return config('meridian.ui') === 'blade' ? 'blade' : 'inertia';
+    }
+
+    /**
      * Get the database connection holding the Meridian tables.
      */
     public static function db(): ConnectionInterface

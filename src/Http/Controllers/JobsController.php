@@ -10,28 +10,45 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
+use Inertia\Response;
+use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
+use IsoDoss\Meridian\Http\Presenters\Present;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\QueueRepository;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Support\Translator;
 
 class JobsController extends Controller
 {
-    public function index(Request $request, ?string $status = null): View
+    use RendersPages;
+
+    public function index(Request $request, ?string $status = null): View|Response
     {
         app(PendingJobsImporter::class)->import();
 
-        return view('meridian::jobs.index', [
+        return $this->page('jobs.index', 'Jobs/Index', [
             'status' => $status,
             'jobs' => $this->query($request, $status)->paginate(50)->withQueryString(),
             'queues' => MonitoredJob::query()->distinct()->orderBy('queue')->pluck('queue'),
             'counts' => MonitoredJob::query()->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status'),
+        ], fn (array $data) => [
+            'status' => $data['status'],
+            'filters' => [
+                'search' => (string) $request->query('search', ''),
+                'queue' => (string) $request->query('queue', ''),
+            ],
+            'jobs' => Present::paginated($data['jobs'], fn (MonitoredJob $job) => Present::job($job)),
+            'queues' => $data['queues']->values(),
+            'counts' => collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $s) => [$s => (int) ($data['counts'][$s] ?? 0)]),
         ]);
     }
 
-    public function show(string $uuid): View
+    public function show(string $uuid): View|Response
     {
-        return view('meridian::jobs.show', [
-            'job' => MonitoredJob::query()->where('uuid', $uuid)->firstOrFail(),
+        $job = MonitoredJob::query()->where('uuid', $uuid)->firstOrFail();
+
+        return $this->page('jobs.show', 'Jobs/Show', ['job' => $job], fn (array $data) => [
+            'job' => Present::job($data['job'], details: true),
         ]);
     }
 
@@ -55,10 +72,10 @@ class JobsController extends Controller
 
             $job->update(['status' => MonitoredJob::PENDING, 'retries' => $job->retries + 1, 'failed_at' => null, 'available_at' => now()]);
         } else {
-            return back()->with('meridian.error', 'This job cannot be retried: its payload was not stored.');
+            return back()->with('meridian.error', Translator::get('This job cannot be retried: its payload was not stored.'));
         }
 
-        return back()->with('meridian.success', 'The job has been pushed back onto the queue.');
+        return back()->with('meridian.success', Translator::get('The job has been pushed back onto the queue.'));
     }
 
     /**
@@ -80,7 +97,7 @@ class JobsController extends Controller
 
         $job->delete();
 
-        return redirect()->route('meridian.jobs.index')->with('meridian.success', 'The job has been deleted.');
+        return redirect()->route('meridian.jobs.index')->with('meridian.success', Translator::get('The job has been deleted.'));
     }
 
     public function apiIndex(Request $request, ?string $status = null): JsonResponse

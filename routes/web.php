@@ -4,12 +4,16 @@ use Illuminate\Support\Facades\Route;
 use IsoDoss\Meridian\Http\Controllers\BatchesController;
 use IsoDoss\Meridian\Http\Controllers\DashboardController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
+use IsoDoss\Meridian\Http\Controllers\LocaleController;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
 
 // Group attributes come from config("meridian.route.web"), names are prefixed with "meridian.".
 
 // Dashboard...
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
+
+// Language of the interface...
+Route::post('locale', [LocaleController::class, 'update'])->name('locale');
 
 // Jobs...
 Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () {

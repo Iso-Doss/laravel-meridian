@@ -1,0 +1,11 @@
+{
+  "resources/js/app.tsx": {
+    "file": "assets/app-CawLEMQ3.js",
+    "name": "app",
+    "src": "resources/js/app.tsx",
+    "isEntry": true,
+    "css": [
+      "assets/app-BgMpXMfD.css"
+    ]
+  }
+}

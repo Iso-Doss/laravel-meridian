@@ -5,6 +5,9 @@ namespace IsoDoss\Meridian\Http\Controllers;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
+use Inertia\Response;
+use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
+use IsoDoss\Meridian\Http\Presenters\Present;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Supervisor;
 use IsoDoss\Meridian\Models\Worker;
@@ -14,21 +17,29 @@ use IsoDoss\Meridian\Support\PendingJobsImporter;
 
 class DashboardController extends Controller
 {
+    use RendersPages;
+
     public function __construct(
         protected QueueRepository $queues,
         protected MetricsRepository $metrics,
     ) {}
 
-    public function index(): View
+    public function index(): View|Response
     {
         app(PendingJobsImporter::class)->import();
 
-        return view('meridian::dashboard', [
+        return $this->page('dashboard', 'Dashboard', [
             'stats' => $this->stats(),
             'workload' => $this->queues->workload(),
             'throughput' => $this->metrics->throughputPerMinute(60),
             'supervisors' => Supervisor::query()->alive()->orderBy('name')->get(),
             'workers' => Worker::query()->alive()->orderBy('name')->get(),
+        ], fn (array $data) => [
+            'stats' => $data['stats'],
+            'workload' => $data['workload']->values(),
+            'throughput' => collect($data['throughput'])->map(fn (int $count, int $time) => ['time' => $time, 'count' => $count])->values(),
+            'supervisors' => $data['supervisors']->map(fn (Supervisor $supervisor) => Present::supervisor($supervisor))->values(),
+            'workers' => $data['workers']->map(fn (Worker $worker) => Present::worker($worker))->values(),
         ]);
     }
 

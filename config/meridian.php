@@ -32,6 +32,24 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Dashboard interface
+    |--------------------------------------------------------------------------
+    |
+    | "inertia": the React / Inertia / shadcn interface, with light and dark
+    | themes and a language switcher. Its compiled assets ship with the
+    | package and are served by Meridian itself (nothing to build or publish).
+    | "blade": the lightweight server-rendered interface.
+    |
+    */
+
+    'ui' => env('MERIDIAN_UI', 'inertia'),
+
+    // Languages offered by the language switcher of the "inertia" interface.
+    // The default one is the application locale when available, else the first.
+    'locales' => ['en', 'fr'],
+
     // Number of seconds between two automatic refreshes of the dashboard (0 = off).
     'poll' => 5,
 

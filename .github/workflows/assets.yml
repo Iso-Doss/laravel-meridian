@@ -1,0 +1,54 @@
+name: assets
+
+on:
+  push:
+    paths:
+      - 'resources/js/**'
+      - 'resources/css/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'dist/**'
+      - '.github/workflows/assets.yml'
+  pull_request:
+    paths:
+      - 'resources/js/**'
+      - 'resources/css/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'vite.config.ts'
+      - 'tsconfig.json'
+      - 'dist/**'
+      - '.github/workflows/assets.yml'
+
+jobs:
+  assets:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v7
+
+      - name: Setup Node
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
+
+      # dist/ ships with the package: it must match the sources.
+      - name: Check that dist/ is up to date
+        run: git diff --exit-code --stat dist || (echo "::error::dist/ is outdated, run npm run build and commit it." && exit 1)

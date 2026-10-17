@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Tests;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Inertia\ServiceProvider as InertiaServiceProvider;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\MeridianServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
@@ -23,7 +24,7 @@ class TestCase extends Orchestra
 
     protected function getPackageProviders($app)
     {
-        return [MeridianServiceProvider::class];
+        return [InertiaServiceProvider::class, MeridianServiceProvider::class];
     }
 
     public function getEnvironmentSetUp($app)
@@ -43,6 +44,10 @@ class TestCase extends Orchestra
             'table' => 'failed_jobs',
         ]);
         config()->set('queue.batching', ['database' => 'testing', 'table' => 'job_batches']);
+
+        // assertInertia() checks that every rendered page component exists.
+        config()->set('inertia.pages.paths', [__DIR__.'/../resources/js/pages']);
+        config()->set('inertia.pages.extensions', ['tsx']);
     }
 
     protected function createQueueTables(): void
