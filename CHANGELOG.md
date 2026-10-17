@@ -2,6 +2,26 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.2.0 - 2026-10-17
+
+### Added
+
+- **Blade interface in French**: every text of the Blade interface (`MERIDIAN_UI=blade`) is now translated, with the same translations as the Inertia interface; dates, numbers and relative times follow the visitor's language. A language switcher sits in the sidebar.
+- **Light / dark / system theme for the Blade interface**, with a switcher in the sidebar, applied before the first paint.
+- Both interfaces share the same settings: the theme kept in the browser and the language kept in a cookie, so switching interface keeps your choices.
+
+### Fixed
+
+- **Content-Security-Policy (Blade interface)**: the queue filter and the delete / retry confirmations used inline event handlers (`onchange`, `onsubmit`), which a strict CSP refuses even with a nonce. They are now handled by the nonce'd script, so the Blade interface fully works under a policy such as `script-src 'nonce-…' 'strict-dynamic' 'self'`.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration nor configuration change. If you published the Blade views of Meridian, republish them to get the translations and the theme switcher.
+
 ## v1.1.1 - 2026-10-17
 
 ### Fixed
