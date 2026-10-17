@@ -1,18 +1,18 @@
 <?php
 
-namespace Kakodjenou\Meridian;
+namespace IsoDoss\Meridian;
 
 use Illuminate\Bus\Events\BatchDispatched;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
-use Kakodjenou\Meridian\Events\LongWaitDetected;
-use Kakodjenou\Meridian\Http\Middleware\Authorize;
-use Kakodjenou\Meridian\Listeners\RecordJobLifecycle;
-use Kakodjenou\Meridian\Listeners\SendLongWaitNotification;
-use Kakodjenou\Meridian\Listeners\WorkerHeartbeat;
-use Kakodjenou\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Http\Middleware\Authorize;
+use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
+use IsoDoss\Meridian\Listeners\SendLongWaitNotification;
+use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
+use IsoDoss\Meridian\Support\PendingJobsImporter;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;

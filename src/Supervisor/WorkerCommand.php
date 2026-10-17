@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Supervisor;
+namespace IsoDoss\Meridian\Supervisor;
 
 use Symfony\Component\Process\PhpExecutableFinder;
 

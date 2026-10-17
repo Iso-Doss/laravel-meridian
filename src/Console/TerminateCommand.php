@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Console;
+namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
 

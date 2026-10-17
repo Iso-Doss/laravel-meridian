@@ -1,10 +1,10 @@
 <?php
 
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Tests\Fixtures\FailingJob;
-use Kakodjenou\Meridian\Tests\Fixtures\SuccessfulJob;
-use Kakodjenou\Meridian\Tests\Fixtures\TaggedJob;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
+use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
+use IsoDoss\Meridian\Tests\Fixtures\TaggedJob;
 
 it('forbids access when the auth callback refuses', function () {
     Meridian::auth(fn () => false);
@@ -54,7 +54,7 @@ it('shows a job with its payload and exception', function () {
 
     $job = MonitoredJob::sole();
 
-    $this->get('/meridian/job/'.$job->uuid)
+    $this->get('/meridian/jobs/'.$job->uuid)
         ->assertOk()
         ->assertSee('Boom from FailingJob')
         ->assertSee('Retry');
@@ -75,7 +75,7 @@ it('retries a failed job', function () {
     $this->work();
     $job = MonitoredJob::sole();
 
-    $this->post('/meridian/job/'.$job->uuid.'/retry')->assertRedirect();
+    $this->post('/meridian/jobs/'.$job->uuid.'/retry')->assertRedirect();
 
     expect($job->fresh()->status)->toBe(MonitoredJob::PENDING)
         ->and(app('queue.failer')->find($job->uuid))->toBeNull()
@@ -86,8 +86,19 @@ it('cancels a pending job', function () {
     SuccessfulJob::dispatch();
     $job = MonitoredJob::sole();
 
-    $this->delete('/meridian/job/'.$job->uuid)->assertRedirect();
+    $this->delete('/meridian/jobs/'.$job->uuid)->assertRedirect();
 
     expect(MonitoredJob::count())->toBe(0)
         ->and(DB::table('jobs')->count())->toBe(0);
+});
+
+it('returns a job through the api', function () {
+    SuccessfulJob::dispatch();
+    $job = MonitoredJob::sole();
+
+    $this->getJson('/meridian/api/jobs/'.$job->uuid)
+        ->assertOk()
+        ->assertJsonPath('uuid', $job->uuid);
+
+    $this->getJson('/meridian/api/jobs/pending')->assertOk()->assertJsonCount(1, 'data');
 });

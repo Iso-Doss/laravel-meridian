@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Notifications;
+namespace IsoDoss\Meridian\Notifications;
 
 use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Notification;

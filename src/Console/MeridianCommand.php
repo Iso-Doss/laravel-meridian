@@ -1,10 +1,10 @@
 <?php
 
-namespace Kakodjenou\Meridian\Console;
+namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
-use Kakodjenou\Meridian\Supervisor\MasterSupervisor;
-use Kakodjenou\Meridian\Supervisor\SupervisorOptions;
+use IsoDoss\Meridian\Supervisor\MasterSupervisor;
+use IsoDoss\Meridian\Supervisor\SupervisorOptions;
 
 class MeridianCommand extends Command
 {

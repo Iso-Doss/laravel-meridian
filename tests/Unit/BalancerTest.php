@@ -1,7 +1,7 @@
 <?php
 
-use Kakodjenou\Meridian\Supervisor\Balancer;
-use Kakodjenou\Meridian\Supervisor\SupervisorOptions;
+use IsoDoss\Meridian\Supervisor\Balancer;
+use IsoDoss\Meridian\Supervisor\SupervisorOptions;
 
 function options(array $config = []): SupervisorOptions
 {

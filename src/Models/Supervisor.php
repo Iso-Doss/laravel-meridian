@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Models;
+namespace IsoDoss\Meridian\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;

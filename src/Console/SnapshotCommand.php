@@ -1,13 +1,13 @@
 <?php
 
-namespace Kakodjenou\Meridian\Console;
+namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
-use Kakodjenou\Meridian\Events\LongWaitDetected;
-use Kakodjenou\Meridian\Repositories\MetricsRepository;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
-use Kakodjenou\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Repositories\MetricsRepository;
+use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\PendingJobsImporter;
 
 class SnapshotCommand extends Command
 {

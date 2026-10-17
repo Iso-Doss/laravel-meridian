@@ -1,5 +1,5 @@
 @extends('meridian::layout', ['title' => 'Batches', 'poll' => true])
-@use('Kakodjenou\Meridian\Support\Format')
+@use('IsoDoss\Meridian\Support\Format')
 
 @section('content')
     <h1>Batches</h1>

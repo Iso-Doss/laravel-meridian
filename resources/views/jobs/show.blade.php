@@ -1,6 +1,6 @@
 @extends('meridian::layout', ['title' => $job->shortName()])
-@use('Kakodjenou\Meridian\Support\Format')
-@use('Kakodjenou\Meridian\Models\MonitoredJob')
+@use('IsoDoss\Meridian\Support\Format')
+@use('IsoDoss\Meridian\Models\MonitoredJob')
 
 @section('content')
     <h1>

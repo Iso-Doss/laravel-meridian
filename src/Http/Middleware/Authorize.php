@@ -1,10 +1,10 @@
 <?php
 
-namespace Kakodjenou\Meridian\Http\Middleware;
+namespace IsoDoss\Meridian\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Kakodjenou\Meridian\Meridian;
+use IsoDoss\Meridian\Meridian;
 use Symfony\Component\HttpFoundation\Response;
 
 class Authorize

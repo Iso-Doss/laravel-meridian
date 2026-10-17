@@ -1,28 +1,46 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use Kakodjenou\Meridian\Http\Controllers\BatchesController;
-use Kakodjenou\Meridian\Http\Controllers\DashboardController;
-use Kakodjenou\Meridian\Http\Controllers\JobsController;
-use Kakodjenou\Meridian\Http\Controllers\MetricsController;
+use IsoDoss\Meridian\Http\Controllers\BatchesController;
+use IsoDoss\Meridian\Http\Controllers\DashboardController;
+use IsoDoss\Meridian\Http\Controllers\JobsController;
+use IsoDoss\Meridian\Http\Controllers\MetricsController;
 
-Route::prefix('api')->name('api.')->group(function () {
-    Route::get('stats', [DashboardController::class, 'apiStats'])->name('stats');
-    Route::get('workload', [DashboardController::class, 'apiWorkload'])->name('workload');
-    Route::get('jobs/{status?}', [JobsController::class, 'apiIndex'])->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->name('jobs.index');
-    Route::get('job/{uuid}', [JobsController::class, 'apiShow'])->name('jobs.show');
+$statuses = ['pending', 'processing', 'completed', 'failed'];
+
+// JSON API...
+Route::prefix('api')->name('api.')->group(function () use ($statuses) {
+    Route::controller(DashboardController::class)->group(function () {
+        Route::get('stats', 'apiStats')->name('stats');
+        Route::get('workload', 'apiWorkload')->name('workload');
+    });
+
+    Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () use ($statuses) {
+        Route::get('{status?}', 'apiIndex')->whereIn('status', $statuses)->name('index');
+        Route::get('{uuid}', 'apiShow')->whereUuid('uuid')->name('show');
+    });
 });
 
+// Dashboard...
 Route::get('/', [DashboardController::class, 'index'])->name('dashboard');
 
-Route::get('jobs/{status?}', [JobsController::class, 'index'])->whereIn('status', ['pending', 'processing', 'completed', 'failed'])->name('jobs.index');
-Route::get('job/{uuid}', [JobsController::class, 'show'])->name('jobs.show');
-Route::post('job/{uuid}/retry', [JobsController::class, 'retry'])->name('jobs.retry');
-Route::delete('job/{uuid}', [JobsController::class, 'destroy'])->name('jobs.destroy');
+// Jobs...
+Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () use ($statuses) {
+    Route::get('{status?}', 'index')->whereIn('status', $statuses)->name('index');
+    Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
+    Route::post('{uuid}/retry', 'retry')->whereUuid('uuid')->name('retry');
+    Route::delete('{uuid}', 'destroy')->whereUuid('uuid')->name('destroy');
+});
 
-Route::get('batches', [BatchesController::class, 'index'])->name('batches.index');
-Route::get('batches/{id}', [BatchesController::class, 'show'])->name('batches.show');
-Route::post('batches/{id}/retry', [BatchesController::class, 'retry'])->name('batches.retry');
+// Batches...
+Route::prefix('batches')->name('batches.')->controller(BatchesController::class)->group(function () {
+    Route::get('/', 'index')->name('index');
+    Route::get('{id}', 'show')->name('show');
+    Route::post('{id}/retry', 'retry')->name('retry');
+});
 
-Route::get('metrics/{type?}', [MetricsController::class, 'index'])->whereIn('type', ['jobs', 'queues'])->name('metrics.index');
-Route::get('metrics/{type}/{name}', [MetricsController::class, 'show'])->whereIn('type', ['jobs', 'queues'])->where('name', '.*')->name('metrics.show');
+// Metrics...
+Route::prefix('metrics')->name('metrics.')->controller(MetricsController::class)->group(function () {
+    Route::get('{type?}', 'index')->whereIn('type', ['jobs', 'queues'])->name('index');
+    Route::get('{type}/{name}', 'show')->whereIn('type', ['jobs', 'queues'])->where('name', '.*')->name('show');
+});

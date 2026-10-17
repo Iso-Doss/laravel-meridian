@@ -34,7 +34,7 @@ Monitoring never breaks your application: every write is wrapped and errors are 
 ## Installation
 
 ```bash
-composer require kakodjenou/laravel-meridian
+composer require isodoss/laravel-meridian
 php artisan meridian:install
 ```
 
@@ -148,17 +148,17 @@ public function tags(): array
 }
 ```
 
-Completed jobs listed in `meridian.silenced`, implementing `Kakodjenou\Meridian\Contracts\Silenced`, or having a tag
+Completed jobs listed in `meridian.silenced`, implementing `IsoDoss\Meridian\Contracts\Silenced`, or having a tag
 listed in `meridian.silenced_tags` are not kept (failures always are).
 
 ## Notifications
 
 Configure thresholds in `meridian.waits` (`'database:default' => 60`, or `'*'` for all queues). When the oldest job
-waits longer, a `Kakodjenou\Meridian\Events\LongWaitDetected` event is fired and, if `MERIDIAN_NOTIFY_MAIL` is set, an email is sent.
+waits longer, a `IsoDoss\Meridian\Events\LongWaitDetected` event is fired and, if `MERIDIAN_NOTIFY_MAIL` is set, an email is sent.
 
 ## JSON API
 
-`GET /meridian/api/stats`, `/meridian/api/workload`, `/meridian/api/jobs/{status?}?search=&queue=`, `/meridian/api/job/{uuid}`.
+`GET /meridian/api/stats`, `/meridian/api/workload`, `/meridian/api/jobs/{status?}?search=&queue=`, `/meridian/api/jobs/{uuid}`.
 
 ## Notes
 

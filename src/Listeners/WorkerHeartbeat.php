@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Listeners;
+namespace IsoDoss\Meridian\Listeners;
 
 use Illuminate\Events\Dispatcher;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Queue\Events\WorkerStopping;
-use Kakodjenou\Meridian\Meridian;
+use IsoDoss\Meridian\Meridian;
 use Throwable;
 
 /**

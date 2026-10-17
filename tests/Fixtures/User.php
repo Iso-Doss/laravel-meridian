@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Tests\Fixtures;
+namespace IsoDoss\Meridian\Tests\Fixtures;
 
 use Illuminate\Database\Eloquent\Model;
 

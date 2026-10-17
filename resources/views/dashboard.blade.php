@@ -1,5 +1,5 @@
 @extends('meridian::layout', ['title' => 'Dashboard', 'poll' => true])
-@use('Kakodjenou\Meridian\Support\Format')
+@use('IsoDoss\Meridian\Support\Format')
 
 @section('content')
     <h1>Dashboard <span class="badge {{ $stats['status'] }}">{{ ucfirst($stats['status']) }}</span></h1>

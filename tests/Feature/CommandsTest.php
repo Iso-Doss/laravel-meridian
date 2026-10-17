@@ -1,11 +1,11 @@
 <?php
 
 use Illuminate\Support\Facades\Event;
-use Kakodjenou\Meridian\Events\LongWaitDetected;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Models\Supervisor;
-use Kakodjenou\Meridian\Tests\Fixtures\SuccessfulJob;
+use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 
 it('prunes old completed and failed jobs', function () {
     SuccessfulJob::dispatch();

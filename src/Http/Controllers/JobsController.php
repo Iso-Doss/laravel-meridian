@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Http\Controllers;
+namespace IsoDoss\Meridian\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Database\Eloquent\Builder;
@@ -10,9 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Queue;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
-use Kakodjenou\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\PendingJobsImporter;
 
 class JobsController extends Controller
 {

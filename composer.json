@@ -1,5 +1,5 @@
 {
-    "name": "kakodjenou/laravel-meridian",
+    "name": "isodoss/laravel-meridian",
     "description": "A Horizon-like dashboard and supervisor for Laravel database queues.",
     "keywords": [
         "laravel",
@@ -9,12 +9,12 @@
         "monitoring",
         "meridian"
     ],
-    "homepage": "https://github.com/kakodjenou/laravel-meridian",
+    "homepage": "https://github.com/Iso-Doss/laravel-meridian",
     "license": "MIT",
     "authors": [
         {
-            "name": "Kakodjenou",
-            "email": "kakodjenou@gmail.com",
+            "name": "IsoDoss",
+            "email": "dossou.israel48@gmail.com",
             "role": "Developer"
         }
     ],
@@ -44,12 +44,12 @@
     },
     "autoload": {
         "psr-4": {
-            "Kakodjenou\\Meridian\\": "src/"
+            "IsoDoss\\Meridian\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "Kakodjenou\\Meridian\\Tests\\": "tests/"
+            "IsoDoss\\Meridian\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -70,10 +70,10 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Kakodjenou\\Meridian\\MeridianServiceProvider"
+                "IsoDoss\\Meridian\\MeridianServiceProvider"
             ],
             "aliases": {
-                "Meridian": "Kakodjenou\\Meridian\\Facades\\Meridian"
+                "Meridian": "IsoDoss\\Meridian\\Facades\\Meridian"
             }
         }
     },

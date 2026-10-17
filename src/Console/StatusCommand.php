@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Console;
+namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
-use Kakodjenou\Meridian\Models\Supervisor;
-use Kakodjenou\Meridian\Models\Worker;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Repositories\QueueRepository;
 
 class StatusCommand extends Command
 {

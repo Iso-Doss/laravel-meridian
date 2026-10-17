@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Support;
+namespace IsoDoss\Meridian\Support;
 
 use Illuminate\Support\Facades\Cache;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\QueueRepository;
 use Throwable;
 
 /**

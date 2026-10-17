@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\Facades\Gate;
-use Kakodjenou\Meridian\MeridianApplicationServiceProvider;
+use IsoDoss\Meridian\MeridianApplicationServiceProvider;
 
 class MeridianServiceProvider extends MeridianApplicationServiceProvider
 {

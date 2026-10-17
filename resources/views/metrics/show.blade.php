@@ -1,5 +1,5 @@
 @extends('meridian::layout', ['title' => 'Metrics'])
-@use('Kakodjenou\Meridian\Support\Format')
+@use('IsoDoss\Meridian\Support\Format')
 
 @section('content')
     <h1><a href="{{ route('meridian.metrics.index', $type) }}">Metrics</a> / <span class="mono">{{ $name }}</span></h1>

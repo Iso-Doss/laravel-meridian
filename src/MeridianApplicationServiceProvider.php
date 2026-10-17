@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian;
+namespace IsoDoss\Meridian;
 
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;

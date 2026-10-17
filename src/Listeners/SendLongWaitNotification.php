@@ -1,10 +1,10 @@
 <?php
 
-namespace Kakodjenou\Meridian\Listeners;
+namespace IsoDoss\Meridian\Listeners;
 
 use Illuminate\Support\Facades\Notification;
-use Kakodjenou\Meridian\Events\LongWaitDetected;
-use Kakodjenou\Meridian\Notifications\LongWaitDetected as LongWaitNotification;
+use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Notifications\LongWaitDetected as LongWaitNotification;
 
 class SendLongWaitNotification
 {

@@ -1,8 +1,8 @@
 <?php
 
-use Kakodjenou\Meridian\Supervisor\SupervisorOptions;
-use Kakodjenou\Meridian\Supervisor\WorkerCommand;
-use Kakodjenou\Meridian\Tests\TestCase;
+use IsoDoss\Meridian\Supervisor\SupervisorOptions;
+use IsoDoss\Meridian\Supervisor\WorkerCommand;
+use IsoDoss\Meridian\Tests\TestCase;
 
 uses(TestCase::class);
 

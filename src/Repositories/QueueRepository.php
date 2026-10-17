@@ -1,14 +1,14 @@
 <?php
 
-namespace Kakodjenou\Meridian\Repositories;
+namespace IsoDoss\Meridian\Repositories;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Models\Supervisor;
-use Kakodjenou\Meridian\Models\Worker;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Models\Worker;
 
 /**
  * Reads the live state of the database queues straight from the "jobs" table

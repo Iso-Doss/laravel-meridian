@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Tests;
+namespace IsoDoss\Meridian\Tests;
 
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\MeridianServiceProvider;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\MeridianServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra

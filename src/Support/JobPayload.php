@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Support;
+namespace IsoDoss\Meridian\Support;
 
 use Throwable;
 

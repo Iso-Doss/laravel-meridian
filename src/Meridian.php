@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian;
+namespace IsoDoss\Meridian;
 
 use Closure;
 use Illuminate\Database\ConnectionInterface;

@@ -1,10 +1,10 @@
 <?php
 
-namespace Kakodjenou\Meridian\Repositories;
+namespace IsoDoss\Meridian\Repositories;
 
 use Illuminate\Support\Collection;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
 
 /**
  * Throughput / runtime statistics computed from "meridian_jobs" (live)

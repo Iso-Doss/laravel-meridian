@@ -7,7 +7,7 @@
         <div class="panel-head">
             <div class="tabs">
                 <a href="{{ route('meridian.jobs.index', array_filter(['queue' => request('queue'), 'search' => request('search')])) }}" @class(['active' => ! $status])>All</a>
-                @foreach (\Kakodjenou\Meridian\Models\MonitoredJob::STATUSES as $s)
+                @foreach (\IsoDoss\Meridian\Models\MonitoredJob::STATUSES as $s)
                     <a href="{{ route('meridian.jobs.index', array_filter(['status' => $s, 'queue' => request('queue'), 'search' => request('search')])) }}" @class(['active' => $status === $s])>
                         {{ ucfirst($s) }} <span class="muted">{{ number_format($counts[$s] ?? 0) }}</span>
                     </a>

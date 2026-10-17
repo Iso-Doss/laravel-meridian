@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Events;
+namespace IsoDoss\Meridian\Events;
 
 use Illuminate\Foundation\Events\Dispatchable;
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace Kakodjenou\Meridian\Console;
+namespace IsoDoss\Meridian\Console;
 
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\Supervisor;
 
 trait SendsSupervisorCommands
 {

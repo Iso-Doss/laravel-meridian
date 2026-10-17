@@ -1,16 +1,16 @@
 <?php
 
-namespace Kakodjenou\Meridian\Http\Controllers;
+namespace IsoDoss\Meridian\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Routing\Controller;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Models\Supervisor;
-use Kakodjenou\Meridian\Models\Worker;
-use Kakodjenou\Meridian\Repositories\MetricsRepository;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
-use Kakodjenou\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Repositories\MetricsRepository;
+use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\PendingJobsImporter;
 
 class DashboardController extends Controller
 {

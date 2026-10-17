@@ -1,10 +1,10 @@
 <?php
 
-namespace Kakodjenou\Meridian\Supervisor;
+namespace IsoDoss\Meridian\Supervisor;
 
 use Closure;
-use Kakodjenou\Meridian\Repositories\MetricsRepository;
-use Kakodjenou\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Repositories\MetricsRepository;
+use IsoDoss\Meridian\Repositories\QueueRepository;
 use Throwable;
 
 /**

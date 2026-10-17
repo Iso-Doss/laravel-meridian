@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Listeners;
+namespace IsoDoss\Meridian\Listeners;
 
 use DateInterval;
 use DateTimeInterface;
@@ -13,10 +13,10 @@ use Illuminate\Queue\Events\JobQueued;
 use Illuminate\Queue\Events\JobReleasedAfterException;
 use Illuminate\Queue\Events\JobRetryRequested;
 use Illuminate\Support\Carbon;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Support\JobPayload;
-use Kakodjenou\Meridian\Support\Tags;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Support\JobPayload;
+use IsoDoss\Meridian\Support\Tags;
 use Throwable;
 
 /**

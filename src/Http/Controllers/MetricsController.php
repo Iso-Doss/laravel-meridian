@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Http\Controllers;
+namespace IsoDoss\Meridian\Http\Controllers;
 
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Kakodjenou\Meridian\Repositories\MetricsRepository;
+use IsoDoss\Meridian\Repositories\MetricsRepository;
 
 class MetricsController extends Controller
 {

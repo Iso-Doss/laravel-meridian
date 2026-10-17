@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Supervisor;
+namespace IsoDoss\Meridian\Supervisor;
 
 /**
  * Computes how many processes each pool of a supervisor should have.

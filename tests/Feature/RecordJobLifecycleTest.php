@@ -2,15 +2,15 @@
 
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Queue;
-use Kakodjenou\Meridian\Models\MonitoredJob;
-use Kakodjenou\Meridian\Models\Worker;
-use Kakodjenou\Meridian\Support\PendingJobsImporter;
-use Kakodjenou\Meridian\Tests\Fixtures\FailingJob;
-use Kakodjenou\Meridian\Tests\Fixtures\RetriedJob;
-use Kakodjenou\Meridian\Tests\Fixtures\SilencedJob;
-use Kakodjenou\Meridian\Tests\Fixtures\SuccessfulJob;
-use Kakodjenou\Meridian\Tests\Fixtures\TaggedJob;
-use Kakodjenou\Meridian\Tests\Fixtures\User;
+use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Support\PendingJobsImporter;
+use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
+use IsoDoss\Meridian\Tests\Fixtures\RetriedJob;
+use IsoDoss\Meridian\Tests\Fixtures\SilencedJob;
+use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
+use IsoDoss\Meridian\Tests\Fixtures\TaggedJob;
+use IsoDoss\Meridian\Tests\Fixtures\User;
 
 it('records a pending job when it is pushed', function () {
     $user = User::create(['email' => 'jane@example.com']);

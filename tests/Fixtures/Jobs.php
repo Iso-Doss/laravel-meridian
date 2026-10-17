@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Tests\Fixtures;
+namespace IsoDoss\Meridian\Tests\Fixtures;
 
 use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
@@ -8,7 +8,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Kakodjenou\Meridian\Contracts\Silenced;
+use IsoDoss\Meridian\Contracts\Silenced;
 use RuntimeException;
 
 class SuccessfulJob implements ShouldQueue

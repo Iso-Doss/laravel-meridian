@@ -1,6 +1,6 @@
 <?php
 
-namespace Kakodjenou\Meridian\Http\Controllers;
+namespace IsoDoss\Meridian\Http\Controllers;
 
 use Illuminate\Bus\BatchRepository;
 use Illuminate\Contracts\View\View;
@@ -8,7 +8,7 @@ use Illuminate\Database\QueryException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\Artisan;
-use Kakodjenou\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Models\MonitoredJob;
 
 class BatchesController extends Controller
 {

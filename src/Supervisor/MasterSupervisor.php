@@ -1,11 +1,11 @@
 <?php
 
-namespace Kakodjenou\Meridian\Supervisor;
+namespace IsoDoss\Meridian\Supervisor;
 
 use Closure;
 use Illuminate\Support\Str;
-use Kakodjenou\Meridian\Meridian;
-use Kakodjenou\Meridian\Models\Supervisor as SupervisorModel;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\Supervisor as SupervisorModel;
 use Throwable;
 
 /**
