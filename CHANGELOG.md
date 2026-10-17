@@ -29,8 +29,4 @@ First release of Meridian: a Horizon-like dashboard and supervisor for Laravel *
 ```bash
 composer require iso-doss/laravel-meridian
 php artisan meridian:install
-
 ```
-## Unreleased
-
-- Initial version: job recording, dashboard, metrics, batches, worker heartbeats, master supervisor with auto-balancing, long wait notifications.
