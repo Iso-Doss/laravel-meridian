@@ -2,6 +2,32 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.4.0 - 2026-10-17
+
+Horizon parity release.
+
+### Added
+
+- **Monitored tags**: a « Monitoring » page (both interfaces, and `GET /meridian/api/monitoring`) to watch tags such as `App\Models\User:42` or `customer:42`, with their number of jobs, pending and failed jobs. The jobs carrying a monitored tag are kept `trim.monitored` minutes (7 days by default) instead of `trim.completed`.
+- **Clickable tags**: a tag anywhere in the dashboard opens the jobs carrying it (exact `tag` filter). « Retry all » honours it: retry all the failed jobs of a customer in one click.
+- **Slack and SMS notifications** for long waits, besides e-mail, with Horizon's API in a service provider: `Meridian::routeMailNotificationsTo()`, `routeSlackNotificationsTo($webhook, $channel)` and `routeSmsNotificationsTo($number)`, or the `MERIDIAN_NOTIFY_MAIL`, `MERIDIAN_NOTIFY_SLACK_WEBHOOK`, `MERIDIAN_NOTIFY_SLACK_CHANNEL` and `MERIDIAN_NOTIFY_SMS` variables. Slack requires `laravel/slack-notification-channel`, SMS `laravel/vonage-notification-channel`.
+- **Readable job data**: the job page lists the properties of the job (models as `App\Models\User:42`, collections, dates, enums, arrays…), encrypted jobs included, instead of only the serialized payload.
+- **Dashboard**: the slowest queue (highest average runtime) and the busiest one (most jobs processed) of the last hour.
+
+### Fixed
+
+- Tag searches did not find model tags (`App\Models\User:42`) on MySQL and PostgreSQL: their LIKE patterns now use an explicit escape character, which behaves the same on every database.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+The new migration creates the `meridian_monitored_tags` table (the migrations you already published are skipped). If you published `config/meridian.php`, add the new keys from the package's config (`trim.monitored`, `notifications.slack`, `notifications.slack_channel`, `notifications.sms`), or republish it. If you published the Blade views, republish them.
+
 ## v1.3.0 - 2026-10-17
 
 ### Added
