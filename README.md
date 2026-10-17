@@ -1,57 +1,120 @@
-# Meridian — a Horizon-like dashboard for Laravel **database** queues
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="art/logo-dark.svg">
+        <img src="art/logo-light.svg" alt="Meridian" width="300">
+    </picture>
+</p>
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/iso-doss/laravel-meridian.svg?style=flat-square)](https://packagist.org/packages/iso-doss/laravel-meridian)
-[![Tests](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/run-tests.yml?query=branch%3Amain)
-[![PHPStan](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/phpstan.yml?branch=main&label=phpstan&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/phpstan.yml?query=branch%3Amain)
-[![Code Style](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/fix-php-code-style-issues.yml?query=branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/iso-doss/laravel-meridian.svg?style=flat-square)](https://packagist.org/packages/iso-doss/laravel-meridian)
-[![License](https://img.shields.io/packagist/l/iso-doss/laravel-meridian.svg?style=flat-square)](LICENSE.md)
+<p align="center">
+    <a href="https://github.com/Iso-Doss/laravel-meridian/actions/workflows/run-tests.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/run-tests.yml?branch=main&label=tests" alt="Tests"></a>
+    <a href="https://github.com/Iso-Doss/laravel-meridian/actions/workflows/phpstan.yml?query=branch%3Amain"><img src="https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/phpstan.yml?branch=main&label=phpstan" alt="PHPStan"></a>
+    <a href="https://packagist.org/packages/iso-doss/laravel-meridian"><img src="https://img.shields.io/packagist/dt/iso-doss/laravel-meridian" alt="Total Downloads"></a>
+    <a href="https://packagist.org/packages/iso-doss/laravel-meridian"><img src="https://img.shields.io/packagist/v/iso-doss/laravel-meridian" alt="Latest Stable Version"></a>
+    <a href="https://packagist.org/packages/iso-doss/laravel-meridian"><img src="https://img.shields.io/packagist/l/iso-doss/laravel-meridian" alt="License"></a>
+</p>
 
-[Laravel Horizon](https://laravel.com/docs/horizon) only works with Redis. Meridian brings the same
-experience to applications using the `database` queue driver:
+## Introduction
 
-- **Dashboard**: throughput, jobs per minute, failures, pending / delayed / reserved jobs per queue, max wait time.
-- **Job history**: pending, processing, completed and failed jobs, with tags, payload, exception, attempts, wait time and runtime.
+Meridian gives the Laravel **database** queue driver what [Laravel Horizon](https://laravel.com/docs/horizon) gives Redis: a beautiful dashboard and code-driven configuration. Monitor the throughput, runtime, wait time and failures of your jobs, search them by tag, retry them in one click, and follow your batches and workers live.
+
+All of your worker configuration lives in a single, simple configuration file. `php artisan meridian` starts and supervises your `queue:work` processes and balances them between your queues according to their workload, exactly like Horizon, so your whole team can scale the workers from source control.
+
+<p align="center">
+    <picture>
+        <source media="(prefers-color-scheme: dark)" srcset="art/dashboard-dark.png">
+        <img src="art/dashboard-light.png" alt="The Meridian dashboard: jobs per minute, failures, pending jobs, throughput chart, workload per queue, supervisors and workers">
+    </picture>
+</p>
+
+- [Why Meridian?](#why-meridian)
+- [Screenshots](#screenshots)
+- [Installation](#installation)
+- [Configuration](#configuration)
+  - [Environments and supervisors](#environments-and-supervisors)
+  - [Balancing strategies](#balancing-strategies)
+  - [Worker options](#worker-options)
+  - [Silenced jobs](#silenced-jobs)
+- [Running Meridian](#running-meridian)
+  - [Deploying Meridian](#deploying-meridian)
+- [The dashboard](#the-dashboard)
+  - [Dashboard authorization](#dashboard-authorization)
+  - [Interfaces, themes and languages](#interfaces-themes-and-languages)
+  - [Content-Security-Policy](#content-security-policy)
+  - [JSON API](#json-api)
+- [Tags](#tags)
+- [Notifications](#notifications)
+- [Metrics](#metrics)
+- [Retention](#retention)
+- [How it works](#how-it-works)
+- [Upgrading](#upgrading)
+- [Contributing](#contributing)
+
+## Why Meridian?
+
+Horizon only works with Redis. If your application runs its queues on the `database` driver, you usually have no visibility on what runs in the background: the `jobs` table only holds pending jobs, and a job leaves no trace once it is processed. Meridian records the whole life of every job and brings the Horizon experience to the database driver:
+
+- **Dashboard**: jobs per minute, jobs of the past hour, failures, pending and delayed jobs, max wait time, throughput chart, workload per queue, supervisors and workers.
+- **Job history**: pending, processing, completed and failed jobs, with their tags, payload, exception, attempts, wait time and runtime.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
 - **Actions**: retry a failed job, cancel a pending job, retry the failed jobs of a batch.
-- **Batches**: progress of `Bus::batch()` batches and their jobs.
-- **Metrics**: per job and per queue (count, failure rate, average / max runtime, average wait), with history snapshots.
-- **Workers**: every `queue:work` process reports a heartbeat (memory, jobs processed, status) — even without Meridian's supervisor.
-- **Supervisor** (optional): `php artisan meridian` starts and supervises `queue:work` processes, auto-balancing them between queues according to the number of pending jobs, exactly like Horizon. `meridian:pause`, `meridian:continue`, `meridian:terminate` included.
-- **Long wait notifications** per `connection:queue`.
+- **Batches**: progress of your `Bus::batch()` batches and of their jobs.
+- **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
+- **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
+- **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`.
+- **Notifications** when a queue waits too long.
+- **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, English and French, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
 
-Two dashboard interfaces ship with the package:
+## Screenshots
 
-- **Inertia** (default): React + Inertia + shadcn/ui, light / dark / system theme, English and French. Its compiled assets are part of the package and served by Meridian itself: nothing to install, build or publish in your application, which does not need Node, React nor Inertia of its own.
-- **Blade**: the lightweight server-rendered interface (`MERIDIAN_UI=blade`), with the same themes and languages.
+<table>
+    <tr>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/jobs-dark.png">
+                <img src="art/jobs-light.png" alt="Completed jobs, with their tags, queue, wait time and runtime">
+            </picture>
+            <p align="center"><b>Jobs</b>: by status, filtered by queue, searched by class, tag or UUID</p>
+        </td>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/job-dark.png">
+                <img src="art/job-light.png" alt="A failed job with its exception, payload and the retry and delete actions">
+            </picture>
+            <p align="center"><b>Job details</b>: exception, payload, timings, retry and delete</p>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/batches-dark.png">
+                <img src="art/batches-light.png" alt="Job batches with their progress">
+            </picture>
+            <p align="center"><b>Batches</b>: progress, pending and failed jobs</p>
+        </td>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/metrics-dark.png">
+                <img src="art/metrics-light.png" alt="Metrics per job: processed, failure rate, average and max runtime, average wait">
+            </picture>
+            <p align="center"><b>Metrics</b>: per job or per queue, over 1 hour to 7 days</p>
+        </td>
+    </tr>
+</table>
 
-## How it works
-
-| Horizon (Redis) | Meridian (database) |
-| --- | --- |
-| Jobs stored in Redis hashes by Horizon's own `RedisQueue` | Laravel queue events (`JobQueued`, `JobProcessing`, `JobProcessed`, `JobFailed`, `JobReleasedAfterException`, `JobRetryRequested`) are recorded in a `meridian_jobs` table, keyed by the job UUID |
-| Workload read from Redis lists | Workload read from the `jobs` table (`pending`, `delayed`, `reserved`, oldest available job) |
-| Supervisors state in Redis | `meridian_supervisors` and `meridian_workers` tables (heartbeats) |
-| Commands sent through a Redis command queue | Commands written in `meridian_supervisors.command`, polled by the master every second |
-| Metrics snapshots in Redis | `meridian:snapshot` aggregates into `meridian_metrics` |
-| `horizon:snapshot` / trimming in the master loop | `meridian:snapshot` (every 5 min) and `meridian:prune` (hourly), auto-registered in the scheduler |
-
-Jobs inserted without event — `Queue::bulk()` (used by job batches), `pushRaw()`, jobs pushed by another application or
-before installing Meridian — are imported from the `jobs` table when a batch is dispatched, when the dashboard is opened and on every snapshot.
-
-Monitoring never breaks your application: every write is wrapped and errors are only reported.
+The screenshots follow the theme of your GitHub account: switch it to see the other one.
 
 ## Installation
+
+Meridian requires PHP 8.3+, Laravel 12 or 13, and `inertiajs/inertia-laravel` v3 (installed with the package).
 
 ```bash
 composer require iso-doss/laravel-meridian
 php artisan meridian:install
 ```
 
-The install command publishes `config/meridian.php`, the migration and `App\Providers\MeridianServiceProvider`
-(registered in `bootstrap/providers.php`), then offers to run the migrations.
+The install command publishes `config/meridian.php`, the migration and `App\Providers\MeridianServiceProvider` (registered in `bootstrap/providers.php`), then offers to run the migrations.
 
-If not done yet, create the queue tables used by the database driver:
+If your application does not have them yet, create the tables of the database queue driver:
 
 ```bash
 php artisan make:queue-table
@@ -60,114 +123,113 @@ php artisan make:queue-batches-table
 php artisan migrate
 ```
 
-Make sure the scheduler runs (`php artisan schedule:work` locally, a cron entry in production): Meridian registers
-`meridian:snapshot` and `meridian:prune` automatically (disable with `meridian.schedule = false`).
+Meridian registers `meridian:snapshot` (every five minutes) and `meridian:prune` (hourly) in the scheduler: make sure it runs (`php artisan schedule:work` locally, a cron entry in production), or disable this with `meridian.schedule = false` and schedule them yourself.
 
-## Dashboard interface
+## Configuration
 
-```dotenv
-MERIDIAN_UI=inertia   # or blade
-```
+After installing Meridian, its configuration lives in `config/meridian.php`. Each option is documented in the file itself.
 
-The Inertia interface:
+### Environments and supervisors
 
-- has its own root view, Inertia middleware and asset version: your application's Inertia setup (shared props, SSR, root view) is never involved, even when it uses Inertia too. It requires `inertiajs/inertia-laravel` v3, installed with the package;
-- offers a light, dark or system theme (kept in the browser);
-- is translated in English and French: the language follows the application locale and can be changed from the header (kept in a cookie). Restrict the offered languages with `meridian.locales`;
-- refreshes its data every `meridian.poll` seconds (switch « Live » in the header).
-
-### Content-Security-Policy
-
-Both interfaces work under a strict CSP based on nonces (for instance `script-src 'nonce-…' 'strict-dynamic' 'self'`): when your application sets a nonce with `Vite::useCspNonce()`, Meridian puts it on its scripts and styles (and passes it to Inertia for the styles it injects). Nothing to configure, and no need to exempt Meridian's routes from your policy.
-
-### Switching back to the Blade interface
-
-Since v1.1.0 the React / Inertia interface is the default. To keep the previous Blade interface, set in your `.env`:
-
-```dotenv
-MERIDIAN_UI=blade
-```
-
-or, when `config/meridian.php` is published, `'ui' => 'blade'` (republish the config with `php artisan vendor:publish --tag=meridian-config --force` to get the new `ui` and `locales` keys). Clear the cached configuration afterwards if needed (`php artisan config:clear`).
-
-Both interfaces share the same URLs, route names, actions (retry, cancel, delete) and JSON API; only the pages change. The Blade interface also has the light / dark / system theme and the English / French language switcher (same browser setting and cookie as the Inertia interface).
-
-## Dashboard authorization
-
-The dashboard is available at `/meridian` and the JSON API at `/meridian/api`. Both are configurable in `config/meridian.php`:
-
-```php
-'route' => [
-    'api' => [
-        'namespace' => 'IsoDoss\Meridian\Http\Controllers',
-        'prefix' => env('MERIDIAN_API_PREFIX', 'meridian/api'),
-        'domain' => env('MERIDIAN_DOMAIN'),
-        'middleware' => ['web'],
-    ],
-    'web' => [
-        'namespace' => 'IsoDoss\Meridian\Http\Controllers',
-        'prefix' => env('MERIDIAN_PREFIX', 'meridian'),
-        'domain' => env('MERIDIAN_DOMAIN'),
-        'middleware' => ['web'],
-    ],
-],
-```
-
-The authorization middleware is always added on top of the configured middleware. In the `local` environment everybody can access it; in other environments
-access is granted by the `viewMeridian` gate defined in `app/Providers/MeridianServiceProvider.php`:
-
-```php
-protected function gate(): void
-{
-    Gate::define('viewMeridian', function ($user = null) {
-        return in_array(optional($user)->email, [
-            'admin@example.com',
-        ]);
-    });
-}
-```
-
-You can also use `Meridian::auth(fn (Request $request) => ...)` directly.
-
-## Running the workers
-
-You have two options.
-
-**1. Keep your current workers.** Run `php artisan queue:work database ...` with Supervisor/systemd as usual: jobs, metrics
-and workers will show up in the dashboard.
-
-**2. Let Meridian supervise them**, like Horizon. Configure the supervisors per environment in `config/meridian.php`:
+The `environments` option lists, for each environment of your application, the supervisors to run. A supervisor manages a group of worker processes processing one or more queues. The supervisors of the current environment (`APP_ENV`) are started; a `'*'` environment is used when none matches.
 
 ```php
 'environments' => [
     'production' => [
         'supervisor-1' => [
             'connection' => 'database',
-            'queue' => ['high', 'default', 'emails'],
-            'balance' => 'auto',      // "auto", "simple" or false
+            'queue' => ['default', 'emails', 'images'],
+            'balance' => 'auto',
             'minProcesses' => 1,
             'maxProcesses' => 10,
             'balanceMaxShift' => 1,
             'balanceCooldown' => 3,
             'tries' => 3,
-            'timeout' => 60,
+        ],
+
+        'reports' => [
+            'connection' => 'database',
+            'queue' => ['reports'],
+            'balance' => 'simple',
+            'maxProcesses' => 2,
+            'timeout' => 300,
+        ],
+    ],
+
+    'local' => [
+        'supervisor-1' => [
+            'maxProcesses' => 3,
         ],
     ],
 ],
 ```
 
-then run a single long-lived process (managed by Supervisor/systemd):
+The `defaults` option holds the values shared by every supervisor of the same name, merged with the values of the environment.
+
+### Balancing strategies
+
+| `balance` | Behaviour |
+| --- | --- |
+| `auto` (default) | Each queue gets its own pool of processes; Meridian moves processes towards the queues with the most work, between `minProcesses` per queue and `maxProcesses` in total. With `autoScalingStrategy: time` (default) the work of a queue is its pending jobs × their average runtime, with `size` only its number of pending jobs. `balanceMaxShift` processes are added or removed every `balanceCooldown` seconds. |
+| `simple` | `maxProcesses` is split evenly between the queues. |
+| `false` | `maxProcesses` workers process the queues in the order they are listed, like `queue:work --queue=high,default`. |
+
+Like with Horizon, the order of the queues does not set priorities with `auto` balancing: give a resource-heavy queue its own supervisor with a low `maxProcesses`.
+
+### Worker options
+
+| Option | Default | `queue:work` option |
+| --- | --- | --- |
+| `tries` | `1` | `--tries` |
+| `timeout` | `60` | `--timeout` (keep it a few seconds below `retry_after`) |
+| `backoff` | `0` | `--backoff` |
+| `memory` | `128` | `--memory` |
+| `sleep` | `3` | `--sleep` |
+| `maxJobs` | `0` | `--max-jobs` |
+| `maxTime` | `0` | `--max-time` |
+| `rest` | `0` | `--rest` |
+| `nice` | `0` | runs the workers with `nice -n` |
+| `force` | `false` | `--force` (process jobs in maintenance mode) |
+
+### Silenced jobs
+
+Completed jobs listed in the `silenced` option, implementing `IsoDoss\Meridian\Contracts\Silenced`, or carrying a tag of the `silenced_tags` option are not kept in the dashboard. Their failures always are.
+
+```php
+'silenced' => [
+    App\Jobs\PingHealthCheck::class,
+],
+
+'silenced_tags' => [
+    'notifications',
+],
+```
+
+## Running Meridian
+
+You have two options:
+
+1. **Keep your workers.** Run `php artisan queue:work database ...` with Supervisor or systemd as usual: jobs, metrics and workers show up in the dashboard.
+2. **Let Meridian supervise them**, like Horizon: run one long-lived process and Meridian starts, restarts and balances the `queue:work` processes of the current environment.
 
 ```bash
 php artisan meridian
 ```
 
-- `balance: auto` gives each queue its own pool and moves processes towards the queues with the most work
-  (`pending jobs × average runtime`, or only pending jobs with `autoScalingStrategy: size`), between `minProcesses` per queue and `maxProcesses` in total.
-- `balance: simple` splits `maxProcesses` evenly between the queues.
-- `balance: false` runs `maxProcesses` workers processing the queues in priority order.
+| Command | Description |
+| --- | --- |
+| `meridian` | Start the master supervisor |
+| `meridian:status` | Show the status, the supervisors and the workload |
+| `meridian:pause` / `meridian:continue` | Pause or resume the workers (`--all` for every host) |
+| `meridian:terminate` | Finish the running jobs, then stop the master supervisor (`--all` for every host) |
+| `meridian:snapshot` | Store a metrics snapshot, import the jobs pushed without event, check the wait times |
+| `meridian:prune` | Delete old completed and failed jobs, metrics and stale heartbeats |
 
-Supervisor configuration example:
+`php artisan meridian` requires the `pcntl` and `posix` extensions.
+
+### Deploying Meridian
+
+Keep `php artisan meridian` running with a process monitor such as Supervisor, and run `php artisan meridian:terminate` during each deployment: the running jobs finish, Meridian exits, and the process monitor restarts it with your new code.
 
 ```ini
 [program:meridian]
@@ -181,61 +243,121 @@ stdout_logfile=/var/www/app/storage/logs/meridian.log
 stopwaitsecs=3600
 ```
 
-On deploy, run `php artisan meridian:terminate`: the master finishes the running jobs, exits, and your process monitor
-restarts it with the new code.
+`stopwaitsecs` must be longer than your longest job.
 
-## Commands
+## The dashboard
 
-| Command | Description |
-| --- | --- |
-| `meridian` | Start the master supervisor |
-| `meridian:status` | Status, supervisors, workload |
-| `meridian:pause` / `meridian:continue` | Pause / resume the workers (`--all` for every host) |
-| `meridian:terminate` | Gracefully stop the master supervisor (`--all` for every host) |
-| `meridian:snapshot` | Store metrics, import unseen jobs, check long wait times |
-| `meridian:prune` | Delete old completed / failed jobs, metrics and stale heartbeats |
+The dashboard is available at `/meridian`. Its pages refresh themselves every `meridian.poll` seconds (switch « Live » in the header).
 
-## Tags and silenced jobs
+### Dashboard authorization
 
-Like Horizon, Eloquent models held by a job are tagged automatically (`App\Models\Order:15`). Define your own tags with a `tags()` method:
+In the `local` environment everybody can open the dashboard. In the other environments, access is granted by the `viewMeridian` gate of `app/Providers/MeridianServiceProvider.php`:
 
 ```php
-public function tags(): array
+protected function gate(): void
 {
-    return ['billing', 'customer:'.$this->customer->id];
+    Gate::define('viewMeridian', function ($user = null) {
+        return in_array(optional($user)->email, [
+            'taylor@example.com',
+        ]);
+    });
 }
 ```
 
-Completed jobs listed in `meridian.silenced`, implementing `IsoDoss\Meridian\Contracts\Silenced`, or having a tag
-listed in `meridian.silenced_tags` are not kept (failures always are).
+You may also call `Meridian::auth(fn (Request $request) => ...)` directly. The prefix, domain and middleware of the dashboard and of its API are configured in the `route` option (`MERIDIAN_PREFIX`, `MERIDIAN_API_PREFIX`, `MERIDIAN_DOMAIN`); the authorization middleware is always added on top of them.
+
+### Interfaces, themes and languages
+
+Two interfaces ship with Meridian:
+
+- **Inertia** (default): React, Inertia and shadcn/ui. It has its own root view, Inertia middleware and asset version: your application's Inertia setup (shared props, SSR, root view) is never involved, even when it uses Inertia too.
+- **Blade**: a lightweight server-rendered interface, with the same pages.
+
+Both offer a light, dark or system theme (kept in the browser) and are translated in English and French: the language follows the application locale and can be changed from the interface (kept in a cookie). Restrict the offered languages with the `locales` option.
+
+To use the Blade interface, set in your `.env`:
+
+```dotenv
+MERIDIAN_UI=blade
+```
+
+or `'ui' => 'blade'` in a published `config/meridian.php` (republish it with `php artisan vendor:publish --tag=meridian-config --force` to get the keys added since your version), then `php artisan config:clear` if the configuration is cached. Both interfaces share the same URLs, route names, actions and JSON API.
+
+### Content-Security-Policy
+
+Meridian works under a strict, nonce-based CSP such as `script-src 'nonce-…' 'strict-dynamic' 'self'`: when your application sets a nonce with `Vite::useCspNonce()`, Meridian puts it on its scripts and styles and passes it to Inertia. There is nothing to configure, and no need to exempt Meridian's routes from your policy.
+
+### JSON API
+
+The dashboard data is also available as JSON, behind the same authorization: `GET /meridian/api/stats`, `/meridian/api/workload`, `/meridian/api/jobs/{status?}?search=&queue=` and `/meridian/api/jobs/{uuid}`.
+
+## Tags
+
+Meridian tags jobs, mailables, broadcast events, notifications and queued event listeners like Horizon does. The Eloquent models held by a job are tagged automatically: a `RenderVideo` job holding the `App\Models\Video` with the id `1` gets the `App\Models\Video:1` tag. To tag a job yourself, give it a `tags` method:
+
+```php
+class RenderVideo implements ShouldQueue
+{
+    public function tags(): array
+    {
+        return ['render', 'video:'.$this->video->id];
+    }
+}
+```
+
+Search a tag from the jobs page to find every job carrying it.
 
 ## Notifications
 
-Configure thresholds in `meridian.waits` (`'database:default' => 60`, or `'*'` for all queues). When the oldest job
-waits longer, a `IsoDoss\Meridian\Events\LongWaitDetected` event is fired and, if `MERIDIAN_NOTIFY_MAIL` is set, an email is sent.
+When the oldest job of a queue waits longer than its threshold, Meridian fires an `IsoDoss\Meridian\Events\LongWaitDetected` event and, if `MERIDIAN_NOTIFY_MAIL` is set, sends an e-mail (at most once every `notifications.cooldown` minutes per queue). The thresholds, in seconds, are set per `connection:queue` in the `waits` option, `'*'` being the default one:
 
-## JSON API
+```php
+'waits' => [
+    'database:default' => 60,
+    'database:reports' => 600,
+    '*' => 120,
+],
+```
 
-`GET /meridian/api/stats`, `/meridian/api/workload`, `/meridian/api/jobs/{status?}?search=&queue=`, `/meridian/api/jobs/{uuid}`.
+Listen to the event to notify Slack or any other channel.
 
-## Notes
+## Metrics
 
-- Use a dedicated connection for Meridian's tables with `MERIDIAN_DB_CONNECTION` if you want to keep the monitoring writes away from your main database.
-- With **SQLite** and several workers, Laravel's own `DatabaseQueue::pop()` may hit `database is locked` errors. Enable WAL and a busy timeout
-  (`'journal_mode' => 'wal'`, `'busy_timeout' => 5000` in `config/database.php`) and prefer MySQL / PostgreSQL in production.
-- Each job costs 2–3 small writes in `meridian_jobs`. Tune `trim` and `store_payload` for very high volumes.
-- `pcntl` / `posix` are required for `php artisan meridian` (pause, continue, graceful termination).
+The metrics page shows, per job class and per queue, the jobs processed and failed, the failure rate, the average and max runtime and the average wait, over the last hour to the last seven days. Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
 
-## Testing
+## Retention
+
+`meridian:prune` deletes the completed jobs after `trim.completed` minutes (1 day by default), the failed ones after `trim.failed` minutes (7 days), the metric snapshots after `trim.metrics` minutes (7 days) and the stale heartbeats of workers and supervisors after `trim.workers` minutes. Pending and processing jobs are never pruned. Set `store_payload` to `false` to keep the table small on very busy queues.
+
+## How it works
+
+| Horizon (Redis) | Meridian (database) |
+| --- | --- |
+| Jobs stored in Redis by Horizon's own queue | Laravel's queue events (`JobQueued`, `JobProcessing`, `JobProcessed`, `JobFailed`, `JobReleasedAfterException`, `JobRetryRequested`) are recorded in a `meridian_jobs` table, keyed by the job UUID |
+| Workload read from Redis lists | Workload read from the `jobs` table: pending, delayed and reserved jobs, oldest available job |
+| Supervisors and workers in Redis | `meridian_supervisors` and `meridian_workers` tables (heartbeats) |
+| Commands through a Redis command queue | Commands written in `meridian_supervisors`, read by the master every second |
+| Metrics snapshots in Redis | `meridian:snapshot` aggregates them into `meridian_metrics` |
+
+Jobs inserted without event (`Queue::bulk()`, used by job batches, `pushRaw()`, jobs pushed by another application or before Meridian was installed) are imported from the `jobs` table when a batch is dispatched, when the dashboard is opened and at every snapshot. Recording never breaks your application: every write is guarded and its errors are only reported.
+
+A few notes:
+
+- Keep Meridian's tables on a dedicated connection with `MERIDIAN_DB_CONNECTION` to move the monitoring writes away from your main database. Each job costs two or three small writes.
+- With **SQLite** and several workers, Laravel's own `DatabaseQueue::pop()` may hit `database is locked` errors: enable WAL and a busy timeout (`'journal_mode' => 'wal'`, `'busy_timeout' => 5000`), and prefer MySQL or PostgreSQL in production.
+
+## Upgrading
+
+Every release and its upgrade notes are listed in the [changelog](CHANGELOG.md). Since v1.1.0 the React / Inertia interface is the default one; set `MERIDIAN_UI=blade` to keep the previous one.
+
+## Contributing
 
 ```bash
 composer test
 composer analyse
 ```
 
-### Front-end
-
-The interface lives in `resources/js` (React, TypeScript, Tailwind CSS v4, shadcn/ui) and is compiled into `dist/`, which is committed:
+The interface lives in `resources/js` (React, TypeScript, Tailwind CSS v4, shadcn/ui) and is compiled into `dist/`, which is committed. The CI checks that `dist/` matches the sources.
 
 ```bash
 npm ci
@@ -244,13 +366,17 @@ npm run typecheck
 npm test
 ```
 
-Texts go through `t('English text')`; add the French translation to `lang/fr.json` (a test fails when one is missing). The CI checks that `dist/` matches the sources.
+Texts go through `t('English text')` in React and `$t('English text')` in Blade; add their French translation to `lang/fr.json` (a test fails when one is missing).
+
+## Security Vulnerabilities
+
+Please report security vulnerabilities through the [security advisories](https://github.com/Iso-Doss/laravel-meridian/security/advisories/new) of the repository rather than in a public issue.
 
 ## Credits
 
-- Inspired by [laravel/horizon](https://github.com/laravel/horizon) (tag extraction is adapted from it).
+- Inspired by [Laravel Horizon](https://github.com/laravel/horizon), whose tag extraction is adapted.
 - Built on [spatie/package-skeleton-laravel](https://github.com/spatie/package-skeleton-laravel).
 
 ## License
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+Meridian is open-sourced software licensed under the [MIT license](LICENSE.md).

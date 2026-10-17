@@ -1,6 +1,6 @@
 {
     "name": "iso-doss/laravel-meridian",
-    "description": "A Horizon-like dashboard and supervisor for Laravel database queues.",
+    "description": "Horizon for the database queue driver: dashboard, metrics and code-driven supervisors for Laravel database queues.",
     "keywords": [
         "laravel",
         "queue",
