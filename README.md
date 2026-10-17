@@ -34,7 +34,7 @@ Monitoring never breaks your application: every write is wrapped and errors are 
 ## Installation
 
 ```bash
-composer require isodoss/laravel-meridian
+composer require iso-doss/laravel-meridian
 php artisan meridian:install
 ```
 
