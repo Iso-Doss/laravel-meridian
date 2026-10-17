@@ -2,6 +2,28 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.3.0 - 2026-10-17
+
+### Added
+
+- **Retry all failed jobs**: a « Retry all » button on the failed jobs page pushes back every failed job matching the current filters (queue, search), with a confirmation giving their number. Retry all the failed jobs of a queue, or of a customer by searching its tag. Large lists are processed by chunks of 500.
+- **Retry from the list**: every failed job of the job lists (failed jobs, batch details) has its own « Retry » button, no need to open its details. The actions column stays visible when the table scrolls horizontally on small screens.
+- After a bulk retry, the jobs that could not be retried (payload not stored and no longer in `failed_jobs`) are reported.
+
+Both the Inertia and the Blade interfaces get these actions, in English and French.
+
+### Fixed
+
+- Blade interface: the buttons placed in page titles (retry, delete) no longer take the title's font size.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration nor configuration change. If you published the Blade views of Meridian, republish them to get the new buttons.
+
 ## v1.2.0 - 2026-10-17
 
 ### Added
