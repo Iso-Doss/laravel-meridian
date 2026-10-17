@@ -10,3 +10,4 @@ parameters:
         # Package views ("meridian::...") are registered at runtime, Larastan cannot resolve them.
         - identifier: argument.type
           message: '#view-string#'
+          reportUnmatched: false

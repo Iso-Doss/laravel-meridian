@@ -6,6 +6,7 @@ use DateInterval;
 use DateTimeInterface;
 use Illuminate\Contracts\Queue\Job;
 use Illuminate\Events\Dispatcher;
+use Illuminate\Queue\Events\JobExceptionOccurred;
 use Illuminate\Queue\Events\JobFailed;
 use Illuminate\Queue\Events\JobProcessed;
 use Illuminate\Queue\Events\JobProcessing;
@@ -34,6 +35,14 @@ class RecordJobLifecycle
      */
     protected array $timers = [];
 
+    /**
+     * Last exception thrown by the jobs currently running in this process
+     * (JobReleasedAfterException only carries it since Laravel 13).
+     *
+     * @var array<string, string>
+     */
+    protected array $exceptions = [];
+
     public function __construct(protected WorkerHeartbeat $heartbeat) {}
 
     /**
@@ -45,6 +54,7 @@ class RecordJobLifecycle
             JobQueued::class => 'queued',
             JobProcessing::class => 'processing',
             JobProcessed::class => 'processed',
+            JobExceptionOccurred::class => 'exceptionOccurred',
             JobReleasedAfterException::class => 'released',
             JobFailed::class => 'failed',
             JobRetryRequested::class => 'retryRequested',
@@ -164,6 +174,13 @@ class RecordJobLifecycle
         });
     }
 
+    public function exceptionOccurred(JobExceptionOccurred $event): void
+    {
+        if (Meridian::watches($event->connectionName) && $uuid = $event->job->uuid()) {
+            $this->exceptions[$uuid] = (string) $event->exception;
+        }
+    }
+
     public function released(JobReleasedAfterException $event): void
     {
         $job = $event->job;
@@ -173,11 +190,12 @@ class RecordJobLifecycle
         }
 
         $runtime = $this->stopTimer($uuid);
+        $exception = $this->pullException($uuid);
 
         $this->safely(fn () => MonitoredJob::query()->where('uuid', $uuid)->update([
             'status' => MonitoredJob::PENDING,
             'runtime' => $runtime,
-            'exception' => $event->exception ? (string) $event->exception : null,
+            'exception' => $exception,
             'available_at' => time() + (int) ($event->backoff ?? 0),
             'updated_at' => time(),
         ]));
@@ -194,6 +212,7 @@ class RecordJobLifecycle
         $this->heartbeat->idle($event->connectionName, $job->getQueue(), processed: true);
 
         $runtime = $this->stopTimer($uuid);
+        unset($this->exceptions[$uuid]);
 
         $this->safely(function () use ($event, $job, $uuid, $runtime) {
             $updated = MonitoredJob::query()->where('uuid', $uuid)->update([
@@ -273,6 +292,15 @@ class RecordJobLifecycle
             is_numeric($delay) => $now + (int) $delay,
             default => $now,
         };
+    }
+
+    protected function pullException(string $uuid): ?string
+    {
+        $exception = $this->exceptions[$uuid] ?? null;
+
+        unset($this->exceptions[$uuid]);
+
+        return $exception;
     }
 
     protected function stopTimer(string $uuid): ?int
