@@ -2,6 +2,20 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.0.1 - 2026-10-17
+
+### Fixed
+
+- **MySQL / MariaDB**: the dashboard and the workload API (`/meridian/api/workload`) failed with a SQL syntax error, the workload query aliasing a column `delayed`, a reserved word there. The aliases are now suffixed (`pending_jobs`, `delayed_jobs`, `reserved_jobs`, `oldest_available`); the keys returned by `QueueRepository::workload()` and the API are unchanged. A test guards against reserved words used as aliases (the test suite runs on SQLite, which accepts them).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+
+```
+No migration nor configuration change.
+
 ## v1.0.0 - 2026-10-17
 
 First release of Meridian: a Horizon-like dashboard and supervisor for Laravel **database** queues.
@@ -29,4 +43,5 @@ First release of Meridian: a Horizon-like dashboard and supervisor for Laravel *
 ```bash
 composer require iso-doss/laravel-meridian
 php artisan meridian:install
+
 ```
