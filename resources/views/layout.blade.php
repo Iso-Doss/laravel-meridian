@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="robots" content="noindex, nofollow">
     <title>Meridian{{ isset($title) ? ' · '.$title : '' }} · {{ config('app.name') }}</title>
-    <style>@include('meridian::partials.styles')</style>
+    @php($nonce = \IsoDoss\Meridian\Support\Assets::nonceAttribute())
+    <style{!! $nonce !!}>@include('meridian::partials.styles')</style>
 </head>
 <body>
 <div class="app">
@@ -46,7 +47,7 @@
     </main>
 </div>
 
-<script>
+<script{!! $nonce !!}>
 (function () {
     var interval = {{ (int) config('meridian.poll', 5) }} * 1000;
     var toggle = document.getElementById('meridian-poll');

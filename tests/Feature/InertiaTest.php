@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\RouteCollection;
 use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Vite;
 use Inertia\Middleware as InertiaMiddleware;
 use Inertia\Testing\AssertableInertia as Assert;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
@@ -170,6 +171,21 @@ it('loads the assets in the root view', function () {
     $this->get('/meridian')
         ->assertSee('data-page="meridian"', false)
         ->assertSee('/meridian/assets/'.str_replace('assets/', '', Assets::entry()['js'][0]), false);
+});
+
+it('puts the CSP nonce of the application on its scripts and styles', function () {
+    Vite::useCspNonce('meridian-test-nonce');
+
+    $html = $this->get('/meridian')->assertOk()->getContent();
+
+    // The meta tag read by the client, the theme script, the stylesheet and the module script.
+    expect(substr_count($html, 'nonce="meridian-test-nonce"'))->toBe(3 + count(Assets::entry()['css']))
+        ->and($html)->toContain('<meta property="csp-nonce" nonce="meridian-test-nonce">')
+        ->and($html)->toMatch('/<script type="module" nonce="meridian-test-nonce" src=/');
+});
+
+it('adds no nonce when the application uses none', function () {
+    $this->get('/meridian')->assertOk()->assertDontSee('nonce=', false);
 });
 
 it('does not run the application Inertia middleware on its pages', function () {

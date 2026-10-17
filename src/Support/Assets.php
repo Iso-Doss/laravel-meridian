@@ -2,6 +2,8 @@
 
 namespace IsoDoss\Meridian\Support;
 
+use Illuminate\Support\Facades\Vite;
+
 /**
  * The compiled assets of the Inertia interface (dist/), served by Meridian.
  */
@@ -13,6 +15,25 @@ class Assets
      * @var array<string, array<string, mixed>>|null
      */
     protected static ?array $manifest = null;
+
+    /**
+     * The Content-Security-Policy nonce of the current request, set by the
+     * application with Vite::useCspNonce() (null when it uses no nonce).
+     */
+    public static function nonce(): ?string
+    {
+        return Vite::cspNonce();
+    }
+
+    /**
+     * The nonce as an HTML attribute (" nonce=\"...\""), or an empty string.
+     */
+    public static function nonceAttribute(): string
+    {
+        $nonce = static::nonce();
+
+        return $nonce === null || $nonce === '' ? '' : ' nonce="'.e($nonce).'"';
+    }
 
     public static function directory(): string
     {

@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Vite;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\QueueRepository;
@@ -124,4 +125,13 @@ it('returns a job through the api', function () {
         ->assertJsonPath('uuid', $job->uuid);
 
     $this->getJson('/meridian/api/jobs/pending')->assertOk()->assertJsonCount(1, 'data');
+});
+
+it('puts the CSP nonce of the application on the Blade interface', function () {
+    Vite::useCspNonce('meridian-test-nonce');
+
+    $html = $this->get('/meridian')->assertOk()->getContent();
+
+    expect($html)->toContain('<style nonce="meridian-test-nonce">')
+        ->and($html)->toContain('<script nonce="meridian-test-nonce">');
 });

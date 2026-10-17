@@ -76,6 +76,10 @@ The Inertia interface:
 - is translated in English and French: the language follows the application locale and can be changed from the header (kept in a cookie). Restrict the offered languages with `meridian.locales`;
 - refreshes its data every `meridian.poll` seconds (switch « Live » in the header).
 
+### Content-Security-Policy
+
+Both interfaces work under a strict CSP based on nonces (for instance `script-src 'nonce-…' 'strict-dynamic' 'self'`): when your application sets a nonce with `Vite::useCspNonce()`, Meridian puts it on its scripts and styles (and passes it to Inertia for the styles it injects). Nothing to configure, and no need to exempt Meridian's routes from your policy.
+
 ### Switching back to the Blade interface
 
 Since v1.1.0 the React / Inertia interface is the default. To keep the previous Blade interface, set in your `.env`:
