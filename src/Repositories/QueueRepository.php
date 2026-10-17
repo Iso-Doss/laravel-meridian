@@ -40,10 +40,11 @@ class QueueRepository
             ->flatMap(function (string $connection) use ($now, $processes) {
                 $rows = $this->jobsTable($connection)
                     ->selectRaw('queue')
-                    ->selectRaw('SUM(CASE WHEN reserved_at IS NULL AND available_at <= ? THEN 1 ELSE 0 END) AS pending', [$now])
-                    ->selectRaw('SUM(CASE WHEN reserved_at IS NULL AND available_at > ? THEN 1 ELSE 0 END) AS delayed', [$now])
-                    ->selectRaw('SUM(CASE WHEN reserved_at IS NOT NULL THEN 1 ELSE 0 END) AS reserved')
-                    ->selectRaw('MIN(CASE WHEN reserved_at IS NULL AND available_at <= ? THEN available_at END) AS oldest', [$now])
+                    // Aliases suffixed: « delayed » is a reserved word of MySQL / MariaDB.
+                    ->selectRaw('SUM(CASE WHEN reserved_at IS NULL AND available_at <= ? THEN 1 ELSE 0 END) AS pending_jobs', [$now])
+                    ->selectRaw('SUM(CASE WHEN reserved_at IS NULL AND available_at > ? THEN 1 ELSE 0 END) AS delayed_jobs', [$now])
+                    ->selectRaw('SUM(CASE WHEN reserved_at IS NOT NULL THEN 1 ELSE 0 END) AS reserved_jobs')
+                    ->selectRaw('MIN(CASE WHEN reserved_at IS NULL AND available_at <= ? THEN available_at END) AS oldest_available', [$now])
                     ->groupBy('queue')
                     ->get()
                     ->keyBy('queue');
@@ -60,10 +61,10 @@ class QueueRepository
                     return [
                         'connection' => $connection,
                         'queue' => $queue,
-                        'pending' => (int) ($row->pending ?? 0),
-                        'delayed' => (int) ($row->delayed ?? 0),
-                        'reserved' => (int) ($row->reserved ?? 0),
-                        'wait' => isset($row->oldest) ? max(0, $now - (int) $row->oldest) : 0,
+                        'pending' => (int) ($row->pending_jobs ?? 0),
+                        'delayed' => (int) ($row->delayed_jobs ?? 0),
+                        'reserved' => (int) ($row->reserved_jobs ?? 0),
+                        'wait' => isset($row->oldest_available) ? max(0, $now - (int) $row->oldest_available) : 0,
                         'processes' => (int) ($processes[$connection.':'.$queue] ?? 0),
                     ];
                 });

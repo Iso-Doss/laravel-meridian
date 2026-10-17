@@ -1,7 +1,9 @@
 <?php
 
+use Illuminate\Support\Facades\DB;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\QueueRepository;
 use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 use IsoDoss\Meridian\Tests\Fixtures\TaggedJob;
@@ -46,6 +48,24 @@ it('shows the dashboard stats and workload', function () {
         ->assertOk()
         ->assertJsonFragment(['queue' => 'emails', 'pending' => 1])
         ->assertJsonFragment(['queue' => 'default', 'pending' => 1]);
+});
+
+it('reads the workload without a reserved word of MySQL as alias', function () {
+    SuccessfulJob::dispatch();
+
+    $queries = [];
+    DB::listen(function ($query) use (&$queries) {
+        $queries[] = $query->sql;
+    });
+
+    $workload = app(QueueRepository::class)->workload();
+
+    expect($workload->firstWhere('queue', 'default'))->toMatchArray(['pending' => 1, 'delayed' => 0, 'reserved' => 0]);
+
+    // « delayed » (and every column alias of MySQL's reserved words) breaks the query there.
+    foreach ($queries as $sql) {
+        expect($sql)->not->toMatch('/\bas\s+[`"]?(delayed|status|key|order|range|rank)[`"]?\b/i');
+    }
 });
 
 it('shows a job with its payload and exception', function () {
