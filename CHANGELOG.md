@@ -2,6 +2,30 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.5.0 - 2026-10-17
+
+### Added
+
+- **Control one supervisor at a time**, like Horizon: `meridian:pause-supervisor {name}` and `meridian:continue-supervisor {name}` pause or resume the workers of one supervisor while the others keep working (`--all` for every host). Each supervisor now has its own status in the dashboard.
+- `meridian:supervisors` lists the running supervisors, `meridian:supervisor-status {name}` shows the status of one.
+- **Cleanup commands**: `meridian:forget {uuid}` / `meridian:forget --all` delete a failed job, or all of them, from Meridian and from the failed jobs table; `meridian:clear {connection?} --queue=` deletes the jobs waiting on a queue (jobs being processed finish normally; asks for confirmation in production, `--force` to skip it); `meridian:clear-metrics` deletes every metrics snapshot.
+- **Retry history**: the page of a retried job lists every retry (single, « Retry all » or `queue:retry`) with its date, status, end, runtime and exception. The history is deleted with the job.
+
+### Changed
+
+- Blade interface: the dashboard cards are laid out on four columns on wide screens.
+- README: new screenshots (dashboard, monitoring, job data and retries, Blade interface).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+The new migration creates the `meridian_job_retries` table (the migrations you already published are skipped). Until it runs, Meridian works as before, without recording the retry history. If you published the Blade views, republish them.
+
 ## v1.4.0 - 2026-10-17
 
 Horizon parity release.
