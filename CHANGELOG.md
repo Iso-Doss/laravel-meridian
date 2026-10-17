@@ -2,6 +2,22 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.1.1 - 2026-10-17
+
+### Fixed
+
+- **Content-Security-Policy**: the dashboard now works under a strict, nonce-based CSP (for instance `script-src 'nonce-…' 'strict-dynamic' 'self'`). When the application sets a nonce with `Vite::useCspNonce()`, Meridian puts it on its scripts and styles and passes it to Inertia for the styles it injects, in both the Inertia and the Blade interfaces. Previously the scripts were blocked and the page stayed blank, unless Meridian's routes were exempted from the policy.
+
+If you exempted Meridian's routes from your CSP to use v1.1.0, you can remove that exception.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration nor configuration change.
+
 ## v1.1.0 - 2026-10-17
 
 ### Added
