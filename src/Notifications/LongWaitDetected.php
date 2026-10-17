@@ -28,6 +28,6 @@ class LongWaitDetected extends Notification
             ->subject(config('app.name').': long queue wait detected')
             ->greeting('Oh no! Something needs your attention.')
             ->line("The \"{$this->queue}\" queue on the \"{$this->connection}\" connection has a wait time of {$this->seconds} seconds.")
-            ->action('Open Meridian', url(config('meridian.path', 'meridian')));
+            ->action('Open Meridian', route('meridian.dashboard'));
     }
 }

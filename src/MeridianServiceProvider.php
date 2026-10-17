@@ -88,14 +88,31 @@ class MeridianServiceProvider extends PackageServiceProvider
             return;
         }
 
-        Route::group([
-            'domain' => config('meridian.domain'),
-            'prefix' => config('meridian.path', 'meridian'),
-            'middleware' => array_merge((array) config('meridian.middleware', ['web']), [Authorize::class]),
-            'as' => 'meridian.',
-        ], function () {
+        Route::group($this->routeGroup('api', 'meridian.api.'), function () {
+            $this->loadRoutesFrom(__DIR__.'/../routes/api.php');
+        });
+
+        Route::group($this->routeGroup('web', 'meridian.'), function () {
             $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
         });
+    }
+
+    /**
+     * Build the route group attributes from the "meridian.route.{api|web}" config.
+     *
+     * @return array<string, mixed>
+     */
+    protected function routeGroup(string $type, string $name): array
+    {
+        $config = (array) config("meridian.route.{$type}", []);
+
+        return array_filter([
+            'namespace' => $config['namespace'] ?? null,
+            'prefix' => trim((string) ($config['prefix'] ?? ''), '/'),
+            'domain' => $config['domain'] ?? null,
+            'middleware' => array_merge((array) ($config['middleware'] ?? []), [Authorize::class]),
+            'as' => $name,
+        ], fn ($value) => $value !== null && $value !== '');
     }
 
     protected function registerSchedule(): void

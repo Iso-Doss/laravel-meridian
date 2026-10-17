@@ -1,5 +1,5 @@
 {
-    "name": "isodoss/laravel-meridian",
+    "name": "iso-doss/laravel-meridian",
     "description": "A Horizon-like dashboard and supervisor for Laravel database queues.",
     "keywords": [
         "laravel",
@@ -13,7 +13,7 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "IsoDoss",
+            "name": "DOSSOU Israël (Iso-Doss)",
             "email": "dossou.israel48@gmail.com",
             "role": "Developer"
         }

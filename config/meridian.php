@@ -4,20 +4,33 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Dashboard
+    | Routes
     |--------------------------------------------------------------------------
     |
-    | The URI path, optional domain and middleware of the Meridian dashboard.
-    | Access is additionally protected by the "viewMeridian" gate (see the
-    | published App\Providers\MeridianServiceProvider).
+    | Namespace, URI prefix, optional domain and middleware of the dashboard
+    | pages ("web") and of the JSON API ("api"). Access to both is also
+    | protected by the "viewMeridian" gate (see the published
+    | App\Providers\MeridianServiceProvider).
+    |
+    | The API uses the "web" middleware by default so that the dashboard
+    | session is available to the authorization gate.
     |
     */
 
-    'domain' => env('MERIDIAN_DOMAIN'),
-
-    'path' => env('MERIDIAN_PATH', 'meridian'),
-
-    'middleware' => ['web'],
+    'route' => [
+        'api' => [
+            'namespace' => 'IsoDoss\Meridian\Http\Controllers',
+            'prefix' => env('MERIDIAN_API_PREFIX', 'meridian/api'),
+            'domain' => env('MERIDIAN_DOMAIN'),
+            'middleware' => ['web'],
+        ],
+        'web' => [
+            'namespace' => 'IsoDoss\Meridian\Http\Controllers',
+            'prefix' => env('MERIDIAN_PREFIX', 'meridian'),
+            'domain' => env('MERIDIAN_DOMAIN'),
+            'middleware' => ['web'],
+        ],
+    ],
 
     // Number of seconds between two automatic refreshes of the dashboard (0 = off).
     'poll' => 5,

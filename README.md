@@ -55,7 +55,26 @@ Make sure the scheduler runs (`php artisan schedule:work` locally, a cron entry 
 
 ## Dashboard authorization
 
-The dashboard is available at `/meridian`. In the `local` environment everybody can access it; in other environments
+The dashboard is available at `/meridian` and the JSON API at `/meridian/api`. Both are configurable in `config/meridian.php`:
+
+```php
+'route' => [
+    'api' => [
+        'namespace' => 'IsoDoss\Meridian\Http\Controllers',
+        'prefix' => env('MERIDIAN_API_PREFIX', 'meridian/api'),
+        'domain' => env('MERIDIAN_DOMAIN'),
+        'middleware' => ['web'],
+    ],
+    'web' => [
+        'namespace' => 'IsoDoss\Meridian\Http\Controllers',
+        'prefix' => env('MERIDIAN_PREFIX', 'meridian'),
+        'domain' => env('MERIDIAN_DOMAIN'),
+        'middleware' => ['web'],
+    ],
+],
+```
+
+The authorization middleware is always added on top of the configured middleware. In the `local` environment everybody can access it; in other environments
 access is granted by the `viewMeridian` gate defined in `app/Providers/MeridianServiceProvider.php`:
 
 ```php
