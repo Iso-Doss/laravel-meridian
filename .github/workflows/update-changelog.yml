@@ -18,11 +18,16 @@ jobs:
         with:
           ref: main
 
+      # Inserts the release notes verbatim (changelog-updater-action rewrites
+      # the Markdown and breaks fenced code blocks).
       - name: Update Changelog
-        uses: stefanzweifel/changelog-updater-action@v1
-        with:
-          latest-version: ${{ github.event.release.name }}
-          release-notes: ${{ github.event.release.body }}
+        env:
+          RELEASE_NAME: ${{ github.event.release.name || github.event.release.tag_name }}
+          RELEASE_BODY: ${{ github.event.release.body }}
+          RELEASE_DATE: ${{ github.event.release.published_at }}
+        run: |
+          export RELEASE_DATE="${RELEASE_DATE%%T*}"
+          python3 .github/scripts/update-changelog.py CHANGELOG.md
 
       - name: Commit updated CHANGELOG
         uses: stefanzweifel/git-auto-commit-action@v7

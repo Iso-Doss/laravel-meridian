@@ -43,5 +43,4 @@ First release of Meridian: a Horizon-like dashboard and supervisor for Laravel *
 ```bash
 composer require iso-doss/laravel-meridian
 php artisan meridian:install
-
 ```
