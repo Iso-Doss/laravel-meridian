@@ -10,6 +10,7 @@ on:
       - 'vite.config.ts'
       - 'tsconfig.json'
       - 'dist/**'
+      - '.nvmrc'
       - '.github/workflows/assets.yml'
   pull_request:
     paths:
@@ -20,6 +21,7 @@ on:
       - 'vite.config.ts'
       - 'tsconfig.json'
       - 'dist/**'
+      - '.nvmrc'
       - '.github/workflows/assets.yml'
 
 jobs:
@@ -34,7 +36,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v5
         with:
-          node-version: 22
+          node-version-file: .nvmrc
           cache: npm
 
       - name: Install dependencies

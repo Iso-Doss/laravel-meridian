@@ -1,6 +1,7 @@
-@import 'tailwindcss';
+@import 'tailwindcss' source(none);
 
 @source '../js';
+@source '../views/inertia.blade.php';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

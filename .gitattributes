@@ -27,4 +27,5 @@
 /vite.config.ts     export-ignore
 /tsconfig.json      export-ignore
 /.npmrc             export-ignore
+/.nvmrc             export-ignore
 /dist/**            linguist-generated
