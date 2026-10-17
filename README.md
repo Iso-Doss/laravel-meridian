@@ -1,5 +1,12 @@
 # Meridian — a Horizon-like dashboard for Laravel **database** queues
 
+[![Latest Version on Packagist](https://img.shields.io/packagist/v/iso-doss/laravel-meridian.svg?style=flat-square)](https://packagist.org/packages/iso-doss/laravel-meridian)
+[![Tests](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/run-tests.yml?query=branch%3Amain)
+[![PHPStan](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/phpstan.yml?branch=main&label=phpstan&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/phpstan.yml?query=branch%3Amain)
+[![Code Style](https://img.shields.io/github/actions/workflow/status/Iso-Doss/laravel-meridian/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/Iso-Doss/laravel-meridian/actions/workflows/fix-php-code-style-issues.yml?query=branch%3Amain)
+[![Total Downloads](https://img.shields.io/packagist/dt/iso-doss/laravel-meridian.svg?style=flat-square)](https://packagist.org/packages/iso-doss/laravel-meridian)
+[![License](https://img.shields.io/packagist/l/iso-doss/laravel-meridian.svg?style=flat-square)](LICENSE.md)
+
 [Laravel Horizon](https://laravel.com/docs/horizon) only works with Redis. Meridian brings the same
 experience to applications using the `database` queue driver:
 
