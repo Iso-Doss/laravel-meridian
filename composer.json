@@ -1,6 +1,6 @@
 {
     "name": "iso-doss/laravel-meridian",
-    "description": "Horizon for the database queue driver: dashboard, metrics and code-driven supervisors for Laravel database queues.",
+    "description": "Horizon for Laravel database queues: dashboard, metrics and auto-scaling supervisors, without Redis and without changing your jobs. React or Blade UI, dark mode, English & French, strict CSP ready.",
     "keywords": [
         "laravel",
         "queue",
