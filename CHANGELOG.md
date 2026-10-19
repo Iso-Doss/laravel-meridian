@@ -2,6 +2,24 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.6.1 - 2026-10-19
+
+Documentation and package metadata release. No code change.
+
+### Changed
+
+- **README**: a « What sets Meridian apart » summary under the introduction (no change to your jobs, a real supervisor with auto-scaling, Horizon's features without Redis nor Horizon's internals, React or Blade interfaces in English and French, nothing to build, strict CSP), and a new « Meridian and the other packages » section comparing Meridian with job monitors, Horizon running on a database and admin panel plugins.
+- README: clearer « Actions » and « Supervisors » descriptions.
+- **Package description** (`composer.json`, shown on Packagist) aligned with the GitHub repository.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration nor configuration change.
+
 ## v1.6.0 - 2026-10-17
 
 Completes the parity with Laravel Horizon.
