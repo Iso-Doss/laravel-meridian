@@ -19,6 +19,15 @@ Meridian gives the Laravel **database** queue driver what [Laravel Horizon](http
 
 All of your worker configuration lives in a single, simple configuration file. `php artisan meridian` starts and supervises your `queue:work` processes and balances them between your queues according to their workload, exactly like Horizon, so your whole team can scale the workers from source control.
 
+**What sets Meridian apart**
+
+- **Nothing to change in your jobs.** Every job is recorded from Laravel's own queue events: no trait, no interface, no base class. Batches, `Queue::bulk()` and `pushRaw()` jobs included.
+- **A real supervisor, not only a dashboard.** `php artisan meridian` starts, restarts and auto-scales your `queue:work` processes (`auto`, `simple` or `log` strategies), with per-supervisor pause and resume, memory limit and graceful termination.
+- **Horizon's features on the database driver**, without Redis and without depending on Horizon's internals: monitored tags, retry history, silenced jobs, metrics, long-wait notifications by e-mail, Slack or SMS.
+- **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English and French**.
+- **Nothing to build.** The compiled assets ship with the package: your application needs neither Node nor an Inertia setup, and never conflicts with its own.
+- **Production-ready**: works under a strict, nonce-based **Content-Security-Policy**, on MySQL, MariaDB, PostgreSQL and SQLite, with Laravel 12 and 13.
+
 <p align="center">
     <picture>
         <source media="(prefers-color-scheme: dark)" srcset="art/dashboard-dark.png">
@@ -27,6 +36,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 </p>
 
 - [Why Meridian?](#why-meridian)
+  - [Meridian and the other packages](#meridian-and-the-other-packages)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
 - [Configuration](#configuration)
@@ -58,13 +68,28 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 - **Job history**: pending, processing, completed and failed jobs, with their tags, readable data (the properties of the job), payload, exception, attempts, wait time and runtime.
 - **Monitored tags**: watch a customer, an order or any tag; its jobs are listed together and kept longer.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
-- **Actions**: retry one failed job or all of them, with the history of each retry, (those matching the filters of the list), cancel a pending job, retry the failed jobs of a batch.
+- **Actions**: retry one failed job, or all the failed jobs matching the filters of the list, with the history of each retry; cancel a pending job; retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
-- **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`.
+- **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`, for all supervisors or one at a time.
 - **Notifications** by e-mail, Slack or SMS when a queue waits too long.
 - **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, English and French, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
+
+### Meridian and the other packages
+
+Other packages cover part of this ground. Meridian is built to cover all of it in one place:
+
+| | Meridian | Job monitors | Horizon on a database | Admin panel plugins |
+| --- | --- | --- | --- | --- |
+| Records every job without changing it | ✅ | Often needs a trait on each job | ✅ | Only pending and failed jobs |
+| Supervises and auto-scales the workers | ✅ | ❌ | ✅ | ❌ |
+| Monitored tags, retry history, metrics | ✅ | Partly | ✅ | ❌ |
+| Independent from Horizon's internals | ✅ | ✅ | ❌ (rebinds Horizon's services) | ✅ |
+| Standalone dashboard, no admin panel required | ✅ | ✅ | ✅ | ❌ (Filament, Nova…) |
+| Strict CSP, English and French, Blade or React | ✅ | ❌ | ❌ | Depends on the panel |
+
+Choose Meridian if you want the full Horizon experience on the `database` driver, from the dashboard to the supervision of your workers, without Redis and without adding anything to your jobs.
 
 ## Screenshots
 
