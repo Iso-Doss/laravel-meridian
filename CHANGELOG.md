@@ -2,6 +2,23 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.6.2 - 2026-10-20
+
+Maintenance release. No change to the package code nor to the compiled assets.
+
+### Changed
+
+- **Build**: the dashboard assets are now built with **Node 22** (`.nvmrc`), Node 20 having reached its end of life in April 2026. The compiled `dist/` is identical, and your application still needs no Node at all.
+- CI: `actions/setup-node` bumped from v5 to v7 (#1).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration nor configuration change.
+
 ## v1.6.1 - 2026-10-19
 
 Documentation and package metadata release. No code change.
