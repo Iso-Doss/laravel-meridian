@@ -3,6 +3,7 @@
 use Illuminate\Support\Facades\DB;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 
@@ -57,7 +58,7 @@ it('refuses to clear a connection it does not watch', function () {
 });
 
 it('clears the metrics', function () {
-    Meridian::table('metrics')->insert(['type' => 'job', 'name' => 'A', 'bucket' => time(), 'period' => 300]);
+    Meridian::table('metrics')->insert(PrimaryKey::fill('meridian_metrics', ['type' => 'job', 'name' => 'A', 'bucket' => time(), 'period' => 300]));
 
     $this->artisan('meridian:clear-metrics')->expectsOutputToContain('1 metrics snapshot(s) deleted.')->assertSuccessful();
 

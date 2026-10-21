@@ -197,7 +197,7 @@ export interface ScheduleRun {
 }
 
 export interface ScheduledTask {
-    id: number;
+    id: number | string;
     name: string;
     expression: string;
     timezone: string | null;

@@ -15,7 +15,7 @@ return new class extends Migration
     {
         $schema = Schema::connection($this->getConnection());
 
-        if (! $schema->hasColumn('meridian_jobs', 'cancel_requested_at')) {
+        if ($schema->hasTable('meridian_jobs') && ! $schema->hasColumn('meridian_jobs', 'cancel_requested_at')) {
             $schema->table('meridian_jobs', function (Blueprint $table) {
                 $table->unsignedInteger('cancel_requested_at')->nullable()->comment('a running job asked to stop');
             });
@@ -24,8 +24,12 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection($this->getConnection())->table('meridian_jobs', function (Blueprint $table) {
-            $table->dropColumn('cancel_requested_at');
-        });
+        $schema = Schema::connection($this->getConnection());
+
+        if ($schema->hasColumn('meridian_jobs', 'cancel_requested_at')) {
+            $schema->table('meridian_jobs', function (Blueprint $table) {
+                $table->dropColumn('cancel_requested_at');
+            });
+        }
     }
 };

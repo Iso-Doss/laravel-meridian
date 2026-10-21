@@ -5,6 +5,7 @@ namespace IsoDoss\Meridian\Repositories;
 use Illuminate\Database\QueryException;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Support\PrimaryKey;
 
 /**
  * Tags whose jobs are listed on the monitoring page and kept longer
@@ -27,7 +28,7 @@ class MonitoredTagRepository
 
     public function monitor(string $tag): void
     {
-        Meridian::table('monitored_tags')->insertOrIgnore(['tag' => $tag, 'created_at' => time()]);
+        Meridian::table('monitored_tags')->insertOrIgnore(PrimaryKey::fill('meridian_monitored_tags', ['tag' => $tag, 'created_at' => time()]));
     }
 
     public function stopMonitoring(string $tag): void

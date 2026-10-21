@@ -220,6 +220,16 @@ php artisan migrate
 
 Meridian registers `meridian:snapshot` (every five minutes) and `meridian:prune` (hourly) in the scheduler: make sure it runs (`php artisan schedule:work` locally, a cron entry in production), or disable this with `meridian.schedule = false` and schedule them yourself.
 
+### Primary keys
+
+Meridian's tables use UUID primary keys by default (UUIDv7, which grow with time, so sorting by `id` keeps the insertion order). To use ULIDs or auto-incrementing integers instead, set the type **before running the migrations**:
+
+```ini
+MERIDIAN_PRIMARY_KEY=uuid   # default; or "ulid", or "id" for auto-incrementing integers
+```
+
+The migrations check `Schema::hasTable()` and `Schema::hasColumn()` before creating anything, so running them again is harmless. Tables that already exist keep their key type: Meridian reads the type of each table's `id` column and writes to it accordingly, so an application installed before this option keeps its integer keys without any change.
+
 ## Configuration
 
 After installing Meridian, its configuration lives in `config/meridian.php`. Each option is documented in the file itself.

@@ -11,6 +11,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Support\Migrations;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use Throwable;
 
 /**
@@ -86,7 +87,7 @@ class ScheduleRepository
         }
 
         if ($rows !== []) {
-            Meridian::table('schedule_tasks')->upsert(array_values($rows), ['name'], [
+            Meridian::table('schedule_tasks')->upsert(PrimaryKey::fillMany('meridian_schedule_tasks', array_values($rows)), ['name'], [
                 'expression', 'timezone', 'repeat_seconds', 'background', 'without_overlapping', 'on_one_server', 'next_run_at', 'last_seen_at',
             ]);
         }
@@ -105,22 +106,30 @@ class ScheduleRepository
     }
 
     /**
-     * @return int The id of the run.
+     * @return int|string The id of the run.
      */
-    public function started(Event $event): int
+    public function started(Event $event): int|string
     {
-        return (int) Meridian::table('schedule_runs')->insertGetId([
+        $row = [
             'task' => static::name($event),
             'status' => self::RUNNING,
             'host' => Meridian::hostname(),
             'started_at' => time(),
-        ]);
+        ];
+
+        if (($id = PrimaryKey::generate('meridian_schedule_runs')) === null) {
+            return (int) Meridian::table('schedule_runs')->insertGetId($row);
+        }
+
+        Meridian::table('schedule_runs')->insert(['id' => $id] + $row);
+
+        return $id;
     }
 
     /**
      * @param  array<string, mixed>  $values
      */
-    public function update(int $run, array $values): void
+    public function update(int|string $run, array $values): void
     {
         Meridian::table('schedule_runs')->where('id', $run)->update($values);
     }
@@ -140,13 +149,13 @@ class ScheduleRepository
 
     public function skipped(Event $event): void
     {
-        Meridian::table('schedule_runs')->insert([
+        Meridian::table('schedule_runs')->insert(PrimaryKey::fill('meridian_schedule_runs', [
             'task' => static::name($event),
             'status' => self::SKIPPED,
             'host' => Meridian::hostname(),
             'started_at' => time(),
             'finished_at' => time(),
-        ]);
+        ]));
     }
 
     /**
@@ -183,7 +192,7 @@ class ScheduleRepository
             $missed = $this->missedRun($task, $history->first());
 
             return [
-                'id' => (int) $task->id,
+                'id' => PrimaryKey::cast($task->id),
                 'name' => (string) $task->name,
                 'expression' => (string) $task->expression,
                 'timezone' => $task->timezone,
@@ -207,17 +216,17 @@ class ScheduleRepository
     /**
      * @return array<string, mixed>|null
      */
-    public function task(int $id): ?array
+    public function task(int|string $id): ?array
     {
-        $task = collect($this->tasks())->firstWhere('id', $id);
+        $task = collect($this->tasks())->first(fn (array $task) => (string) $task['id'] === (string) $id);
 
         if ($task) {
             return $task;
         }
 
-        $row = Migrations::hasSchedule() ? Meridian::table('schedule_tasks')->where('id', $id)->first() : null;
+        $row = Migrations::hasSchedule() && PrimaryKey::valid('meridian_schedule_tasks', $id) ? Meridian::table('schedule_tasks')->where('id', $id)->first() : null;
 
-        return $row ? ['id' => (int) $row->id, 'name' => (string) $row->name, 'expression' => (string) $row->expression, 'timezone' => $row->timezone, 'repeat_seconds' => null, 'background' => (bool) $row->background, 'without_overlapping' => (bool) $row->without_overlapping, 'on_one_server' => (bool) $row->on_one_server, 'next_run_at' => null, 'last_run' => null, 'recent' => [], 'missed_at' => null, 'health' => 'never'] : null;
+        return $row ? ['id' => PrimaryKey::cast($row->id), 'name' => (string) $row->name, 'expression' => (string) $row->expression, 'timezone' => $row->timezone, 'repeat_seconds' => null, 'background' => (bool) $row->background, 'without_overlapping' => (bool) $row->without_overlapping, 'on_one_server' => (bool) $row->on_one_server, 'next_run_at' => null, 'last_run' => null, 'recent' => [], 'missed_at' => null, 'health' => 'never'] : null;
     }
 
     public function runs(string $task, int $perPage = 50): LengthAwarePaginator

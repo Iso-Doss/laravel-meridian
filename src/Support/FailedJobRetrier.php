@@ -33,12 +33,12 @@ class FailedJobRetrier
         $totals = ['retried' => 0, 'skipped' => 0];
 
         // Walk the ids forward: retried jobs leave the "failed" status while we go.
-        $lastId = 0;
+        $lastId = null;
 
         do {
             $jobs = (clone $query)
                 ->where('status', MonitoredJob::FAILED)
-                ->where('id', '>', $lastId)
+                ->when($lastId !== null, fn ($query) => $query->where('id', '>', $lastId))
                 ->orderBy('id')
                 ->limit(500)
                 ->get();
@@ -47,7 +47,7 @@ class FailedJobRetrier
                 break;
             }
 
-            $lastId = (int) $jobs->last()->id;
+            $lastId = $jobs->last()->id;
             $result = $this->retryMany($jobs->all());
             $totals['retried'] += $result['retried'];
             $totals['skipped'] += $result['skipped'];

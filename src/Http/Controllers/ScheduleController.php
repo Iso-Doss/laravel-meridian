@@ -29,7 +29,7 @@ class ScheduleController extends Controller
         ], fn (array $data) => $data);
     }
 
-    public function show(int $id): View|Response
+    public function show(string $id): View|Response
     {
         $task = $this->schedule->task($id);
 

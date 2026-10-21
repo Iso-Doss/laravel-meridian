@@ -82,7 +82,7 @@ class PendingJobsImporter
             ->values();
 
         foreach ($records->chunk(200) as $chunk) {
-            MonitoredJob::query()->insertOrIgnore($chunk->all());
+            MonitoredJob::query()->insertOrIgnore(PrimaryKey::fillMany('meridian_jobs', $chunk->all()));
         }
 
         return $records->count();

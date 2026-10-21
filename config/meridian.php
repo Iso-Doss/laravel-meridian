@@ -67,6 +67,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Primary Keys
+    |--------------------------------------------------------------------------
+    |
+    | Type of the "id" column of the tables created by Meridian's migrations:
+    | "uuid" (UUIDv7, ordered by time), "ulid" or "id" (auto-incrementing
+    | integer). Set it before running the migrations: existing tables keep
+    | their type, and Meridian writes to them accordingly.
+    |
+    */
+
+    'primary_key' => env('MERIDIAN_PRIMARY_KEY', 'uuid'),
+
+    /*
+    |--------------------------------------------------------------------------
     | Watched queue connections
     |--------------------------------------------------------------------------
     |

@@ -17,15 +17,33 @@ return new class extends Migration
     {
         $schema = Schema::connection($this->getConnection());
 
-        if ($schema->hasColumn('meridian_jobs', 'fingerprint')) {
+        if (! $schema->hasTable('meridian_jobs')) {
             return;
         }
 
-        $schema->table('meridian_jobs', function (Blueprint $table) {
-            $table->string('fingerprint', 40)->nullable()->index()->comment('groups the failures with the same cause');
-            $table->unsignedTinyInteger('progress')->nullable()->comment('percent');
-            $table->string('progress_message')->nullable();
-        });
+        $fingerprint = ! $schema->hasColumn('meridian_jobs', 'fingerprint');
+        $progress = ! $schema->hasColumn('meridian_jobs', 'progress');
+        $message = ! $schema->hasColumn('meridian_jobs', 'progress_message');
+
+        if ($fingerprint || $progress || $message) {
+            $schema->table('meridian_jobs', function (Blueprint $table) use ($fingerprint, $progress, $message) {
+                if ($fingerprint) {
+                    $table->string('fingerprint', 40)->nullable()->index()->comment('groups the failures with the same cause');
+                }
+
+                if ($progress) {
+                    $table->unsignedTinyInteger('progress')->nullable()->comment('percent');
+                }
+
+                if ($message) {
+                    $table->string('progress_message')->nullable();
+                }
+            });
+        }
+
+        if (! $fingerprint) {
+            return;
+        }
 
         // Group the failed jobs already recorded.
         DB::connection($this->getConnection())->table('meridian_jobs')
@@ -43,9 +61,21 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::connection($this->getConnection())->table('meridian_jobs', function (Blueprint $table) {
-            $table->dropIndex(['fingerprint']);
-            $table->dropColumn(['fingerprint', 'progress', 'progress_message']);
-        });
+        $schema = Schema::connection($this->getConnection());
+
+        if ($schema->hasColumn('meridian_jobs', 'fingerprint')) {
+            $schema->table('meridian_jobs', function (Blueprint $table) {
+                $table->dropIndex(['fingerprint']);
+                $table->dropColumn('fingerprint');
+            });
+        }
+
+        $columns = array_values(array_filter(['progress', 'progress_message'], fn (string $column) => $schema->hasColumn('meridian_jobs', $column)));
+
+        if ($columns !== []) {
+            $schema->table('meridian_jobs', function (Blueprint $table) use ($columns) {
+                $table->dropColumn($columns);
+            });
+        }
     }
 };

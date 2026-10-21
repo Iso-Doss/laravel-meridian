@@ -69,5 +69,6 @@ class Migrations
     public static function flush(): void
     {
         static::$checked = [];
+        PrimaryKey::flush();
     }
 }

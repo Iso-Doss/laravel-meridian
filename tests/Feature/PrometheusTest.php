@@ -1,6 +1,7 @@
 <?php
 
 use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use IsoDoss\Meridian\Tests\Fixtures\FailingJob;
 use IsoDoss\Meridian\Tests\Fixtures\SuccessfulJob;
 
@@ -35,8 +36,8 @@ it('exposes the metrics in the Prometheus text format', function () {
     FailingJob::dispatch();
     $this->work(2);
     SuccessfulJob::dispatch()->onQueue('emails');
-    Meridian::table('schedule_tasks')->insert(['name' => 'reports "daily"', 'expression' => '0 6 * * *', 'first_seen_at' => time(), 'last_seen_at' => time()]);
-    Meridian::table('schedule_runs')->insert(['task' => 'reports "daily"', 'status' => 'success', 'runtime' => 1250, 'started_at' => $started = time() - 100, 'finished_at' => $started + 1]);
+    Meridian::table('schedule_tasks')->insert(PrimaryKey::fill('meridian_schedule_tasks', ['name' => 'reports "daily"', 'expression' => '0 6 * * *', 'first_seen_at' => time(), 'last_seen_at' => time()]));
+    Meridian::table('schedule_runs')->insert(PrimaryKey::fill('meridian_schedule_runs', ['task' => 'reports "daily"', 'status' => 'success', 'runtime' => 1250, 'started_at' => $started = time() - 100, 'finished_at' => $started + 1]));
 
     $response = $this->get('/meridian/prometheus')
         ->assertOk()

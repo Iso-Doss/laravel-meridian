@@ -20,6 +20,7 @@ use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\ExceptionSummary;
 use IsoDoss\Meridian\Support\JobPayload;
 use IsoDoss\Meridian\Support\Migrations;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use IsoDoss\Meridian\Support\Tags;
 use Throwable;
 
@@ -96,7 +97,7 @@ class RecordJobLifecycle
             $now = time();
             $job = $event->job;
 
-            MonitoredJob::query()->upsert([[
+            MonitoredJob::query()->upsert([PrimaryKey::fill('meridian_jobs', [
                 'uuid' => $payload['uuid'],
                 'connection' => $event->connectionName,
                 'queue' => $this->queueName($event->connectionName, $event->queue),
@@ -110,7 +111,7 @@ class RecordJobLifecycle
                 'queued_at' => $now,
                 'available_at' => $this->availableAt($event->delay, $now),
                 'updated_at' => $now,
-            ]], ['uuid'], ['job_id', 'status', 'available_at', 'updated_at']);
+            ])], ['uuid'], ['job_id', 'status', 'available_at', 'updated_at']);
         });
     }
 
@@ -301,7 +302,7 @@ class RecordJobLifecycle
         $now = time();
         $command = JobPayload::command($payload);
 
-        MonitoredJob::query()->insertOrIgnore(array_merge([
+        MonitoredJob::query()->insertOrIgnore(PrimaryKey::fill('meridian_jobs', array_merge([
             'uuid' => $job->uuid(),
             'connection' => $connection,
             'queue' => $job->getQueue(),
@@ -319,7 +320,7 @@ class RecordJobLifecycle
             'reserved_at' => $now,
             'failed_at' => $status === MonitoredJob::FAILED ? $now : null,
             'updated_at' => $now,
-        ], $this->fingerprint($exception)));
+        ], $this->fingerprint($exception))));
     }
 
     /**

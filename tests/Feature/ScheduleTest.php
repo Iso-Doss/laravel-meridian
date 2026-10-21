@@ -12,6 +12,7 @@ use IsoDoss\Meridian\Events\ScheduleTaskFailed;
 use IsoDoss\Meridian\Events\ScheduleTaskMissed;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Repositories\ScheduleRepository;
+use IsoDoss\Meridian\Support\PrimaryKey;
 
 beforeEach(function () {
     // Leave out the tasks Meridian schedules itself.
@@ -90,12 +91,12 @@ it('finishes the tasks run in background', function () {
 it('detects the missed runs', function () {
     Event::fake([ScheduleTaskMissed::class]);
 
-    Meridian::table('schedule_tasks')->insert([
+    Meridian::table('schedule_tasks')->insert(PrimaryKey::fillMany('meridian_schedule_tasks', [
         ['name' => 'every-minute', 'expression' => '* * * * *', 'first_seen_at' => time() - 3600, 'last_seen_at' => time()],
         ['name' => 'just-added', 'expression' => '* * * * *', 'first_seen_at' => time(), 'last_seen_at' => time()],
         ['name' => 'healthy', 'expression' => '* * * * *', 'first_seen_at' => time() - 3600, 'last_seen_at' => time()],
-    ]);
-    Meridian::table('schedule_runs')->insert(['task' => 'healthy', 'status' => 'success', 'started_at' => time() - 30, 'finished_at' => time() - 29]);
+    ]));
+    Meridian::table('schedule_runs')->insert(PrimaryKey::fill('meridian_schedule_runs', ['task' => 'healthy', 'status' => 'success', 'started_at' => time() - 30, 'finished_at' => time() - 29]));
     config()->set('meridian.schedule_grace', 1);
 
     $tasks = collect(app(ScheduleRepository::class)->tasks())->keyBy('name');
@@ -154,10 +155,10 @@ it('shows the scheduled tasks and their runs', function () {
 });
 
 it('prunes the old runs', function () {
-    Meridian::table('schedule_runs')->insert([
+    Meridian::table('schedule_runs')->insert(PrimaryKey::fillMany('meridian_schedule_runs', [
         ['task' => 'old', 'status' => 'success', 'started_at' => time() - 8 * 86400],
         ['task' => 'recent', 'status' => 'success', 'started_at' => time() - 60],
-    ]);
+    ]));
 
     $this->artisan('meridian:prune')->expectsOutputToContain('1 scheduled task runs')->assertSuccessful();
 

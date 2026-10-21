@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use IsoDoss\Meridian\Support\PrimaryKey;
 
 return new class extends Migration
 {
@@ -13,9 +14,11 @@ return new class extends Migration
 
     public function up(): void
     {
-        if (! Schema::connection($this->getConnection())->hasTable('meridian_audit_logs')) {
-            Schema::connection($this->getConnection())->create('meridian_audit_logs', function (Blueprint $table) {
-                $table->id();
+        $schema = Schema::connection($this->getConnection());
+
+        if (! $schema->hasTable('meridian_audit_logs')) {
+            $schema->create('meridian_audit_logs', function (Blueprint $table) {
+                PrimaryKey::define($table);
                 $table->string('action', 50)->index();
                 $table->string('subject')->nullable();
                 $table->text('details')->nullable();

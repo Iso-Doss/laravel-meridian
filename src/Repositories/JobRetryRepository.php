@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Repositories;
 
 use Illuminate\Support\Facades\Schema;
 use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use Throwable;
 
 /**
@@ -36,11 +37,11 @@ class JobRetryRepository
 
         $now = time();
 
-        Meridian::table('job_retries')->insert(array_map(fn (string $uuid) => [
+        Meridian::table('job_retries')->insert(PrimaryKey::fillMany('meridian_job_retries', array_map(fn (string $uuid) => [
             'job_uuid' => $uuid,
             'status' => 'pending',
             'retried_at' => $now,
-        ], $uuids));
+        ], $uuids)));
     }
 
     /**

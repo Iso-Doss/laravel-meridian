@@ -5,9 +5,10 @@ namespace IsoDoss\Meridian\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use IsoDoss\Meridian\Support\PrimaryKey;
 
 /**
- * @property int $id
+ * @property int|string $id
  * @property string $uuid
  * @property string $connection
  * @property string $queue
@@ -85,6 +86,28 @@ class MonitoredJob extends Model
     public function getConnectionName(): ?string
     {
         return config('meridian.database');
+    }
+
+    /**
+     * The key is a UUID, a ULID or an integer ("meridian.primary_key").
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (self $job) {
+            if ($job->getKey() === null && ($id = PrimaryKey::generate($job->getTable())) !== null) {
+                $job->setAttribute($job->getKeyName(), $id);
+            }
+        });
+    }
+
+    public function getIncrementing(): bool
+    {
+        return ! PrimaryKey::generated($this->getTable());
+    }
+
+    public function getKeyType(): string
+    {
+        return PrimaryKey::generated($this->getTable()) ? 'string' : 'int';
     }
 
     /**

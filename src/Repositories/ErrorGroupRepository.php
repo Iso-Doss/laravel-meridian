@@ -25,7 +25,7 @@ class ErrorGroupRepository
 
         $rows = $this->failed($queue)
             ->groupBy('fingerprint')
-            ->selectRaw('fingerprint, COUNT(*) AS jobs_count, MIN(failed_at) AS first_seen, MAX(failed_at) AS last_seen, MAX(id) AS last_id')
+            ->selectRaw('fingerprint, COUNT(*) AS jobs_count, MIN(failed_at) AS first_seen, MAX(failed_at) AS last_seen')
             ->orderByDesc('jobs_count')
             ->orderByDesc('last_seen')
             ->limit($limit)
@@ -35,7 +35,17 @@ class ErrorGroupRepository
             return [];
         }
 
-        $samples = MonitoredJob::query()->whereIn('id', $rows->pluck('last_id'))->get(['id', 'uuid', 'exception'])->keyBy('id');
+        // The last failure of each group (MAX(id) does not exist for the UUIDs of PostgreSQL).
+        $samples = $this->failed($queue)
+            ->where(function ($query) use ($rows) {
+                foreach ($rows as $row) {
+                    $query->orWhere(fn ($query) => $query->where('fingerprint', $row->fingerprint)->where('failed_at', $row->last_seen));
+                }
+            })
+            ->orderByDesc('id')
+            ->get(['fingerprint', 'uuid', 'exception'])
+            ->unique('fingerprint')
+            ->keyBy('fingerprint');
 
         $names = $this->failed($queue)
             ->whereIn('fingerprint', $rows->pluck('fingerprint'))
@@ -44,7 +54,7 @@ class ErrorGroupRepository
             ->groupBy('fingerprint');
 
         return $rows->map(function (object $row) use ($samples, $names) {
-            $sample = $samples[$row->last_id] ?? null;
+            $sample = $samples[$row->fingerprint] ?? null;
             $summary = ExceptionSummary::parse($sample?->exception) ?? ['class' => 'Exception', 'message' => '', 'file' => null, 'line' => null];
             $jobs = collect($names[$row->fingerprint] ?? []);
 

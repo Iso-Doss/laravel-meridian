@@ -6,6 +6,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Support\Migrations;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use Throwable;
 
 /**
@@ -50,14 +51,14 @@ class AuditLogRepository
             $request = app()->bound('request') ? request() : null;
             $http = $request?->route() !== null;
 
-            Meridian::table('audit_logs')->insert([
+            Meridian::table('audit_logs')->insert(PrimaryKey::fill('meridian_audit_logs', [
                 'action' => $action,
                 'subject' => $subject === null ? null : mb_substr($subject, 0, 255),
                 'details' => ($details = array_filter($details, fn ($value) => $value !== null && $value !== '')) === [] ? null : json_encode($details),
                 'user' => $http ? static::identify($request->user()) : 'console',
                 'ip' => $http ? $request->ip() : null,
                 'created_at' => time(),
-            ]);
+            ]));
         } catch (Throwable $e) {
             report($e);
         }

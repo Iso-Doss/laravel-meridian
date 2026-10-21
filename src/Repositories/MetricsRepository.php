@@ -5,6 +5,7 @@ namespace IsoDoss\Meridian\Repositories;
 use Illuminate\Support\Collection;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Support\PrimaryKey;
 
 /**
  * Throughput / runtime statistics computed from "meridian_jobs" (live)
@@ -255,7 +256,7 @@ class MetricsRepository
 
         if ($rows !== []) {
             Meridian::table('metrics')->upsert(
-                $rows,
+                PrimaryKey::fillMany('meridian_metrics', $rows),
                 ['type', 'name', 'bucket'],
                 ['period', 'processed', 'failed', 'runtime', 'wait']
             );

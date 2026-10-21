@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Cache;
 use IsoDoss\Meridian\Events\ScheduleTaskFailed;
 use IsoDoss\Meridian\Repositories\ScheduleRepository;
 use IsoDoss\Meridian\Support\Migrations;
+use IsoDoss\Meridian\Support\PrimaryKey;
 use Throwable;
 
 /**
@@ -23,7 +24,7 @@ class RecordScheduledTasks
     /**
      * The run id of the tasks started by this process.
      *
-     * @var array<int, int>
+     * @var array<int, int|string>
      */
     protected array $runs = [];
 
@@ -118,7 +119,7 @@ class RecordScheduledTasks
 
             $failed = (int) $event->task->exitCode !== 0;
 
-            $this->schedule->update((int) $run->id, [
+            $this->schedule->update(PrimaryKey::cast($run->id), [
                 'status' => $failed ? ScheduleRepository::FAILED : ScheduleRepository::SUCCEEDED,
                 'exit_code' => $event->task->exitCode === null ? null : (int) $event->task->exitCode,
                 'runtime' => max(0, time() - (int) $run->started_at) * 1000,

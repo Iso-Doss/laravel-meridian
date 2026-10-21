@@ -44,7 +44,7 @@ Route::get('errors/export', [ErrorsController::class, 'export'])->name('errors.e
 
 // Scheduled tasks...
 Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');
-Route::get('schedule/{id}', [ScheduleController::class, 'show'])->whereNumber('id')->name('schedule.show');
+Route::get('schedule/{id}', [ScheduleController::class, 'show'])->where('id', '[0-9A-Za-z-]+')->name('schedule.show');
 
 // Audit log...
 Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
