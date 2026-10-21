@@ -114,6 +114,7 @@ return [
         'metrics' => 10080,   // 7 days of metric snapshots
         'workers' => 60,      // stale worker / supervisor heartbeats
         'monitored' => 10080, // jobs carrying a monitored tag (7 days)
+        'audit' => 43200,     // audit log entries (30 days)
     ],
 
     /*
@@ -129,6 +130,31 @@ return [
 
     'waits' => [
         'database:default' => 60,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Alerts
+    |--------------------------------------------------------------------------
+    |
+    | Checked by "meridian:snapshot" (every 5 minutes). Each alert fires an
+    | event and, when routes are configured below, a notification.
+    |
+    | failure_rate: percentage of the jobs of a queue failed during the last
+    | "window" minutes, once at least "failure_rate_minimum" jobs ran (0 = off).
+    | failures: number of failed jobs of a queue during the window (0 = off).
+    | no_workers: jobs are waiting but no worker is running.
+    | long_running: a job has been running for more seconds than this (0 = off).
+    |
+    */
+
+    'alerts' => [
+        'window' => 5,
+        'failure_rate' => 25,
+        'failure_rate_minimum' => 10,
+        'failures' => 0,
+        'no_workers' => true,
+        'long_running' => 0,
     ],
 
     'notifications' => [

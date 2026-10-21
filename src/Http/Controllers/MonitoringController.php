@@ -9,6 +9,8 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Inertia\Response;
 use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
+use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\MonitoredTagRepository;
 use IsoDoss\Meridian\Support\Translator;
 
@@ -16,10 +18,12 @@ class MonitoringController extends Controller
 {
     use RendersPages;
 
-    public function __construct(protected MonitoredTagRepository $tags) {}
+    public function __construct(protected MonitoredTagRepository $tags, protected AuditLogRepository $audit) {}
 
-    public function index(): View|Response
+    public function index(Request $request): View|Response
     {
+        $canManage = Meridian::canManage($request);
+
         return $this->page('monitoring.index', 'Monitoring/Index', [
             'tags' => $this->tags->withCounts(),
             'ready' => $this->tags->isReady(),
@@ -28,8 +32,8 @@ class MonitoringController extends Controller
                 'url' => route('meridian.jobs.index', ['tag' => $tag['tag']]),
             ], $data['tags']),
             'ready' => $data['ready'],
-            'store_url' => route('meridian.monitoring.store'),
-            'destroy_url' => route('meridian.monitoring.destroy'),
+            'store_url' => $canManage ? route('meridian.monitoring.store') : null,
+            'destroy_url' => $canManage ? route('meridian.monitoring.destroy') : null,
         ]);
     }
 
@@ -38,6 +42,7 @@ class MonitoringController extends Controller
         $tag = trim((string) $request->validate(['tag' => ['required', 'string', 'max:255']])['tag']);
 
         $this->tags->monitor($tag);
+        $this->audit->record('tag.monitored', $tag);
 
         return back()->with('meridian.success', Translator::get('The tag :tag is now monitored.', ['tag' => $tag]));
     }
@@ -47,6 +52,7 @@ class MonitoringController extends Controller
         $tag = (string) $request->validate(['tag' => ['required', 'string']])['tag'];
 
         $this->tags->stopMonitoring($tag);
+        $this->audit->record('tag.unmonitored', $tag);
 
         return back()->with('meridian.success', Translator::get('The tag :tag is no longer monitored.', ['tag' => $tag]));
     }

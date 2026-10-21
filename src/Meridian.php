@@ -7,6 +7,7 @@ use Illuminate\Database\ConnectionInterface;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class Meridian
 {
@@ -14,6 +15,11 @@ class Meridian
      * The callback that should be used to authenticate dashboard users.
      */
     public static ?Closure $authUsing = null;
+
+    /**
+     * The callback that determines who can act on the jobs and queues.
+     */
+    public static ?Closure $manageUsing = null;
 
     /**
      * Routes of the long wait notifications, set in a service provider.
@@ -94,6 +100,35 @@ class Meridian
         return (bool) (static::$authUsing ?: function () {
             return app()->environment('local');
         })($request);
+    }
+
+    /**
+     * Register the callback that determines who can act on the jobs and
+     * queues (retry, delete, cancel, monitor tags). The others only read.
+     */
+    public static function manage(Closure $callback): self
+    {
+        static::$manageUsing = $callback;
+
+        return new self;
+    }
+
+    /**
+     * Determine if the given request can act on the jobs and queues: the
+     * Meridian::manage() callback, else the "manageMeridian" gate when it is
+     * defined, else everybody who can open the dashboard.
+     */
+    public static function canManage(Request $request): bool
+    {
+        if (static::$manageUsing) {
+            return (bool) (static::$manageUsing)($request);
+        }
+
+        if (Gate::has('manageMeridian')) {
+            return Gate::check('manageMeridian', [$request->user()]);
+        }
+
+        return true;
     }
 
     /**

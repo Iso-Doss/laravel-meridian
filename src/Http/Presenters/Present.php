@@ -5,9 +5,11 @@ namespace IsoDoss\Meridian\Http\Presenters;
 use Illuminate\Bus\Batch;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Carbon;
+use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Supervisor;
 use IsoDoss\Meridian\Models\Worker;
+use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobData;
 
@@ -39,8 +41,11 @@ class Present
             'queued_at' => static::time($job->queued_at),
             'completed_at' => static::time($job->completed_at),
             'failed_at' => static::time($job->failed_at),
+            'progress' => $job->status === MonitoredJob::PROCESSING ? $job->progress : null,
+            'progress_message' => $job->status === MonitoredJob::PROCESSING ? $job->progress_message : null,
+            'remaining' => static::remaining($job),
             'url' => route('meridian.jobs.show', $job->uuid),
-            'retry_url' => $job->status === MonitoredJob::FAILED ? route('meridian.jobs.retry', $job->uuid) : null,
+            'retry_url' => $job->status === MonitoredJob::FAILED && static::canManage() ? route('meridian.jobs.retry', $job->uuid) : null,
         ];
 
         if (! $details) {
@@ -57,8 +62,54 @@ class Present
             'retry_history' => app(JobRetryRepository::class)->history($job->uuid),
             'exception' => $job->exception,
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
-            'delete_url' => $job->status !== MonitoredJob::PROCESSING ? route('meridian.jobs.destroy', $job->uuid) : null,
+            'delete_url' => $job->status !== MonitoredJob::PROCESSING && static::canManage() ? route('meridian.jobs.destroy', $job->uuid) : null,
+            'error_group' => static::errorGroup($job),
         ]);
+    }
+
+    /**
+     * Estimated seconds before a running job that reports its progress completes.
+     */
+    public static function remaining(MonitoredJob $job): ?int
+    {
+        $progress = $job->progress;
+
+        if ($job->status !== MonitoredJob::PROCESSING || ! $job->reserved_at || $progress === null || $progress <= 0 || $progress >= 100) {
+            return null;
+        }
+
+        $elapsed = max(0, time() - $job->reserved_at->getTimestamp());
+
+        return (int) round($elapsed * (100 - $progress) / $progress);
+    }
+
+    /**
+     * The other failed jobs with the same cause.
+     *
+     * @return array{count: int, url: string}|null
+     */
+    protected static function errorGroup(MonitoredJob $job): ?array
+    {
+        if ($job->status !== MonitoredJob::FAILED || ! $job->fingerprint) {
+            return null;
+        }
+
+        return [
+            'count' => app(ErrorGroupRepository::class)->countFor($job->fingerprint),
+            'url' => route('meridian.jobs.index', ['status' => MonitoredJob::FAILED, 'error' => $job->fingerprint]),
+        ];
+    }
+
+    /**
+     * Whether the visitor can act on the jobs (computed once per request).
+     */
+    public static function canManage(): bool
+    {
+        static $cache = [];
+
+        $request = request();
+
+        return $cache[spl_object_id($request)] ??= Meridian::canManage($request);
     }
 
     /**
@@ -124,7 +175,7 @@ class Present
             'finished_at' => static::time($batch->finishedAt),
             'cancelled_at' => static::time($batch->cancelledAt),
             'url' => route('meridian.batches.show', $batch->id),
-            'retry_url' => $batch->failedJobs > 0 ? route('meridian.batches.retry', $batch->id) : null,
+            'retry_url' => $batch->failedJobs > 0 && static::canManage() ? route('meridian.batches.retry', $batch->id) : null,
         ];
     }
 

@@ -104,6 +104,14 @@ h1 .btn { font-size: 14px; font-weight: 500; }
 .progress { height: 6px; background: var(--bg); border-radius: 99px; overflow: hidden; min-width: 120px; display: flex; }
 .progress span { display: block; height: 100%; }
 .progress .ok { background: var(--ok); } .progress .bad { background: var(--bad); }
+.job-progress { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-top: 4px; font-size: 12px; color: var(--muted); }
+progress.bar { appearance: none; -webkit-appearance: none; width: 96px; height: 6px; border: 0; border-radius: 99px; background: var(--bg); overflow: hidden; }
+progress.bar::-webkit-progress-bar { background: var(--bg); border-radius: 99px; }
+progress.bar::-webkit-progress-value { background: var(--accent); border-radius: 99px; }
+progress.bar::-moz-progress-bar { background: var(--accent); border-radius: 99px; }
+.readonly { display: inline-block; margin: 0 0 12px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); }
+.error-message { margin-top: 2px; overflow-wrap: anywhere; }
+.error-file { font-size: 11px; color: var(--muted); }
 .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); color: var(--muted); }
 @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; }

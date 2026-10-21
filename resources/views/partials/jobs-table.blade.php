@@ -1,5 +1,5 @@
 @use('IsoDoss\Meridian\Support\Format')
-@php($retryable = collect($jobs->items())->contains(fn ($job) => $job->status === 'failed'))
+@php($retryable = $canManage && collect($jobs->items())->contains(fn ($job) => $job->status === 'failed'))
 <div class="table-wrap">
     <table>
         <thead>
@@ -25,6 +25,7 @@
                 <td>
                     <span class="badge {{ $job->status }}">{{ $t(Format::status($job->isDelayed() ? 'delayed' : $job->status)) }}</span>
                     @if ($job->retries) <span class="muted" title="{{ $t('Manual retries') }}">↻{{ $job->retries }}</span> @endif
+                    @include('meridian::partials.job-progress')
                 </td>
                 <td class="num">{{ $job->attempts }}</td>
                 <td title="{{ Format::date($job->queued_at, $locale) }}">{{ Format::ago($job->queued_at, $locale) }}</td>

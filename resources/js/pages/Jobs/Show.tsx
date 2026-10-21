@@ -2,6 +2,7 @@ import { Link } from '@inertiajs/react';
 import { RotateCcw, Trash2 } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { ConfirmAction } from '@/components/confirm-action';
+import { JobProgress } from '@/components/job-progress';
 import { Tags } from '@/components/jobs-table';
 import { Layout } from '@/components/layout';
 import { StatusBadge } from '@/components/status-badge';
@@ -97,6 +98,11 @@ export default function JobShow({ job }: { job: JobDetails }) {
                     {job.failed_at && <Row label={t('Failed at')}>{formatDateTime(job.failed_at, locale)}</Row>}
                     <Row label={t('Wait')}>{formatSeconds(job.wait)}</Row>
                     <Row label={t('Runtime')}>{formatRuntime(job.runtime, locale)}</Row>
+                    {job.progress !== null && (
+                        <Row label={t('Progress')}>
+                            <JobProgress job={job} detailed />
+                        </Row>
+                    )}
                 </dl>
             </Card>
 
@@ -104,6 +110,11 @@ export default function JobShow({ job }: { job: JobDetails }) {
                 <Card className="mt-6 border-destructive/30">
                     <CardHeader>
                         <CardTitle className="text-destructive">{t('Exception')}</CardTitle>
+                        {job.error_group && job.error_group.count > 1 && (
+                            <Link href={job.error_group.url} className="text-sm text-primary hover:underline">
+                                {t(':count failed jobs with the same error', { count: job.error_group.count })}
+                            </Link>
+                        )}
                     </CardHeader>
                     <CardContent>
                         <pre className="max-h-[28rem] overflow-auto rounded-lg bg-muted p-4 font-mono text-xs leading-relaxed break-words whitespace-pre-wrap">

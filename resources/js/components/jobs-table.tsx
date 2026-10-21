@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
 import { ConfirmAction } from '@/components/confirm-action';
+import { JobProgress } from '@/components/job-progress';
 import { Pagination } from '@/components/pagination';
 import { StatusBadge } from '@/components/status-badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -86,6 +87,11 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                                         </span>
                                     )}
                                 </span>
+                                {job.progress !== null && (
+                                    <div className="mt-1.5">
+                                        <JobProgress job={job} />
+                                    </div>
+                                )}
                             </TableCell>
                             <TableCell className="text-right tabular-nums">{job.attempts}</TableCell>
                             <TableCell title={formatDateTime(job.queued_at, locale)}>{formatRelative(job.queued_at, locale)}</TableCell>

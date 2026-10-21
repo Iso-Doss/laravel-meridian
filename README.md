@@ -24,6 +24,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 - **Nothing to change in your jobs.** Every job is recorded from Laravel's own queue events: no trait, no interface, no base class. Batches, `Queue::bulk()` and `pushRaw()` jobs included.
 - **A real supervisor, not only a dashboard.** `php artisan meridian` starts, restarts and auto-scales your `queue:work` processes (`auto`, `simple` or `log` strategies), with per-supervisor pause and resume, memory limit and graceful termination.
 - **Horizon's features on the database driver**, without Redis and without depending on Horizon's internals: monitored tags, retry history, silenced jobs, metrics, long-wait notifications by e-mail, Slack or SMS.
+- **Beyond Horizon**: failed jobs grouped by cause, alerts on failure rates, missing workers and long jobs, job progress, read-only access and an audit log.
 - **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English and French**.
 - **Nothing to build.** The compiled assets ship with the package: your application needs neither Node nor an Inertia setup, and never conflicts with its own.
 - **Production-ready**: works under a strict, nonce-based **Content-Security-Policy**, on MySQL, MariaDB, PostgreSQL and SQLite, with Laravel 12 and 13.
@@ -48,12 +49,17 @@ All of your worker configuration lives in a single, simple configuration file. `
   - [Deploying Meridian](#deploying-meridian)
 - [The dashboard](#the-dashboard)
   - [Dashboard authorization](#dashboard-authorization)
+  - [Read-only access](#read-only-access)
+  - [Audit log](#audit-log)
   - [Interfaces, themes and languages](#interfaces-themes-and-languages)
   - [Content-Security-Policy](#content-security-policy)
   - [JSON API](#json-api)
 - [Tags](#tags)
   - [Monitored tags](#monitored-tags)
+- [Errors](#errors)
+- [Job progress](#job-progress)
 - [Notifications](#notifications)
+  - [Alerts](#alerts)
 - [Metrics](#metrics)
 - [Retention](#retention)
 - [How it works](#how-it-works)
@@ -66,14 +72,17 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 
 - **Dashboard**: jobs per minute, jobs of the past hour, failures, pending and delayed jobs, max wait time, slowest and busiest queues, throughput chart, workload per queue, supervisors and workers.
 - **Job history**: pending, processing, completed and failed jobs, with their tags, readable data (the properties of the job), payload, exception, attempts, wait time and runtime.
+- **Errors**: the failed jobs grouped by cause (same exception thrown at the same line), with their number, first and last occurrence; retry a whole group in one click.
 - **Monitored tags**: watch a customer, an order or any tag; its jobs are listed together and kept longer.
+- **Job progress**: a job reports `$this->progress(42)` and the dashboard shows a progress bar and the estimated remaining time.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
 - **Actions**: retry one failed job, or all the failed jobs matching the filters of the list, with the history of each retry; cancel a pending job; retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
 - **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`, for all supervisors or one at a time.
-- **Notifications** by e-mail, Slack or SMS when a queue waits too long.
+- **Alerts** by e-mail, Slack or SMS when a queue waits too long, fails too often, has no worker, or when a job runs for too long.
+- **Read-only access and audit log**: choose who can retry, delete or cancel jobs, and see who did what, and when.
 - **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, English and French, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
 
 ### Meridian and the other packages
@@ -85,6 +94,7 @@ Other packages cover part of this ground. Meridian is built to cover all of it i
 | Records every job without changing it | ✅ | Often needs a trait on each job | ✅ | Only pending and failed jobs |
 | Supervises and auto-scales the workers | ✅ | ❌ | ✅ | ❌ |
 | Monitored tags, retry history, metrics | ✅ | Partly | ✅ | ❌ |
+| Errors grouped by cause, failure alerts, read-only access, audit log | ✅ | Partly | ❌ | ❌ |
 | Independent from Horizon's internals | ✅ | ✅ | ❌ (rebinds Horizon's services) | ✅ |
 | Standalone dashboard, no admin panel required | ✅ | ✅ | ✅ | ❌ (Filament, Nova…) |
 | Strict CSP, English and French, Blade or React | ✅ | ❌ | ❌ | Depends on the panel |
@@ -98,16 +108,32 @@ Choose Meridian if you want the full Horizon experience on the `database` driver
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/jobs-dark.png">
-                <img src="art/jobs-light.png" alt="Completed jobs, with their tags, queue, wait time and runtime">
+                <img src="art/jobs-light.png" alt="All jobs, with the progress and remaining time of the running ones, their tags, queue and wait time">
             </picture>
-            <p align="center"><b>Jobs</b>: by status, filtered by queue or tag, searched by class, tag or UUID</p>
+            <p align="center"><b>Jobs</b>: by status, with the progress of the running ones, filtered by queue or tag</p>
         </td>
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/job-dark.png">
-                <img src="art/job-light.png" alt="A failed job with its exception, retry history, data and the retry and delete actions">
+                <img src="art/job-light.png" alt="A failed job with its exception, the link to the jobs failing with the same error, its retry history and data">
             </picture>
-            <p align="center"><b>Job details</b>: exception, retry history, readable data, payload</p>
+            <p align="center"><b>Job details</b>: exception, same errors, retry history, readable data</p>
+        </td>
+    </tr>
+    <tr>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/errors-dark.png">
+                <img src="art/errors-light.png" alt="Failed jobs grouped by error, with their occurrences, first and last occurrence and a retry button">
+            </picture>
+            <p align="center"><b>Errors</b>: failed jobs grouped by cause, retried in one click</p>
+        </td>
+        <td width="50%">
+            <picture>
+                <source media="(prefers-color-scheme: dark)" srcset="art/audit-dark.png">
+                <img src="art/audit-light.png" alt="The audit log: who retried, cancelled or cleared what, and when">
+            </picture>
+            <p align="center"><b>Audit log</b>: who did what, and when</p>
         </td>
     </tr>
     <tr>
@@ -318,6 +344,31 @@ protected function gate(): void
 
 You may also call `Meridian::auth(fn (Request $request) => ...)` directly. The prefix, domain and middleware of the dashboard and of its API are configured in the `route` option (`MERIDIAN_PREFIX`, `MERIDIAN_API_PREFIX`, `MERIDIAN_DOMAIN`); the authorization middleware is always added on top of them.
 
+### Read-only access
+
+By default, everybody who can open the dashboard can also retry, delete and cancel jobs, and monitor tags. To give some people a read-only access, define the `manageMeridian` gate in `app/Providers/MeridianServiceProvider.php`:
+
+```php
+protected function gate(): void
+{
+    Gate::define('viewMeridian', fn ($user = null) => in_array(optional($user)->email, [
+        'taylor@example.com',
+        'support@example.com',
+    ]));
+
+    // Only Taylor can act on the jobs, the support team can only look.
+    Gate::define('manageMeridian', fn ($user = null) => in_array(optional($user)->email, [
+        'taylor@example.com',
+    ]));
+}
+```
+
+or call `Meridian::manage(fn (Request $request) => ...)`. The read-only users browse every page, but the buttons that act on the jobs are hidden and their requests are refused (403). The page header shows « Read only ».
+
+### Audit log
+
+The « Audit log » page lists who retried, deleted or cancelled a job, retried a batch or a group of failed jobs, monitored a tag, and who paused, resumed, terminated or cleared Meridian from the command line, with the date, the IP address and the details of each action. Users are named by their `email`, else their `name`, else their identifier; Artisan commands appear as « Console ». The entries are kept `trim.audit` minutes (30 days by default) and are also available as JSON (`GET /meridian/api/audit`).
+
 ### Interfaces, themes and languages
 
 Two interfaces ship with Meridian:
@@ -363,12 +414,40 @@ Click a tag anywhere in the dashboard to list every job carrying it. The page of
 
 Like Horizon, the « Monitoring » page lets you watch tags: add `App\Models\User:42` or `customer:42` and its jobs are listed together, with their number of pending and failed jobs. The jobs carrying a monitored tag are kept `trim.monitored` minutes (7 days by default) instead of `trim.completed`.
 
-Monitored tags are stored in the `meridian_monitored_tags` table. When upgrading from a version older than 1.4.0 (monitored tags) or 1.5.0 (retry history), publish and run the new migrations:
+Monitored tags are stored in the `meridian_monitored_tags` table. When upgrading from a version older than 1.4.0 (monitored tags), 1.5.0 (retry history) or 1.7.0 (errors, job progress, audit log), publish and run the new migrations:
 
 ```bash
 php artisan vendor:publish --tag=meridian-migrations
 php artisan migrate
 ```
+
+## Errors
+
+The « Errors » page groups the failed jobs by cause: the same exception class thrown at the same line, whatever its message (`User 12 not found` and `User 57 not found` are one error). Each group shows the exception, its message and location, the jobs and queues it affects, its number of occurrences and when it was first and last seen. Open a group to list its jobs, or « Retry all » to push them all back onto their queue once the bug is fixed. The page of a failed job links to the other jobs failing with the same error. The groups are also available as JSON (`GET /meridian/api/errors`).
+
+## Job progress
+
+Long jobs can report their progress with the `IsoDoss\Meridian\Concerns\TracksProgress` trait: the dashboard shows a progress bar, the estimated remaining time and an optional message while they run.
+
+```php
+use IsoDoss\Meridian\Concerns\TracksProgress;
+
+class ImportCustomers implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, TracksProgress;
+
+    public function handle(): void
+    {
+        foreach ($this->rows as $index => $row) {
+            // ...
+
+            $this->progressOf($index + 1, count($this->rows), ($index + 1).' customers imported');
+        }
+    }
+}
+```
+
+`$this->progress(42)` takes a percentage, `$this->progressOf($done, $total)` computes it. Meridian only writes when the percentage or the message changes, so you may call them in a tight loop.
 
 ## Notifications
 
@@ -399,13 +478,36 @@ The thresholds, in seconds, are set per `connection:queue` in the `waits` option
 ],
 ```
 
+### Alerts
+
+Besides long waits, `meridian:snapshot` (every five minutes) checks the health of your queues and notifies the same routes, at most once per `notifications.cooldown` minutes for the same problem:
+
+| Alert | Event | When |
+| --- | --- | --- |
+| High failure rate | `FailureRateExceeded` | `failure_rate` % of the jobs of a queue failed during the last `window` minutes, once at least `failure_rate_minimum` jobs ran; or `failures` jobs failed |
+| No worker | `NoWorkersRunning` | jobs are waiting but no worker has reported itself |
+| Long running job | `LongRunningJobDetected` | a job has been running for more than `long_running` seconds |
+
+```php
+'alerts' => [
+    'window' => 5,                 // minutes
+    'failure_rate' => 25,          // %, 0 to disable
+    'failure_rate_minimum' => 10,  // jobs
+    'failures' => 0,               // failed jobs, 0 to disable
+    'no_workers' => true,
+    'long_running' => 0,           // seconds, 0 to disable
+],
+```
+
+The events live in `IsoDoss\Meridian\Events`: listen to them to send the alerts anywhere else.
+
 ## Metrics
 
 The dashboard shows the slowest queue (highest average runtime) and the busiest one (most jobs processed) of the last hour. The metrics page shows, per job class and per queue, the jobs processed and failed, the failure rate, the average and max runtime and the average wait, over the last hour to the last seven days. Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
 
 ## Retention
 
-`meridian:prune` deletes the completed jobs after `trim.completed` minutes (1 day by default), the failed ones after `trim.failed` minutes (7 days), the metric snapshots after `trim.metrics` minutes (7 days) and the stale heartbeats of workers and supervisors after `trim.workers` minutes. Pending and processing jobs are never pruned. Set `store_payload` to `false` to keep the table small on very busy queues.
+`meridian:prune` deletes the completed jobs after `trim.completed` minutes (1 day by default), the failed ones after `trim.failed` minutes (7 days), the metric snapshots after `trim.metrics` minutes (7 days) and the stale heartbeats of workers and supervisors after `trim.workers` minutes, and the audit log entries after `trim.audit` minutes (30 days). Pending and processing jobs are never pruned. Set `store_payload` to `false` to keep the table small on very busy queues.
 
 ## How it works
 

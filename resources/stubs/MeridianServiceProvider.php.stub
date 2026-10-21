@@ -19,5 +19,13 @@ class MeridianServiceProvider extends MeridianApplicationServiceProvider
                 //
             ]);
         });
+
+        // Optional: who can retry, delete or cancel jobs and monitor tags.
+        // Without this gate, everybody who can view Meridian can.
+        // Gate::define('manageMeridian', function ($user = null) {
+        //     return in_array(optional($user)->email, [
+        //         //
+        //     ]);
+        // });
     }
 }

@@ -17,7 +17,9 @@ use Illuminate\Support\Carbon;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
+use IsoDoss\Meridian\Support\ExceptionSummary;
 use IsoDoss\Meridian\Support\JobPayload;
+use IsoDoss\Meridian\Support\Migrations;
 use IsoDoss\Meridian\Support\Tags;
 use Throwable;
 
@@ -109,7 +111,7 @@ class RecordJobLifecycle
         $this->safely(function () use ($event, $uuid) {
             $now = time();
 
-            $updated = MonitoredJob::query()->where('uuid', $uuid)->update([
+            $updated = MonitoredJob::query()->where('uuid', $uuid)->update(array_merge([
                 'status' => MonitoredJob::PROCESSING,
                 'attempts' => $event->job->attempts(),
                 'job_id' => (string) $event->job->getJobId(),
@@ -117,7 +119,7 @@ class RecordJobLifecycle
                 'reserved_at' => $now,
                 'wait' => Meridian::db()->raw('CASE WHEN wait IS NULL AND available_at <= '.$now.' THEN '.$now.' - available_at ELSE wait END'),
                 'updated_at' => $now,
-            ]);
+            ], Migrations::hasJobInsights() ? ['progress' => null, 'progress_message' => null] : []));
 
             // The job was pushed before Meridian was installed, by another
             // application, or with pushRaw(): record it now.
@@ -220,14 +222,14 @@ class RecordJobLifecycle
         unset($this->exceptions[$uuid]);
 
         $this->safely(function () use ($event, $job, $uuid, $runtime) {
-            $updated = MonitoredJob::query()->where('uuid', $uuid)->update([
+            $updated = MonitoredJob::query()->where('uuid', $uuid)->update(array_merge([
                 'status' => MonitoredJob::FAILED,
                 'attempts' => $job->attempts(),
                 'runtime' => $runtime,
                 'exception' => (string) $event->exception,
                 'failed_at' => time(),
                 'updated_at' => time(),
-            ]);
+            ], $this->fingerprint((string) $event->exception)));
 
             if ($updated === 0) {
                 $this->recordFromJob($event->connectionName, $job, MonitoredJob::FAILED, (string) $event->exception);
@@ -272,7 +274,7 @@ class RecordJobLifecycle
         $now = time();
         $command = JobPayload::command($payload);
 
-        MonitoredJob::query()->insertOrIgnore([
+        MonitoredJob::query()->insertOrIgnore(array_merge([
             'uuid' => $job->uuid(),
             'connection' => $connection,
             'queue' => $job->getQueue(),
@@ -290,7 +292,18 @@ class RecordJobLifecycle
             'reserved_at' => $now,
             'failed_at' => $status === MonitoredJob::FAILED ? $now : null,
             'updated_at' => $now,
-        ]);
+        ], $this->fingerprint($exception)));
+    }
+
+    /**
+     * The fingerprint grouping the failures with the same cause, once the
+     * migration of v1.7.0 has run.
+     *
+     * @return array{fingerprint?: string|null}
+     */
+    protected function fingerprint(?string $exception): array
+    {
+        return Migrations::hasJobInsights() ? ['fingerprint' => ExceptionSummary::fingerprint($exception)] : [];
     }
 
     protected function queueName(string $connection, mixed $queue): string

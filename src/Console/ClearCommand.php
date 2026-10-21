@@ -6,6 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Console\ConfirmableTrait;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\QueueRepository;
 
@@ -46,6 +47,8 @@ class ClearCommand extends Command
 
         app(JobRetryRepository::class)->forget((clone $pending)->pluck('uuid'));
         $pending->delete();
+
+        app(AuditLogRepository::class)->record('queue.cleared', "{$connection}:{$queue}", ['count' => $cleared]);
 
         $this->components->info("{$cleared} job(s) deleted from the [{$connection}:{$queue}] queue.");
 

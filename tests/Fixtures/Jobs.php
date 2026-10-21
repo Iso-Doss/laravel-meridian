@@ -6,10 +6,13 @@ use Illuminate\Bus\Batchable;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeEncrypted;
 use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use IsoDoss\Meridian\Concerns\TracksProgress;
 use IsoDoss\Meridian\Contracts\Silenced;
+use IsoDoss\Meridian\Models\MonitoredJob;
 use RuntimeException;
 
 class SuccessfulJob implements ShouldQueue
@@ -108,4 +111,45 @@ class FlakyJob implements ShouldQueue
             throw new RuntimeException('Flaky failure');
         }
     }
+}
+
+class ProgressJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, TracksProgress;
+
+    /**
+     * The progress read from the database while the job runs.
+     *
+     * @var array<int, array{0: int|null, 1: string|null}>
+     */
+    public static array $seen = [];
+
+    public function handle(): void
+    {
+        $this->progress(25.7, 'Importing');
+        $this->progress(25.9, 'Importing');
+        static::$seen[] = $this->read();
+
+        $this->progressOf(3, 4, '3 / 4 rows');
+        static::$seen[] = $this->read();
+    }
+
+    /**
+     * @return array{0: int|null, 1: string|null}
+     */
+    protected function read(): array
+    {
+        $job = MonitoredJob::query()->where('uuid', $this->job->uuid())->first();
+
+        return [$job->progress, $job->progress_message];
+    }
+}
+
+class Operator extends Authenticatable
+{
+    protected $table = 'users';
+
+    public $timestamps = false;
+
+    protected $guarded = [];
 }

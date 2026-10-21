@@ -22,8 +22,9 @@ interface MonitoredTag {
 interface Props {
     tags: MonitoredTag[];
     ready: boolean;
-    store_url: string;
-    destroy_url: string;
+    /** Null for read-only users. */
+    store_url: string | null;
+    destroy_url: string | null;
 }
 
 export default function MonitoringIndex({ tags, ready, store_url, destroy_url }: Props) {
@@ -33,7 +34,7 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
 
     const submit = (event: FormEvent) => {
         event.preventDefault();
-        form.post(store_url, { preserveScroll: true, onSuccess: () => form.reset() });
+        form.post(store_url ?? '', { preserveScroll: true, onSuccess: () => form.reset() });
     };
 
     return (
@@ -44,36 +45,38 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
                 </div>
             )}
 
-            <Card>
-                <CardHeader>
-                    <div>
-                        <CardTitle>{t('Monitor a tag')}</CardTitle>
-                        <CardDescription>
-                            {t('The jobs carrying a monitored tag are listed here and kept longer (trim.monitored).')}
-                        </CardDescription>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <form onSubmit={submit} className="flex flex-wrap gap-2">
-                        <Input
-                            value={form.data.tag}
-                            onChange={(event) => form.setData('tag', event.target.value)}
-                            placeholder="App\Models\User:42"
-                            aria-label={t('Tag to monitor')}
-                            aria-invalid={!!form.errors.tag}
-                            className="max-w-md font-mono"
-                            disabled={!ready}
-                        />
-                        <Button type="submit" disabled={!ready || form.processing || form.data.tag.trim() === ''}>
-                            {form.processing ? <Loader2 className="animate-spin" /> : <BookmarkPlus />}
-                            {t('Monitor')}
-                        </Button>
-                    </form>
-                    {form.errors.tag && <p className="mt-2 text-sm text-destructive">{form.errors.tag}</p>}
-                </CardContent>
-            </Card>
+            {store_url && (
+                <Card className="mb-6">
+                    <CardHeader>
+                        <div>
+                            <CardTitle>{t('Monitor a tag')}</CardTitle>
+                            <CardDescription>
+                                {t('The jobs carrying a monitored tag are listed here and kept longer (trim.monitored).')}
+                            </CardDescription>
+                        </div>
+                    </CardHeader>
+                    <CardContent>
+                        <form onSubmit={submit} className="flex flex-wrap gap-2">
+                            <Input
+                                value={form.data.tag}
+                                onChange={(event) => form.setData('tag', event.target.value)}
+                                placeholder="App\Models\User:42"
+                                aria-label={t('Tag to monitor')}
+                                aria-invalid={!!form.errors.tag}
+                                className="max-w-md font-mono"
+                                disabled={!ready}
+                            />
+                            <Button type="submit" disabled={!ready || form.processing || form.data.tag.trim() === ''}>
+                                {form.processing ? <Loader2 className="animate-spin" /> : <BookmarkPlus />}
+                                {t('Monitor')}
+                            </Button>
+                        </form>
+                        {form.errors.tag && <p className="mt-2 text-sm text-destructive">{form.errors.tag}</p>}
+                    </CardContent>
+                </Card>
+            )}
 
-            <Card className="mt-6">
+            <Card>
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -81,13 +84,13 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
                             <TableHead className="text-right">{t('Jobs')}</TableHead>
                             <TableHead className="text-right">{t('Pending')}</TableHead>
                             <TableHead className="text-right">{t('Failed')}</TableHead>
-                            <TableHead className="text-right">{t('Actions')}</TableHead>
+                            {destroy_url && <TableHead className="text-right">{t('Actions')}</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {tags.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={5} className="py-10 text-center text-muted-foreground">
+                                <TableCell colSpan={destroy_url ? 5 : 4} className="py-10 text-center text-muted-foreground">
                                     {t('No tag is monitored.')}
                                 </TableCell>
                             </TableRow>
@@ -102,20 +105,22 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
                                 <TableCell className="text-right tabular-nums">{formatNumber(tag.jobs, locale)}</TableCell>
                                 <TableCell className="text-right tabular-nums">{formatNumber(tag.pending, locale)}</TableCell>
                                 <TableCell className="text-right tabular-nums">{formatNumber(tag.failed, locale)}</TableCell>
-                                <TableCell className="text-right">
-                                    <ConfirmAction
-                                        compact
-                                        url={destroy_url}
-                                        method="delete"
-                                        data={{ tag: tag.tag }}
-                                        tone="destructive"
-                                        icon={Trash2}
-                                        label={t('Stop monitoring')}
-                                        title={t('Stop monitoring :tag?', { tag: tag.tag })}
-                                        description={t('Its jobs will be pruned like the other ones.')}
-                                        confirmLabel={t('Stop monitoring')}
-                                    />
-                                </TableCell>
+                                {destroy_url && (
+                                    <TableCell className="text-right">
+                                        <ConfirmAction
+                                            compact
+                                            url={destroy_url}
+                                            method="delete"
+                                            data={{ tag: tag.tag }}
+                                            tone="destructive"
+                                            icon={Trash2}
+                                            label={t('Stop monitoring')}
+                                            title={t('Stop monitoring :tag?', { tag: tag.tag })}
+                                            description={t('Its jobs will be pruned like the other ones.')}
+                                            confirmLabel={t('Stop monitoring')}
+                                        />
+                                    </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>

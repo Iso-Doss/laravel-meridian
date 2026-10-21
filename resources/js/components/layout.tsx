@@ -4,6 +4,7 @@ import {
     BellOff,
     Bookmark,
     BarChart3,
+    Bug,
     CheckCircle2,
     Clock,
     Globe,
@@ -13,6 +14,8 @@ import {
     Loader,
     Menu,
     RefreshCw,
+    ScrollText,
+    Eye,
     XCircle,
     X,
     type LucideIcon,
@@ -57,9 +60,11 @@ function useNavigation(): { title: string; items: NavItem[] }[] {
         {
             title: 'Insights',
             items: [
+                { label: 'Errors', href: nav.errors, icon: Bug },
                 { label: 'Monitoring', href: nav.monitoring, icon: Bookmark },
                 { label: 'Batches', href: nav.batches, icon: Layers },
                 { label: 'Metrics', href: nav.metrics, icon: BarChart3 },
+                { label: 'Audit log', href: nav.audit, icon: ScrollText },
             ],
         },
     ];
@@ -178,6 +183,7 @@ export function Layout({
     children: ReactNode;
 }) {
     const { t } = useTranslation();
+    const { meridian } = usePage<SharedProps>().props;
     const [menuOpen, setMenuOpen] = useState(false);
 
     return (
@@ -209,6 +215,15 @@ export function Layout({
                     <span className="truncate text-sm text-muted-foreground">{t('Database queues')}</span>
 
                     <div className="ml-auto flex items-center gap-1">
+                        {!meridian.can_manage && (
+                            <span
+                                className="mr-1 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground"
+                                title={t('You can browse Meridian but not act on the jobs.')}
+                            >
+                                <Eye className="size-3.5" />
+                                <span className="hidden sm:inline">{t('Read only')}</span>
+                            </span>
+                        )}
                         <AutoRefreshToggle />
                         <LocaleSwitcher />
                         <ThemeToggle />

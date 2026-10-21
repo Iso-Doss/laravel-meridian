@@ -13,6 +13,7 @@ use Inertia\Response;
 use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
 use IsoDoss\Meridian\Http\Presenters\Present;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Support\Translator;
 
 class BatchesController extends Controller
@@ -46,6 +47,8 @@ class BatchesController extends Controller
     public function retry(string $id): RedirectResponse
     {
         Artisan::call('queue:retry-batch', ['id' => [$id]]);
+
+        app(AuditLogRepository::class)->record('batch.retried', $id);
 
         return back()->with('meridian.success', Translator::get('The failed jobs of the batch have been pushed back onto the queue.'));
     }

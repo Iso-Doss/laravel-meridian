@@ -36,9 +36,11 @@
             <a href="{{ route('meridian.jobs.index', 'silenced') }}" @class(['active' => request()->route('status') === 'silenced'])>{{ $t('Silenced') }}</a>
             <a href="{{ route('meridian.jobs.index') }}" @class(['active' => $route === 'meridian.jobs.index' && ! request()->route('status')])>{{ $t('All jobs') }}</a>
             <div class="nav-title">{{ $t('Insights') }}</div>
+            <a href="{{ route('meridian.errors.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.errors')])>{{ $t('Errors') }}</a>
             <a href="{{ route('meridian.monitoring.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.monitoring')])>{{ $t('Monitoring') }}</a>
             <a href="{{ route('meridian.batches.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.batches')])>{{ $t('Batches') }}</a>
             <a href="{{ route('meridian.metrics.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.metrics')])>{{ $t('Metrics') }}</a>
+            <a href="{{ route('meridian.audit.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.audit')])>{{ $t('Audit log') }}</a>
         </nav>
         <div class="sidebar-foot">
             <div class="setting">
@@ -65,6 +67,9 @@
     </aside>
 
     <main class="main">
+        @unless ($canManage)
+            <span class="readonly" title="{{ $t('You can browse Meridian but not act on the jobs.') }}">👁 {{ $t('Read only') }}</span>
+        @endunless
         @if (session('meridian.success'))
             <div class="flash success">{{ session('meridian.success') }}</div>
         @endif

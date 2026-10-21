@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\MeridianServiceProvider;
+use IsoDoss\Meridian\Support\Migrations;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 class TestCase extends Orchestra
@@ -16,13 +17,17 @@ class TestCase extends Orchestra
         parent::setUp();
 
         Meridian::$authUsing = fn () => true;
+        Meridian::$manageUsing = null;
         Meridian::$notificationRoutes = [];
+        Migrations::flush();
 
         $this->createQueueTables();
 
         (include __DIR__.'/../database/migrations/create_meridian_tables.php.stub')->up();
         (include __DIR__.'/../database/migrations/create_meridian_monitored_tags_table.php.stub')->up();
         (include __DIR__.'/../database/migrations/create_meridian_job_retries_table.php.stub')->up();
+        (include __DIR__.'/../database/migrations/add_fingerprint_and_progress_to_meridian_jobs_table.php.stub')->up();
+        (include __DIR__.'/../database/migrations/create_meridian_audit_logs_table.php.stub')->up();
     }
 
     protected function getPackageProviders($app)

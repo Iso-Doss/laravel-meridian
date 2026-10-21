@@ -8,10 +8,10 @@
         {{ $job->shortName() }}
         <span class="badge {{ $job->status }}">{{ $t(Format::status($job->isDelayed() ? 'delayed' : $job->status)) }}</span>
         <span class="filters actions">
-            @if ($job->status === MonitoredJob::FAILED)
+            @if ($job->status === MonitoredJob::FAILED && $canManage)
                 <form class="inline" method="post" action="{{ route('meridian.jobs.retry', $job->uuid) }}" data-confirm="{{ $t('Retry this job?') }}">@csrf <button class="btn primary">{{ $t('Retry') }}</button></form>
             @endif
-            @if ($job->status !== MonitoredJob::PROCESSING)
+            @if ($job->status !== MonitoredJob::PROCESSING && $canManage)
                 <form class="inline" method="post" action="{{ route('meridian.jobs.destroy', $job->uuid) }}" data-confirm="{{ $pending ? $t('Cancel this job?') : $t('Delete this job?') }}">
                     @csrf @method('DELETE') <button class="btn danger">{{ $pending ? $t('Cancel job') : $t('Delete') }}</button>
                 </form>
@@ -34,12 +34,19 @@
             @if ($job->failed_at)<dt>{{ $t('Failed at') }}</dt><dd>{{ Format::date($job->failed_at, $locale) }}</dd>@endif
             <dt>{{ $t('Wait') }}</dt><dd>{{ Format::seconds($job->wait) }}</dd>
             <dt>{{ $t('Runtime') }}</dt><dd>{{ Format::runtime($job->runtime, $locale) }}</dd>
+            @if ($job->status === MonitoredJob::PROCESSING && $job->progress !== null)
+                <dt>{{ $t('Progress') }}</dt><dd>@include('meridian::partials.job-progress', ['detailed' => true])</dd>
+            @endif
         </dl>
     </div>
 
     @if ($job->exception)
         <div class="panel">
-            <div class="panel-head"><h2>{{ $t('Exception') }}</h2></div>
+            @php($similar = $job->status === MonitoredJob::FAILED ? app(\IsoDoss\Meridian\Repositories\ErrorGroupRepository::class)->countFor($job->fingerprint) : 0)
+            <div class="panel-head">
+                <h2>{{ $t('Exception') }}</h2>
+                @if ($similar > 1)<a href="{{ route('meridian.jobs.index', ['status' => 'failed', 'error' => $job->fingerprint]) }}">{{ $t(':count failed jobs with the same error', ['count' => $similar]) }}</a>@endif
+            </div>
             <div class="panel-body"><pre>{{ $job->exception }}</pre></div>
         </div>
     @endif

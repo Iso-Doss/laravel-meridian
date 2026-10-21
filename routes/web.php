@@ -1,8 +1,10 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use IsoDoss\Meridian\Http\Controllers\AuditLogController;
 use IsoDoss\Meridian\Http\Controllers\BatchesController;
 use IsoDoss\Meridian\Http\Controllers\DashboardController;
+use IsoDoss\Meridian\Http\Controllers\ErrorsController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\LocaleController;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
@@ -32,6 +34,12 @@ Route::prefix('monitoring')->name('monitoring.')->controller(MonitoringControlle
     Route::post('/', 'store')->name('store');
     Route::delete('/', 'destroy')->name('destroy');
 });
+
+// Failed jobs grouped by cause...
+Route::get('errors', [ErrorsController::class, 'index'])->name('errors.index');
+
+// Audit log...
+Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');
 
 // Batches...
 Route::prefix('batches')->name('batches.')->controller(BatchesController::class)->group(function () {

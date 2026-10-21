@@ -12,11 +12,15 @@ export interface SharedProps {
         locale: string;
         locales: Locale[];
         translations: Record<string, string>;
+        /** False for read-only users: no retry, delete, cancel or monitoring action. */
+        can_manage: boolean;
     };
     nav: {
         dashboard: string;
         jobs: Record<'all' | JobStatus, string>;
         monitoring: string;
+        errors: string;
+        audit: string;
         batches: string;
         metrics: string;
         locale: string;
@@ -43,6 +47,11 @@ export interface Job {
     queued_at: number | null;
     completed_at: number | null;
     failed_at: number | null;
+    /** Percent reported by a running job (TracksProgress), else null. */
+    progress: number | null;
+    progress_message: string | null;
+    /** Estimated seconds before the job completes. */
+    remaining: number | null;
     url: string;
     retry_url: string | null;
 }
@@ -66,6 +75,34 @@ export interface JobDetails extends Job {
     exception: string | null;
     batch_url: string | null;
     delete_url: string | null;
+    /** The failed jobs with the same cause. */
+    error_group: { count: number; url: string } | null;
+}
+
+export interface ErrorGroup {
+    fingerprint: string;
+    class: string;
+    message: string;
+    file: string | null;
+    line: number | null;
+    count: number;
+    jobs: string[];
+    queues: string[];
+    first_seen: number;
+    last_seen: number;
+    url: string;
+    sample_url: string;
+    retry_url: string | null;
+}
+
+export interface AuditEntry {
+    action: string;
+    label: string;
+    subject: string | null;
+    details: Record<string, string | number | boolean>;
+    user: string | null;
+    ip: string | null;
+    created_at: number;
 }
 
 export interface Paginated<T> {

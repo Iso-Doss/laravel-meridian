@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use IsoDoss\Meridian\Http\Controllers\AuditLogController;
 use IsoDoss\Meridian\Http\Controllers\DashboardController;
+use IsoDoss\Meridian\Http\Controllers\ErrorsController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\MonitoringController;
 use IsoDoss\Meridian\Models\MonitoredJob;
@@ -22,3 +24,9 @@ Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(f
 
 // Monitored tags...
 Route::get('monitoring', [MonitoringController::class, 'apiIndex'])->name('monitoring.index');
+
+// Failed jobs grouped by cause...
+Route::get('errors', [ErrorsController::class, 'apiIndex'])->name('errors.index');
+
+// Audit log...
+Route::get('audit', [AuditLogController::class, 'apiIndex'])->name('audit.index');

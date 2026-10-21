@@ -3,19 +3,17 @@
 namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Cache;
-use IsoDoss\Meridian\Events\LongWaitDetected;
 use IsoDoss\Meridian\Repositories\MetricsRepository;
-use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\Alerts;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 
 class SnapshotCommand extends Command
 {
     protected $signature = 'meridian:snapshot {--minutes=5 : Size of the snapshot window}';
 
-    protected $description = 'Store a metrics snapshot and check the queues wait times';
+    protected $description = 'Store a metrics snapshot and check the health of the queues';
 
-    public function handle(MetricsRepository $metrics, QueueRepository $queues, PendingJobsImporter $importer): int
+    public function handle(MetricsRepository $metrics, Alerts $alerts, PendingJobsImporter $importer): int
     {
         $period = max(1, (int) $this->option('minutes')) * 60;
         $to = intdiv(time(), $period) * $period;
@@ -32,34 +30,10 @@ class SnapshotCommand extends Command
             $this->components->info("Imported {$imported} job(s) pushed without event (bulk / pushRaw).");
         }
 
-        $this->checkWaitTimes($queues);
+        foreach ($alerts->check() as $alert) {
+            $this->components->warn($alert);
+        }
 
         return self::SUCCESS;
-    }
-
-    protected function checkWaitTimes(QueueRepository $queues): void
-    {
-        $thresholds = config('meridian.waits', []);
-
-        foreach ($queues->waitTimes() as $key => $seconds) {
-            // Like Horizon, 60 seconds for the queues not listed; 0 disables a queue.
-            $threshold = (int) ($thresholds[$key] ?? $thresholds['*'] ?? 60);
-
-            if ($threshold <= 0 || $seconds < $threshold) {
-                continue;
-            }
-
-            $cooldown = (int) config('meridian.notifications.cooldown', 5) * 60;
-
-            if (! Cache::add('meridian:long-wait:'.$key, true, $cooldown)) {
-                continue;
-            }
-
-            [$connection, $queue] = explode(':', $key, 2);
-
-            event(new LongWaitDetected($connection, $queue, $seconds));
-
-            $this->components->warn("Long wait detected on [{$key}]: {$seconds}s.");
-        }
     }
 }

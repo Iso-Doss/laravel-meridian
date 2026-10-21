@@ -8,19 +8,26 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Illuminate\Support\Str;
 use Inertia\Response;
 use IsoDoss\Meridian\Http\Controllers\Concerns\RendersPages;
 use IsoDoss\Meridian\Http\Presenters\Present;
+use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
+use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\QueueRepository;
 use IsoDoss\Meridian\Support\FailedJobRetrier;
+use IsoDoss\Meridian\Support\Migrations;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
 
 class JobsController extends Controller
 {
     use RendersPages;
+
+    public function __construct(protected AuditLogRepository $audit) {}
 
     public function index(Request $request, ?string $status = null): View|Response
     {
@@ -31,17 +38,20 @@ class JobsController extends Controller
             'jobs' => $this->query($request, $status)->paginate(50)->withQueryString(),
             'queues' => MonitoredJob::query()->distinct()->orderBy('queue')->pluck('queue'),
             'counts' => MonitoredJob::query()->selectRaw('status, COUNT(*) AS total')->groupBy('status')->pluck('total', 'status'),
+            'error' => $request->query('error') ? app(ErrorGroupRepository::class)->find((string) $request->query('error')) : null,
         ], fn (array $data) => [
             'status' => $data['status'],
             'filters' => [
                 'search' => (string) $request->query('search', ''),
                 'queue' => (string) $request->query('queue', ''),
                 'tag' => (string) $request->query('tag', ''),
+                'error' => (string) $request->query('error', ''),
             ],
+            'error' => $data['error'],
             'jobs' => Present::paginated($data['jobs'], fn (MonitoredJob $job) => Present::job($job)),
             'queues' => $data['queues']->values(),
             'counts' => collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $s) => [$s => (int) ($data['counts'][$s] ?? 0)]),
-            'retry_all_url' => route('meridian.jobs.retry-all'),
+            'retry_all_url' => Meridian::canManage($request) ? route('meridian.jobs.retry-all') : null,
         ]);
     }
 
@@ -67,20 +77,36 @@ class JobsController extends Controller
             return back()->with('meridian.error', Translator::get('This job cannot be retried: its payload was not stored.'));
         }
 
+        $this->audit->record('job.retried', $job->uuid, ['job' => $job->name, 'queue' => $job->connection.':'.$job->queue]);
+
         return back()->with('meridian.success', Translator::get('The job has been pushed back onto the queue.'));
     }
 
     /**
-     * Retry every failed job matching the filters of the list (queue, search).
+     * Retry every failed job matching the filters of the list (queue, search, tag, error group).
      */
     public function retryAll(Request $request, FailedJobRetrier $retrier): RedirectResponse
     {
+        // Read before the retry: the group no longer exists afterwards.
+        $error = $request->input('error') ? app(ErrorGroupRepository::class)->find((string) $request->input('error')) : null;
+
         $result = $retrier->retryQuery(
             MonitoredJob::query()
                 ->search($request->input('search'))
                 ->when($request->input('queue'), fn ($query, $queue) => $query->where('queue', $queue))
                 ->when($request->input('tag'), fn ($query, $tag) => $query->withTag((string) $tag))
+                ->when($request->input('error') && Migrations::hasJobInsights(), fn ($query) => $query->where('fingerprint', (string) $request->input('error')))
         );
+
+        if ($result['retried'] > 0) {
+            $this->audit->record('jobs.retried', null, [
+                'count' => $result['retried'],
+                'queue' => $request->input('queue'),
+                'search' => $request->input('search'),
+                'tag' => $request->input('tag'),
+                'error' => $error ? $error['class'].': '.Str::limit($error['message'], 120) : $request->input('error'),
+            ]);
+        }
 
         $redirect = back();
 
@@ -117,6 +143,12 @@ class JobsController extends Controller
         $job->delete();
         app(JobRetryRepository::class)->forget([$uuid]);
 
+        $this->audit->record($job->status === MonitoredJob::PENDING ? 'job.cancelled' : 'job.deleted', $uuid, [
+            'job' => $job->name,
+            'queue' => $job->connection.':'.$job->queue,
+            'status' => $job->status,
+        ]);
+
         return redirect()->route('meridian.jobs.index')->with('meridian.success', Translator::get('The job has been deleted.'));
     }
 
@@ -137,13 +169,19 @@ class JobsController extends Controller
      */
     protected function query(Request $request, ?string $status)
     {
+        $insights = Migrations::hasJobInsights();
+
         return MonitoredJob::query()
-            ->select(['id', 'uuid', 'connection', 'queue', 'name', 'status', 'attempts', 'retries', 'tags', 'batch_id', 'runtime', 'wait', 'queued_at', 'available_at', 'reserved_at', 'completed_at', 'failed_at', 'updated_at'])
+            ->select(array_merge(
+                ['id', 'uuid', 'connection', 'queue', 'name', 'status', 'attempts', 'retries', 'tags', 'batch_id', 'runtime', 'wait', 'queued_at', 'available_at', 'reserved_at', 'completed_at', 'failed_at', 'updated_at'],
+                $insights ? ['fingerprint', 'progress', 'progress_message'] : [],
+            ))
             ->status($status)
             ->search($request->query('search'))
             ->when($request->query('queue'), fn ($q, $queue) => $q->where('queue', $queue))
             ->when($request->query('tag'), fn ($q, $tag) => $q->withTag((string) $tag))
             ->when($request->query('batch'), fn ($q, $batch) => $q->where('batch_id', $batch))
+            ->when($insights && $request->query('error'), fn ($q) => $q->where('fingerprint', (string) $request->query('error')))
             ->orderByDesc('id');
     }
 }

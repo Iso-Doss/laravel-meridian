@@ -5,6 +5,7 @@ namespace IsoDoss\Meridian\Console;
 use Illuminate\Console\Command;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\MonitoredTagRepository;
 
@@ -34,7 +35,9 @@ class PruneCommand extends Command
         $workers = Meridian::table('workers')->where('last_seen_at', '<', $stale)->delete();
         $supervisors = Meridian::table('supervisors')->where('last_seen_at', '<', $stale)->delete();
 
-        $this->components->info("Pruned {$completed} completed jobs, {$failed} failed jobs, {$metrics} metrics, ".($workers + $supervisors).' stale heartbeats.');
+        $audit = app(AuditLogRepository::class)->prune($now - (int) config('meridian.trim.audit', 43200) * 60);
+
+        $this->components->info("Pruned {$completed} completed jobs, {$failed} failed jobs, {$metrics} metrics, ".($workers + $supervisors).' stale heartbeats'.($audit ? ", {$audit} audit log entries" : '').'.');
 
         return self::SUCCESS;
     }

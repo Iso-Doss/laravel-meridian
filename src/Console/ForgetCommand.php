@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
 use IsoDoss\Meridian\Models\MonitoredJob;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 
 class ForgetCommand extends Command
@@ -23,6 +24,7 @@ class ForgetCommand extends Command
             app(JobRetryRepository::class)->forget((clone $failed)->pluck('uuid'));
             $count = $failed->delete();
             $failer->flush();
+            app(AuditLogRepository::class)->record('jobs.forgotten', null, ['count' => $count]);
 
             $this->components->info("{$count} failed job(s) deleted.");
 
@@ -46,6 +48,8 @@ class ForgetCommand extends Command
 
             return self::FAILURE;
         }
+
+        app(AuditLogRepository::class)->record('jobs.forgotten', $uuid, ['count' => 1]);
 
         $this->components->info("The failed job [{$uuid}] has been deleted.");
 

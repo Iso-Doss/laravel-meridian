@@ -23,6 +23,9 @@ use Illuminate\Support\Carbon;
  * @property string|null $exception
  * @property int|null $wait
  * @property int|null $runtime
+ * @property string|null $fingerprint
+ * @property int|null $progress
+ * @property string|null $progress_message
  * @property Carbon $queued_at
  * @property Carbon $available_at
  * @property Carbon|null $reserved_at
@@ -68,6 +71,7 @@ class MonitoredJob extends Model
             'retries' => 'integer',
             'wait' => 'integer',
             'runtime' => 'integer',
+            'progress' => 'integer',
             'queued_at' => 'datetime',
             'available_at' => 'datetime',
             'reserved_at' => 'datetime',

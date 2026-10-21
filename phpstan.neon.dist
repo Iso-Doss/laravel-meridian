@@ -11,3 +11,6 @@ parameters:
         - identifier: argument.type
           message: '#view-string#'
           reportUnmatched: false
+        # TracksProgress is used by the jobs of the applications.
+        - identifier: trait.unused
+          path: src/Concerns/TracksProgress.php

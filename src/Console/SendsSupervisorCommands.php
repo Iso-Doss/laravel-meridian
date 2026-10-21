@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Console;
 
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\Supervisor;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 
 trait SendsSupervisorCommands
 {
@@ -23,6 +24,14 @@ trait SendsSupervisorCommands
 
         $count = (clone $query)->distinct()->count('master');
         $query->update(['command' => $command]);
+
+        if ($count > 0) {
+            app(AuditLogRepository::class)->record(
+                ($supervisor === null ? 'meridian.' : 'supervisor.').['pause' => 'paused', 'continue' => 'continued', 'terminate' => 'terminated'][$command],
+                $supervisor,
+                ['masters' => $count, 'hosts' => $this->option('all') ? 'all' : Meridian::hostname()],
+            );
+        }
 
         if ($count === 0) {
             $this->components->warn($supervisor === null

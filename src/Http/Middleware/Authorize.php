@@ -13,6 +13,11 @@ class Authorize
     {
         abort_unless(Meridian::check($request), 403);
 
+        // Read-only users can browse, and choose their language, but not act.
+        if (! $request->isMethodSafe() && $request->route()?->getName() !== 'meridian.locale') {
+            abort_unless(Meridian::canManage($request), 403);
+        }
+
         return $next($request);
     }
 }

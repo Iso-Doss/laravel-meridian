@@ -14,11 +14,14 @@ import type { Job, JobStatus, Paginated, SharedProps } from '@/types';
 
 interface Props {
     status: JobStatus | null;
-    filters: { search: string; queue: string; tag: string };
+    filters: { search: string; queue: string; tag: string; error: string };
+    /** The error group the list is filtered on. */
+    error: { class: string; message: string; count: number } | null;
     jobs: Paginated<Job>;
     queues: string[];
     counts: Record<JobStatus, number>;
-    retry_all_url: string;
+    /** Null for read-only users. */
+    retry_all_url: string | null;
 }
 
 const TITLES: Record<'all' | JobStatus, string> = {
@@ -40,7 +43,7 @@ const TAB_LABELS: Record<'all' | JobStatus, string> = {
     silenced: 'Silenced',
 };
 
-export default function JobsIndex({ status, filters, jobs, queues, counts, retry_all_url }: Props) {
+export default function JobsIndex({ status, filters, error, jobs, queues, counts, retry_all_url }: Props) {
     const { t, locale } = useTranslation();
     const { nav } = usePage<SharedProps>().props;
     const [search, setSearch] = useState(filters.search);
@@ -60,6 +63,7 @@ export default function JobsIndex({ status, filters, jobs, queues, counts, retry
             title={t(TITLES[current])}
             actions={
                 current === 'failed' &&
+                retry_all_url &&
                 jobs.meta.total > 0 && (
                     <ConfirmAction
                         url={retry_all_url}
@@ -69,7 +73,7 @@ export default function JobsIndex({ status, filters, jobs, queues, counts, retry
                         label={t('Retry all')}
                         title={t('Retry :count failed job(s)?', { count: formatNumber(jobs.meta.total, locale) })}
                         description={
-                            filters.queue || filters.search || filters.tag
+                            filters.queue || filters.search || filters.tag || filters.error
                                 ? t('Every failed job matching the current filters will be pushed back onto its queue.')
                                 : t('Every failed job will be pushed back onto its queue.')
                         }
@@ -98,6 +102,17 @@ export default function JobsIndex({ status, filters, jobs, queues, counts, retry
                         ))}
                     </nav>
                     <form onSubmit={submit} className="flex flex-wrap items-center gap-2">
+                        {filters.error && (
+                            <Link
+                                href={nav.jobs[current]}
+                                data={query({ error: '' })}
+                                className="inline-flex max-w-xs items-center gap-1 rounded-md border bg-accent px-2 py-1 font-mono text-xs text-accent-foreground"
+                                title={error ? `${error.class}: ${error.message}` : t('Remove the error filter')}
+                            >
+                                <span className="truncate">{error ? error.class.split('\\').pop() : filters.error.slice(0, 8)}</span>
+                                <X className="size-3 shrink-0" />
+                            </Link>
+                        )}
                         {filters.tag && (
                             <Link
                                 href={nav.jobs[current]}

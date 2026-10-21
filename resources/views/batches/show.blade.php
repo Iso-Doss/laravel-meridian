@@ -4,7 +4,7 @@
 @section('content')
     <h1>
         {{ $batch->name ?: $t('Batch') }}
-        @if ($batch->failedJobs > 0)
+        @if ($batch->failedJobs > 0 && $canManage)
             <form class="inline actions" method="post" action="{{ route('meridian.batches.retry', $batch->id) }}" data-confirm="{{ $t('Retry the failed jobs of this batch?') }}">@csrf <button class="btn primary">{{ $t('Retry failed jobs') }}</button></form>
         @endif
     </h1>

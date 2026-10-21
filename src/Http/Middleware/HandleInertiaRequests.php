@@ -47,6 +47,7 @@ class HandleInertiaRequests extends Middleware
                 'locale' => $locale,
                 'locales' => Translator::languages(),
                 'translations' => Translator::messages($locale),
+                'can_manage' => Meridian::canManage($request),
             ],
             'nav' => [
                 'dashboard' => route('meridian.dashboard'),
@@ -55,6 +56,8 @@ class HandleInertiaRequests extends Middleware
                     collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $status) => [$status => route('meridian.jobs.index', $status)])->all(),
                 ),
                 'monitoring' => route('meridian.monitoring.index'),
+                'errors' => route('meridian.errors.index'),
+                'audit' => route('meridian.audit.index'),
                 'batches' => route('meridian.batches.index'),
                 'metrics' => route('meridian.metrics.index'),
                 'locale' => route('meridian.locale'),

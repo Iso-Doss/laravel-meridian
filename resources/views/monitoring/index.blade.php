@@ -8,6 +8,7 @@
         <div class="flash error">{{ $t('Run the migrations of Meridian to monitor tags (php artisan vendor:publish --tag=meridian-migrations, then php artisan migrate).') }}</div>
     @endunless
 
+    @if ($canManage)
     <div class="panel">
         <div class="panel-head">
             <h2>{{ $t('Monitor a tag') }}</h2>
@@ -22,11 +23,12 @@
             @error('tag')<p class="muted">{{ $message }}</p>@enderror
         </div>
     </div>
+    @endif
 
     <div class="panel">
         <div class="table-wrap">
             <table>
-                <thead><tr><th>{{ $t('Tag') }}</th><th class="num">{{ $t('Jobs') }}</th><th class="num">{{ $t('Pending') }}</th><th class="num">{{ $t('Failed') }}</th><th class="num">{{ $t('Actions') }}</th></tr></thead>
+                <thead><tr><th>{{ $t('Tag') }}</th><th class="num">{{ $t('Jobs') }}</th><th class="num">{{ $t('Pending') }}</th><th class="num">{{ $t('Failed') }}</th>@if ($canManage)<th class="num">{{ $t('Actions') }}</th>@endif</tr></thead>
                 <tbody>
                 @forelse ($tags as $tag)
                     <tr>
@@ -34,6 +36,7 @@
                         <td class="num">{{ Format::integer($tag['jobs'], $locale) }}</td>
                         <td class="num">{{ Format::integer($tag['pending'], $locale) }}</td>
                         <td class="num">{{ Format::integer($tag['failed'], $locale) }}</td>
+                        @if ($canManage)
                         <td class="num">
                             <form class="inline" method="post" action="{{ route('meridian.monitoring.destroy') }}" data-confirm="{{ $t('Stop monitoring :tag?', ['tag' => $tag['tag']]) }}">
                                 @csrf @method('DELETE')
@@ -41,9 +44,10 @@
                                 <button class="btn danger">{{ $t('Stop monitoring') }}</button>
                             </form>
                         </td>
+                        @endif
                     </tr>
                 @empty
-                    <tr><td colspan="5" class="empty">{{ $t('No tag is monitored.') }}</td></tr>
+                    <tr><td colspan="{{ $canManage ? 5 : 4 }}" class="empty">{{ $t('No tag is monitored.') }}</td></tr>
                 @endforelse
                 </tbody>
             </table>

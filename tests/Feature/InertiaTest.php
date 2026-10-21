@@ -39,6 +39,8 @@ it('renders every page with its Inertia component', function (string $uri, strin
     'metrics' => ['/meridian/metrics', 'Metrics/Index', ['rows', 'periods', 'tabs']],
     'queue metrics' => ['/meridian/metrics/queues?period=60', 'Metrics/Index', ['rows']],
     'job metrics' => ['/meridian/metrics/jobs/'.urlencode(SuccessfulJob::class), 'Metrics/Show', ['snapshots', 'back_url']],
+    'errors' => ['/meridian/errors', 'Errors/Index', ['groups', 'ready', 'queues', 'filters']],
+    'audit log' => ['/meridian/audit', 'Audit/Index', ['entries', 'ready', 'filters', 'actions']],
 ]);
 
 it('shows the stats and the jobs of the dashboard', function () {

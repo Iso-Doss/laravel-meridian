@@ -5,13 +5,14 @@
 @section('content')
     <h1>
         {{ $t($titles[$status ?? 'all']) }}
-        @if ($status === 'failed' && $jobs->total() > 0)
+        @if ($status === 'failed' && $canManage && $jobs->total() > 0)
             <form class="inline actions" method="post" action="{{ route('meridian.jobs.retry-all') }}"
                   data-confirm="{{ $t('Retry :count failed job(s)?', ['count' => Format::integer($jobs->total(), $locale)]) }}">
                 @csrf
                 @if (request('queue'))<input type="hidden" name="queue" value="{{ request('queue') }}">@endif
                 @if (request('search'))<input type="hidden" name="search" value="{{ request('search') }}">@endif
                 @if (request('tag'))<input type="hidden" name="tag" value="{{ request('tag') }}">@endif
+                @if (request('error'))<input type="hidden" name="error" value="{{ request('error') }}">@endif
                 <button class="btn primary">↻ {{ $t('Retry all') }}</button>
             </form>
         @endif
@@ -20,17 +21,21 @@
     <div class="panel">
         <div class="panel-head">
             <div class="tabs">
-                <a href="{{ route('meridian.jobs.index', array_filter(['queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag')])) }}" @class(['active' => ! $status])>{{ $t('All') }}</a>
+                <a href="{{ route('meridian.jobs.index', array_filter(['queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag'), 'error' => request('error')])) }}" @class(['active' => ! $status])>{{ $t('All') }}</a>
                 @foreach (\IsoDoss\Meridian\Models\MonitoredJob::STATUSES as $s)
-                    <a href="{{ route('meridian.jobs.index', array_filter(['status' => $s, 'queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag')])) }}" @class(['active' => $status === $s])>
+                    <a href="{{ route('meridian.jobs.index', array_filter(['status' => $s, 'queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag'), 'error' => request('error')])) }}" @class(['active' => $status === $s])>
                         {{ $t(Format::status($s)) }} <span class="muted">{{ Format::integer($counts[$s] ?? 0, $locale) }}</span>
                     </a>
                 @endforeach
             </div>
             <form method="get" class="filters">
+                @if (request('error'))
+                    <input type="hidden" name="error" value="{{ request('error') }}">
+                    <a class="tag" href="{{ route('meridian.jobs.index', array_filter(['status' => $status, 'queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag')])) }}" title="{{ $error ? $error['class'].': '.$error['message'] : $t('Remove the error filter') }}">{{ $error ? class_basename($error['class']) : substr((string) request('error'), 0, 8) }} ✕</a>
+                @endif
                 @if (request('tag'))
                     <input type="hidden" name="tag" value="{{ request('tag') }}">
-                    <a class="tag" href="{{ route('meridian.jobs.index', array_filter(['status' => $status, 'queue' => request('queue'), 'search' => request('search')])) }}" title="{{ $t('Remove the tag filter') }}">{{ request('tag') }} ✕</a>
+                    <a class="tag" href="{{ route('meridian.jobs.index', array_filter(['status' => $status, 'queue' => request('queue'), 'search' => request('search'), 'error' => request('error')])) }}" title="{{ $t('Remove the tag filter') }}">{{ request('tag') }} ✕</a>
                 @endif
                 <select name="queue" data-autosubmit aria-label="{{ $t('Filter by queue') }}">
                     <option value="">{{ $t('All queues') }}</option>

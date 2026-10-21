@@ -9,12 +9,16 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 use Inertia\Middleware as InertiaMiddleware;
+use IsoDoss\Meridian\Events\FailureRateExceeded;
+use IsoDoss\Meridian\Events\LongRunningJobDetected;
 use IsoDoss\Meridian\Events\LongWaitDetected;
+use IsoDoss\Meridian\Events\NoWorkersRunning;
 use IsoDoss\Meridian\Http\Middleware\Authorize;
 use IsoDoss\Meridian\Http\Middleware\HandleInertiaRequests;
 use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
-use IsoDoss\Meridian\Listeners\SendLongWaitNotification;
+use IsoDoss\Meridian\Listeners\SendAlertNotification;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
+use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
@@ -30,7 +34,13 @@ class MeridianServiceProvider extends PackageServiceProvider
             ->name('meridian')
             ->hasConfigFile()
             ->hasViews('meridian')
-            ->hasMigrations(['create_meridian_tables', 'create_meridian_monitored_tags_table', 'create_meridian_job_retries_table'])
+            ->hasMigrations([
+                'create_meridian_tables',
+                'create_meridian_monitored_tags_table',
+                'create_meridian_job_retries_table',
+                'add_fingerprint_and_progress_to_meridian_jobs_table',
+                'create_meridian_audit_logs_table',
+            ])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
                 Console\MeridianCommand::class,
@@ -79,13 +89,14 @@ class MeridianServiceProvider extends PackageServiceProvider
         $this->app->singleton(WorkerHeartbeat::class);
         $this->app->singleton(RecordJobLifecycle::class);
         $this->app->singleton(JobRetryRepository::class);
+        $this->app->singleton(AuditLogRepository::class);
     }
 
     public function packageBooted(): void
     {
         Event::subscribe(WorkerHeartbeat::class);
         Event::subscribe(RecordJobLifecycle::class);
-        Event::listen(LongWaitDetected::class, SendLongWaitNotification::class);
+        Event::listen([LongWaitDetected::class, FailureRateExceeded::class, NoWorkersRunning::class, LongRunningJobDetected::class], SendAlertNotification::class);
 
         // Batched jobs are inserted with Queue::bulk(), which fires no JobQueued event.
         Event::listen(BatchDispatched::class, function () {
@@ -181,6 +192,7 @@ class MeridianServiceProvider extends PackageServiceProvider
 
             $view->with('locale', $locale)
                 ->with('languages', Translator::languages())
+                ->with('canManage', Meridian::canManage(request()))
                 ->with('t', fn (string $key, array $replace = []) => Translator::get($key, $replace, $locale));
         });
     }
