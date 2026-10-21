@@ -2,6 +2,42 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.7.0 - 2026-10-21
+
+Production features beyond Horizon: errors grouped by cause, health alerts, job progress, audit log and read-only access.
+
+### Added
+
+- **Errors page**: the failed jobs grouped by cause, the same exception class thrown at the same line whatever its message (`User 12 not found` and `User 57 not found` are one error). Each group shows the exception, its message and location, the jobs and queues it affects, its occurrences and when it was first and last seen. Open a group to list its jobs, or « Retry all » to push them back once the bug is fixed. The page of a failed job links to the jobs failing with the same error. Also `GET /meridian/api/errors`.
+- **Alerts**, checked by `meridian:snapshot` and notified by e-mail, Slack or SMS like the long waits (at most once per `notifications.cooldown`):
+  - **high failure rate**: `failure_rate` % of the jobs of a queue failed during the last `window` minutes (25 % over 5 minutes, from 10 jobs, by default), or `failures` failed jobs;
+  - **no worker**: jobs are waiting but no worker is running;
+  - **long running job**: a job runs for more than `long_running` seconds (disabled by default).
+
+  Each alert fires an event (`FailureRateExceeded`, `NoWorkersRunning`, `LongRunningJobDetected`) you may listen to.
+- **Job progress**: with the `IsoDoss\Meridian\Concerns\TracksProgress` trait, a job reports `$this->progress(42)` or `$this->progressOf($done, $total, 'message')`, and the dashboard shows a progress bar, the estimated remaining time and the message while it runs.
+- **Audit log**: who retried, deleted or cancelled a job, retried a batch or an error group, monitored a tag, and who paused, resumed, terminated or cleared Meridian from the command line (« Console »), with the date and IP address. Filter by action, kept `trim.audit` minutes (30 days). Also `GET /meridian/api/audit`.
+- **Read-only access**: define a `manageMeridian` gate (or call `Meridian::manage()`) to choose who can act on the jobs. The others browse every page, the action buttons are hidden and their requests refused (403). Without the gate, nothing changes.
+
+Everything is available in both interfaces, in English and French.
+
+### Changed
+
+- The long wait notification is sent by the new `SendAlertNotification` listener (the internal `SendLongWaitNotification` listener is removed); its mail subject is now « Long wait detected ».
+- README: new sections and updated screenshots.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+The new migrations add the `fingerprint`, `progress` and `progress_message` columns to `meridian_jobs` (and group the failed jobs already recorded), and create the `meridian_audit_logs` table. Until they run, Meridian works as before, without these features. Restart your workers (`php artisan meridian:terminate`) after migrating.
+
+If you published `config/meridian.php`, you may add the new `alerts` and `trim.audit` keys (defaults apply when they are missing). If you published the Blade views, republish them. The « no worker » alert is enabled by default: applications with notification routes receive it when jobs wait without any running worker; set `alerts.no_workers` to `false` to disable it.
+
 ## v1.6.2 - 2026-10-20
 
 Maintenance release. No change to the package code nor to the compiled assets.
