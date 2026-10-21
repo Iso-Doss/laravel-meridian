@@ -2,6 +2,37 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.8.0 - 2026-10-21
+
+Retry with corrected data, scheduled tasks monitoring, and Meridian in the tools your team already uses: Prometheus / OpenTelemetry, Laravel Pulse, Filament and the terminal.
+
+### Added
+
+- **Retry with corrected data**: « Edit and retry » on a failed job changes its plain values (strings, numbers, booleans, arrays) and pushes it back onto its queue, when it failed because of an invalid value. Models, enums, dates, objects and the queue settings of the job (`tries`, `timeout`...) are kept as they are; encrypted jobs stay encrypted; invalid values are refused field by field. Only the people allowed by the new `editMeridianJobs` gate (or `Meridian::editJobs()`), among those who can act on the jobs, can do it; without the gate, only in the `local` environment. Every change is recorded in the audit log.
+- **Scheduled tasks** (« Schedule » page): Meridian records every run of `schedule:run` (succeeded, failed with its exception or exit code, skipped, running in background) and lists the tasks with their cron expression, last run, duration, recent runs and next run. The tasks that **did not run when due** (`schedule_grace`, 5 minutes) are flagged. Two new alerts: `ScheduleTaskFailed` (sent right away) and `ScheduleTaskMissed`. Also `GET /meridian/api/schedule`.
+- **Prometheus / OpenTelemetry**: `GET /meridian/prometheus` exposes the queues, throughput, failures, runtimes, workers, error groups and scheduled tasks in the Prometheus text format, for Prometheus, the OpenTelemetry Collector, Grafana or Datadog. Disabled by default: `MERIDIAN_PROMETHEUS=true` and a `MERIDIAN_PROMETHEUS_TOKEN` bearer token for the scrapers.
+- **Laravel Pulse card**: when Pulse is installed, `<livewire:meridian cols="4" />` shows the status, throughput, queues and most frequent errors.
+- **Filament plugin** (v4 and v5): `MeridianPlugin::make()` adds Meridian's figures and errors to the panel dashboard and a link to Meridian in the navigation (`navigationGroup()`, `navigationLabel()`, `navigationSort()`, `withoutWidgets()`, `withoutNavigation()`).
+- **`php artisan meridian:top`**: a live view of the queues, running jobs with their progress, supervisors, errors and failing scheduled tasks in the terminal (`--interval=2`, `--once`), for the servers without access to the dashboard.
+
+Pulse and Filament are optional: nothing is installed in your application, they are only suggested.
+
+### Changed
+
+- README: new sections and updated screenshots (schedule, terminal).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+The new migration creates the `meridian_schedule_tasks` and `meridian_schedule_runs` tables (the migrations you already published are skipped). Until it runs, Meridian works as before, without the scheduled tasks monitoring.
+
+If you published `config/meridian.php`, you may add the new `prometheus`, `schedule_grace`, `trim.schedule`, `alerts.schedule_failures` and `alerts.schedule_missed` keys (defaults apply when they are missing). If you published the Blade views, republish them. The two scheduled tasks alerts are enabled by default and are only sent when notification routes are configured.
+
 ## v1.7.0 - 2026-10-21
 
 Production features beyond Horizon: errors grouped by cause, health alerts, job progress, audit log and read-only access.
