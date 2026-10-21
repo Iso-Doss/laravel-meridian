@@ -2,6 +2,31 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.11.0 - 2026-10-21
+
+Configurable primary keys, UUID by default, and migrations that can run again safely.
+
+📖 **Documentation**: https://iso-doss.github.io/laravel-meridian/guide/installation#primary-keys
+
+### Added
+
+- **Configurable primary keys**: the tables created by Meridian's migrations use **UUID** keys by default (UUIDv7, which grow with time, so sorting by `id` keeps the insertion order). Set `MERIDIAN_PRIMARY_KEY=ulid` for ULIDs or `MERIDIAN_PRIMARY_KEY=id` for auto-incrementing integers (`primary_key` option), **before running the migrations**.
+- Existing tables keep their key type: Meridian reads the type of each table's `id` column and writes accordingly, so an application installed before this release keeps its integer keys without any change.
+
+### Changed
+
+- **Guarded migrations**: every migration checks `Schema::hasTable()` / `Schema::hasColumn()` before creating a table or a column, and before dropping it in `down()`. Running them again is harmless, and the migration of v1.7.0 only adds the columns that are missing.
+- Error groups no longer rely on `MAX(id)` (not available for PostgreSQL UUIDs), and "Retry all" walks the failed jobs whatever the key type.
+- The page of a scheduled task accepts UUID and ULID ids (`/meridian/schedule/{id}`); a malformed id answers 404.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration, nothing to change: your existing tables keep their integer keys. To have the option in a published `config/meridian.php`, add `'primary_key' => env('MERIDIAN_PRIMARY_KEY', 'uuid'),`. New installations get UUID keys unless `MERIDIAN_PRIMARY_KEY` is set before `php artisan migrate`.
+
 ## v1.10.0 - 2026-10-21
 
 Comfort and adoption: alerts to any webhook, CSV / JSON exports, richer metrics, six languages and a documentation site.
