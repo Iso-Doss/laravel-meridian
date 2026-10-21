@@ -6,7 +6,11 @@ use Closure;
 use Illuminate\Support\Str;
 use IsoDoss\Meridian\Events\MasterSupervisorOutOfMemory;
 use IsoDoss\Meridian\Meridian;
+use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Supervisor as SupervisorModel;
+use IsoDoss\Meridian\Repositories\JobRetryRepository;
+use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\Migrations;
 use Throwable;
 
 /**
@@ -71,6 +75,7 @@ class MasterSupervisor
             }
 
             $this->processPendingCommands();
+            $this->stopCancelledJobs();
 
             foreach ($this->supervisors as $supervisor) {
                 $supervisor->loop();
@@ -141,6 +146,20 @@ class MasterSupervisor
             $supervisor->terminate();
         }
 
+        // Like Horizon's fast_termination: exit now, the workers finish their
+        // jobs on their own, so that the next deployment starts right away.
+        if (config('meridian.fast_termination', false)) {
+            $this->info('Fast termination: the workers finish their current job on their own.');
+
+            foreach ($this->supervisors as $supervisor) {
+                $supervisor->detach();
+            }
+
+            $this->forget();
+
+            return 0;
+        }
+
         $timeout = max(array_map(fn (Supervisor $s) => $s->options->timeout, $this->supervisors) ?: [60]) + 10;
         $deadline = microtime(true) + $timeout;
 
@@ -154,13 +173,21 @@ class MasterSupervisor
             usleep(250_000);
         }
 
+        $this->forget();
+
+        return 0;
+    }
+
+    /**
+     * Remove this master from the dashboard.
+     */
+    protected function forget(): void
+    {
         try {
             SupervisorModel::query()->where('master', $this->name)->delete();
         } catch (Throwable) {
             //
         }
-
-        return 0;
     }
 
     protected function listenForSignals(): void
@@ -236,6 +263,61 @@ class MasterSupervisor
         }
 
         $this->persist();
+    }
+
+    /**
+     * Stop the workers of this host running a job cancelled from the
+     * dashboard that did not stop by itself within "cancel_timeout" seconds.
+     */
+    protected function stopCancelledJobs(): void
+    {
+        if (! Migrations::hasCancellation()) {
+            return;
+        }
+
+        $prefix = Meridian::hostname().':';
+
+        try {
+            $jobs = MonitoredJob::query()
+                ->where('status', MonitoredJob::PROCESSING)
+                ->whereNotNull('cancel_requested_at')
+                ->where('cancel_requested_at', '<=', time() - (int) config('meridian.cancel_timeout', 10))
+                ->get(['id', 'uuid', 'name', 'connection', 'job_id', 'worker'])
+                ->filter(fn (MonitoredJob $job) => str_starts_with((string) $job->worker, $prefix));
+        } catch (Throwable $e) {
+            report($e);
+
+            return;
+        }
+
+        foreach ($jobs as $job) {
+            $pid = (int) substr((string) $job->worker, strlen($prefix));
+            $process = null;
+
+            foreach ($this->supervisors as $supervisor) {
+                $process ??= $supervisor->findByPid($pid);
+            }
+
+            // Not one of our workers: it is stopped by the master running it, if any.
+            if ($process === null) {
+                continue;
+            }
+
+            $process->signal(defined('SIGKILL') ? SIGKILL : 9);
+
+            try {
+                if ($job->job_id) {
+                    app(QueueRepository::class)->jobsTable($job->connection)->where('id', $job->job_id)->delete();
+                }
+
+                app(JobRetryRepository::class)->forget([$job->uuid]);
+                $job->delete();
+            } catch (Throwable $e) {
+                report($e);
+            }
+
+            $this->info("Stopped the worker running the cancelled job [{$job->name}] ({$job->uuid}).");
+        }
     }
 
     protected function supervisorNamed(string $name): ?Supervisor

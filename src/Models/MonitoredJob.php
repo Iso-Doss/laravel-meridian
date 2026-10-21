@@ -26,6 +26,7 @@ use Illuminate\Support\Carbon;
  * @property string|null $fingerprint
  * @property int|null $progress
  * @property string|null $progress_message
+ * @property int|null $cancel_requested_at
  * @property Carbon $queued_at
  * @property Carbon $available_at
  * @property Carbon|null $reserved_at

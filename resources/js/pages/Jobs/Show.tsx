@@ -1,4 +1,4 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import { PencilLine, RotateCcw, Trash2 } from 'lucide-react';
 import { type ReactNode, useState } from 'react';
 import { ConfirmAction } from '@/components/confirm-action';
@@ -13,7 +13,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { useAutoRefresh } from '@/hooks/use-auto-refresh';
 import { formatDateTime, formatRuntime, formatSeconds } from '@/lib/format';
 import { useTranslation } from '@/lib/i18n';
-import type { JobDetails } from '@/types';
+import type { JobDetails, SharedProps } from '@/types';
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
     return (
@@ -31,11 +31,18 @@ export default function JobShow({ job }: { job: JobDetails }) {
     useAutoRefresh(['job'], !editing);
 
     const pending = job.status === 'pending';
+    const running = job.status === 'processing';
+    const { meridian } = usePage<SharedProps>().props;
 
     return (
         <Layout
             title={job.short_name}
-            badge={<StatusBadge status={job.delayed ? 'delayed' : job.status} />}
+            badge={
+                <>
+                    <StatusBadge status={job.delayed ? 'delayed' : job.status} />
+                    {job.cancelling && <StatusBadge status="cancelling" />}
+                </>
+            }
             actions={
                 <>
                     {job.retry_url && (
@@ -55,14 +62,18 @@ export default function JobShow({ job }: { job: JobDetails }) {
                             method="delete"
                             icon={Trash2}
                             tone="destructive"
-                            label={pending ? t('Cancel job') : t('Delete')}
-                            title={pending ? t('Cancel this job?') : t('Delete this job?')}
+                            label={pending || running ? t('Cancel job') : t('Delete')}
+                            title={pending || running ? t('Cancel this job?') : t('Delete this job?')}
                             description={
-                                pending
-                                    ? t('The job will be removed from the queue and will never run.')
-                                    : t('The record of this job will be deleted from Meridian.')
+                                running
+                                    ? t('The job is asked to stop. If it does not stop by itself within :seconds seconds, Meridian stops the worker running it (when the worker runs under php artisan meridian).', {
+                                          seconds: meridian.cancel_timeout,
+                                      })
+                                    : pending
+                                      ? t('The job will be removed from the queue and will never run.')
+                                      : t('The record of this job will be deleted from Meridian.')
                             }
-                            confirmLabel={pending ? t('Cancel the job') : t('Delete the job')}
+                            confirmLabel={pending || running ? t('Cancel the job') : t('Delete the job')}
                         />
                     )}
                 </>

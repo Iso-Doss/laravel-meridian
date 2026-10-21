@@ -24,6 +24,7 @@
                 <td><span class="muted">{{ $job->connection }}:</span>{{ $job->queue }}</td>
                 <td>
                     <span class="badge {{ $job->status }}">{{ $t(Format::status($job->isDelayed() ? 'delayed' : $job->status)) }}</span>
+                    @if ($job->status === 'processing' && $job->cancel_requested_at)<span class="badge cancelling">{{ $t('Cancelling…') }}</span>@endif
                     @if ($job->retries) <span class="muted" title="{{ $t('Manual retries') }}">↻{{ $job->retries }}</span> @endif
                     @include('meridian::partials.job-progress')
                 </td>

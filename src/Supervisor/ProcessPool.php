@@ -101,6 +101,30 @@ class ProcessPool
         $this->scale(0);
     }
 
+    /**
+     * Let the workers finish their jobs on their own after the master exited.
+     */
+    public function detach(): void
+    {
+        foreach (array_merge($this->processes, $this->terminating) as $process) {
+            $process->detach();
+        }
+    }
+
+    /**
+     * The worker process running with this PID, if any.
+     */
+    public function findByPid(int $pid): ?WorkerProcess
+    {
+        foreach ($this->processes as $process) {
+            if ($process->pid() === $pid) {
+                return $process;
+            }
+        }
+
+        return null;
+    }
+
     public function hasRunningProcesses(): bool
     {
         foreach (array_merge($this->processes, $this->terminating) as $process) {

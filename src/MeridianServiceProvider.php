@@ -47,6 +47,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 'add_fingerprint_and_progress_to_meridian_jobs_table',
                 'create_meridian_audit_logs_table',
                 'create_meridian_schedule_tables',
+                'add_cancel_requested_at_to_meridian_jobs_table',
             ])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
@@ -66,6 +67,8 @@ class MeridianServiceProvider extends PackageServiceProvider
                 Console\ClearMetricsCommand::class,
                 Console\ListenCommand::class,
                 Console\TopCommand::class,
+                Console\PurgeCommand::class,
+                Console\ListCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command

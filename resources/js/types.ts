@@ -14,6 +14,8 @@ export interface SharedProps {
         translations: Record<string, string>;
         /** False for read-only users: no retry, delete, cancel or monitoring action. */
         can_manage: boolean;
+        /** Seconds a cancelled running job has to stop by itself. */
+        cancel_timeout: number;
     };
     nav: {
         dashboard: string;
@@ -53,6 +55,8 @@ export interface Job {
     progress_message: string | null;
     /** Estimated seconds before the job completes. */
     remaining: number | null;
+    /** A running job asked to stop. */
+    cancelling: boolean;
     url: string;
     retry_url: string | null;
 }

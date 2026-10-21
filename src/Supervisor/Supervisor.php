@@ -133,6 +133,24 @@ class Supervisor
         }
     }
 
+    public function detach(): void
+    {
+        foreach ($this->pools as $pool) {
+            $pool->detach();
+        }
+    }
+
+    public function findByPid(int $pid): ?WorkerProcess
+    {
+        foreach ($this->pools as $pool) {
+            if ($process = $pool->findByPid($pid)) {
+                return $process;
+            }
+        }
+
+        return null;
+    }
+
     public function hasRunningProcesses(): bool
     {
         foreach ($this->pools as $pool) {

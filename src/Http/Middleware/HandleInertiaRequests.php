@@ -48,6 +48,7 @@ class HandleInertiaRequests extends Middleware
                 'locales' => Translator::languages(),
                 'translations' => Translator::messages($locale),
                 'can_manage' => Meridian::canManage($request),
+                'cancel_timeout' => (int) config('meridian.cancel_timeout', 10),
             ],
             'nav' => [
                 'dashboard' => route('meridian.dashboard'),

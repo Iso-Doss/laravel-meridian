@@ -220,6 +220,15 @@ return [
 
     'heartbeat' => 5,
 
+    // Like Horizon: when true, "meridian:terminate" makes the master exit
+    // right away while its workers finish their current job on their own,
+    // so that a deployment can start the new master without waiting.
+    'fast_termination' => false,
+
+    // Seconds Meridian waits for a cancelled running job to stop by itself
+    // ($this->cancelled()) before stopping the worker running it.
+    'cancel_timeout' => 10,
+
     // Memory (MB) above which "php artisan meridian" restarts itself: it
     // terminates gracefully with the exit code 12 and your process monitor
     // starts it again. 0 disables the check.

@@ -80,6 +80,7 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                             <TableCell>
                                 <span className="flex items-center gap-2">
                                     <StatusBadge status={job.delayed ? 'delayed' : job.status} />
+                                    {job.cancelling && <StatusBadge status="cancelling" />}
                                     {job.retries > 0 && (
                                         <span className="flex items-center gap-0.5 text-xs text-muted-foreground" title={t('Manual retries')}>
                                             <RotateCcw className="size-3" />

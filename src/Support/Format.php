@@ -31,6 +31,7 @@ class Format
         'skipped' => 'Skipped',
         'missed' => 'Missed',
         'never' => 'Never ran',
+        'cancelling' => 'Cancelling…',
     ];
 
     public static function status(string $status): string

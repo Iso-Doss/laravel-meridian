@@ -60,6 +60,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 - [Errors](#errors)
   - [Retry with corrected data](#retry-with-corrected-data)
 - [Job progress](#job-progress)
+  - [Cancelling a running job](#cancelling-a-running-job)
 - [Scheduled tasks](#scheduled-tasks)
 - [Notifications](#notifications)
   - [Alerts](#alerts)
@@ -82,7 +83,7 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 - **Job progress**: a job reports `$this->progress(42)` and the dashboard shows a progress bar and the estimated remaining time.
 - **Scheduled tasks**: every run of `schedule:run` with its status, duration and exception, and the tasks that failed or did not run when due.
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
-- **Actions**: retry one failed job, or all the failed jobs matching the filters of the list, with the history of each retry; cancel a pending job; retry the failed jobs of a batch.
+- **Actions**: retry one failed job, or all the failed jobs matching the filters of the list, with the history of each retry; cancel a pending or a running job; retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
 - **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
@@ -315,6 +316,8 @@ php artisan meridian
 | `meridian:supervisors` | List the running supervisors |
 | `meridian:supervisor-status {name}` | Show the status of a supervisor |
 | `meridian:terminate` | Finish the running jobs, then stop the master supervisor (`--all` for every host) |
+| `meridian:list` | List the machines running Meridian (the master supervisors) |
+| `meridian:purge` | Terminate the workers left by a master that was killed, and forget the dead processes of this machine (`--signal=SIGTERM`) |
 | `meridian:snapshot` | Store a metrics snapshot, import the jobs pushed without event, check the wait times |
 | `meridian:prune` | Delete old completed and failed jobs, metrics and stale heartbeats |
 | `meridian:forget {uuid}` / `meridian:forget --all` | Delete a failed job, or all of them, from Meridian and from the failed jobs table |
@@ -344,6 +347,10 @@ stopwaitsecs=3600
 ```
 
 `stopwaitsecs` must be longer than your longest job.
+
+**Fast termination**: by default, `meridian:terminate` waits for the running jobs to finish before the master exits, which may delay your deployment. Like Horizon, set `'fast_termination' => true` to make the master exit right away: its workers finish their current job on their own, while your process monitor already starts the new master with your new code.
+
+If a master was killed without terminating its workers (`kill -9`, out of memory...), `php artisan meridian:purge` terminates the workers it left behind.
 
 ## The dashboard
 
@@ -484,6 +491,26 @@ class ImportCustomers implements ShouldQueue
 ```
 
 `$this->progress(42)` takes a percentage, `$this->progressOf($done, $total)` computes it. Meridian only writes when the percentage or the message changes, so you may call them in a tight loop.
+
+### Cancelling a running job
+
+« Cancel job » also works on a running job. The job is asked to stop:
+
+- a job using `TracksProgress` stops cleanly when it checks `$this->cancelled()` (one query per second at most), then Meridian forgets it:
+
+  ```php
+  foreach ($this->rows as $row) {
+      if ($this->cancelled()) {
+          return;
+      }
+
+      // ...
+  }
+  ```
+
+- otherwise, when the job runs under `php artisan meridian`, its master stops the worker running it after `cancel_timeout` seconds (10 by default), removes the job from the queue and starts a new worker.
+
+A job run by a worker that Meridian does not supervise, and that does not check `$this->cancelled()`, runs to completion.
 
 ## Scheduled tasks
 

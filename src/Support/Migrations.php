@@ -58,6 +58,14 @@ class Migrations
         return static::has('meridian_schedule_runs');
     }
 
+    /**
+     * The cancellation of running jobs (v1.9.0).
+     */
+    public static function hasCancellation(): bool
+    {
+        return static::has('meridian_jobs', 'cancel_requested_at');
+    }
+
     public static function flush(): void
     {
         static::$checked = [];

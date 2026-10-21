@@ -4,16 +4,19 @@
 
 @section('content')
     @php($pending = $job->status === MonitoredJob::PENDING)
+    @php($running = $job->status === MonitoredJob::PROCESSING)
+    @php($deletable = ! $running || (\IsoDoss\Meridian\Support\Migrations::hasCancellation() && $job->cancel_requested_at === null))
     <h1>
         {{ $job->shortName() }}
         <span class="badge {{ $job->status }}">{{ $t(Format::status($job->isDelayed() ? 'delayed' : $job->status)) }}</span>
+        @if ($running && $job->cancel_requested_at)<span class="badge cancelling">{{ $t('Cancelling…') }}</span>@endif
         <span class="filters actions">
             @if ($job->status === MonitoredJob::FAILED && $canManage)
                 <form class="inline" method="post" action="{{ route('meridian.jobs.retry', $job->uuid) }}" data-confirm="{{ $t('Retry this job?') }}">@csrf <button class="btn primary">{{ $t('Retry') }}</button></form>
             @endif
-            @if ($job->status !== MonitoredJob::PROCESSING && $canManage)
-                <form class="inline" method="post" action="{{ route('meridian.jobs.destroy', $job->uuid) }}" data-confirm="{{ $pending ? $t('Cancel this job?') : $t('Delete this job?') }}">
-                    @csrf @method('DELETE') <button class="btn danger">{{ $pending ? $t('Cancel job') : $t('Delete') }}</button>
+            @if ($deletable && $canManage)
+                <form class="inline" method="post" action="{{ route('meridian.jobs.destroy', $job->uuid) }}" data-confirm="{{ $pending || $running ? $t('Cancel this job?') : $t('Delete this job?') }}">
+                    @csrf @method('DELETE') <button class="btn danger">{{ $pending || $running ? $t('Cancel job') : $t('Delete') }}</button>
                 </form>
             @endif
         </span>

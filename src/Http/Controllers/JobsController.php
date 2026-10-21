@@ -144,13 +144,16 @@ class JobsController extends Controller
     }
 
     /**
-     * Delete a pending job from the queue, or forget a failed job.
+     * Delete a pending job from the queue, forget a failed job, or ask a
+     * running job to stop.
      */
     public function destroy(string $uuid, QueueRepository $queues): RedirectResponse
     {
         $job = MonitoredJob::query()->where('uuid', $uuid)->firstOrFail();
 
-        abort_if($job->status === MonitoredJob::PROCESSING, 422, 'A job being processed cannot be deleted.');
+        if ($job->status === MonitoredJob::PROCESSING) {
+            return $this->cancelRunning($job);
+        }
 
         if ($job->status === MonitoredJob::PENDING && $job->job_id) {
             $queues->jobsTable($job->connection)->where('id', $job->job_id)->whereNull('reserved_at')->delete();
@@ -170,6 +173,27 @@ class JobsController extends Controller
         ]);
 
         return redirect()->route('meridian.jobs.index')->with('meridian.success', Translator::get('The job has been deleted.'));
+    }
+
+    /**
+     * The job stops when it checks $this->cancelled(), or Meridian's supervisor
+     * stops its worker after "cancel_timeout" seconds.
+     */
+    protected function cancelRunning(MonitoredJob $job): RedirectResponse
+    {
+        abort_unless(Migrations::hasCancellation(), 422, 'Run the migrations of Meridian to cancel running jobs.');
+
+        $job->update(['cancel_requested_at' => time()]);
+
+        $this->audit->record('job.cancelled', $job->uuid, [
+            'job' => $job->name,
+            'queue' => $job->connection.':'.$job->queue,
+            'status' => $job->status,
+        ]);
+
+        return back()->with('meridian.success', Translator::get('Cancellation requested: the job stops at its next check, or its worker is stopped within :seconds seconds when Meridian supervises it.', [
+            'seconds' => (int) config('meridian.cancel_timeout', 10),
+        ]));
     }
 
     public function apiIndex(Request $request, ?string $status = null): JsonResponse
@@ -195,6 +219,7 @@ class JobsController extends Controller
             ->select(array_merge(
                 ['id', 'uuid', 'connection', 'queue', 'name', 'status', 'attempts', 'retries', 'tags', 'batch_id', 'runtime', 'wait', 'queued_at', 'available_at', 'reserved_at', 'completed_at', 'failed_at', 'updated_at'],
                 $insights ? ['fingerprint', 'progress', 'progress_message'] : [],
+                Migrations::hasCancellation() ? ['cancel_requested_at'] : [],
             ))
             ->status($status)
             ->search($request->query('search'))

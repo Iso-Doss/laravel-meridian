@@ -1,0 +1,31 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function getConnection(): ?string
+    {
+        return config('meridian.database');
+    }
+
+    public function up(): void
+    {
+        $schema = Schema::connection($this->getConnection());
+
+        if (! $schema->hasColumn('meridian_jobs', 'cancel_requested_at')) {
+            $schema->table('meridian_jobs', function (Blueprint $table) {
+                $table->unsignedInteger('cancel_requested_at')->nullable()->comment('a running job asked to stop');
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::connection($this->getConnection())->table('meridian_jobs', function (Blueprint $table) {
+            $table->dropColumn('cancel_requested_at');
+        });
+    }
+};

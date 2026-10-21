@@ -13,6 +13,7 @@ use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobData;
 use IsoDoss\Meridian\Support\JobEditor;
+use IsoDoss\Meridian\Support\Migrations;
 
 /**
  * Turns Meridian records into the props of the Inertia pages.
@@ -45,6 +46,7 @@ class Present
             'progress' => $job->status === MonitoredJob::PROCESSING ? $job->progress : null,
             'progress_message' => $job->status === MonitoredJob::PROCESSING ? $job->progress_message : null,
             'remaining' => static::remaining($job),
+            'cancelling' => $job->status === MonitoredJob::PROCESSING && $job->cancel_requested_at !== null,
             'url' => route('meridian.jobs.show', $job->uuid),
             'retry_url' => $job->status === MonitoredJob::FAILED && static::canManage() ? route('meridian.jobs.retry', $job->uuid) : null,
         ];
@@ -63,7 +65,7 @@ class Present
             'retry_history' => app(JobRetryRepository::class)->history($job->uuid),
             'exception' => $job->exception,
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
-            'delete_url' => $job->status !== MonitoredJob::PROCESSING && static::canManage() ? route('meridian.jobs.destroy', $job->uuid) : null,
+            'delete_url' => static::canManage() && static::deletable($job) ? route('meridian.jobs.destroy', $job->uuid) : null,
             'error_group' => static::errorGroup($job),
             'edit' => static::edit($job),
         ]);
@@ -85,6 +87,18 @@ class Present
         return $fields && collect($fields)->contains('editable', true)
             ? ['url' => route('meridian.jobs.retry-edited', $job->uuid), 'fields' => $fields]
             : null;
+    }
+
+    /**
+     * Pending and finished jobs can be deleted, running ones cancelled once.
+     */
+    protected static function deletable(MonitoredJob $job): bool
+    {
+        if ($job->status !== MonitoredJob::PROCESSING) {
+            return true;
+        }
+
+        return Migrations::hasCancellation() && $job->cancel_requested_at === null;
     }
 
     /**

@@ -3,7 +3,6 @@
 namespace IsoDoss\Meridian\Supervisor;
 
 use Closure;
-use Symfony\Component\Process\Process;
 use Throwable;
 
 /**
@@ -11,7 +10,7 @@ use Throwable;
  */
 class WorkerProcess
 {
-    public ?Process $process = null;
+    public ?DetachableProcess $process = null;
 
     /**
      * When the process was last started.
@@ -36,7 +35,7 @@ class WorkerProcess
     public function start(): static
     {
         $this->startedAt = microtime(true);
-        $this->process = new Process($this->command, base_path(), null, null, null);
+        $this->process = new DetachableProcess($this->command, base_path(), null, null, null);
         $this->process->start($this->output);
 
         return $this;
@@ -98,6 +97,14 @@ class WorkerProcess
         $this->stoppingSince ??= microtime(true);
 
         $this->signal(defined('SIGTERM') ? SIGTERM : 15);
+    }
+
+    /**
+     * Let the worker finish its job on its own after the master exited.
+     */
+    public function detach(): void
+    {
+        $this->process?->detach();
     }
 
     /**

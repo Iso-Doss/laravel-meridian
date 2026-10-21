@@ -73,7 +73,7 @@ th.sticky-actions { background: var(--bg); }
 .muted { color: var(--muted); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
 .badge.pending { background: var(--info-soft); color: var(--info); border-color: transparent; }
-.badge.processing, .badge.paused, .badge.working { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
+.badge.processing, .badge.paused, .badge.working, .badge.cancelling { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
 .badge.completed, .badge.running, .badge.finished, .badge.success { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
 .badge.failed, .badge.inactive, .badge.cancelled, .badge.missed { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
 .tag { display: inline-block; padding: 0 6px; margin: 1px 2px 1px 0; border-radius: 4px; background: var(--code); font-size: 11.5px; color: var(--muted); }

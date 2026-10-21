@@ -46,7 +46,23 @@ class RecordJobLifecycle
      */
     protected array $exceptions = [];
 
+    /**
+     * The running jobs that stopped because they were cancelled ($this->cancelled()).
+     *
+     * @var array<string, true>
+     */
+    protected array $cancelled = [];
+
     public function __construct(protected WorkerHeartbeat $heartbeat, protected JobRetryRepository $retries) {}
+
+    /**
+     * A running job noticed that it was cancelled and is stopping: Meridian
+     * forgets it once it returns, like a cancelled pending job.
+     */
+    public function acknowledgeCancellation(string $uuid): void
+    {
+        $this->cancelled[$uuid] = true;
+    }
 
     /**
      * @return array<class-string, string>
@@ -147,6 +163,17 @@ class RecordJobLifecycle
         $this->heartbeat->idle($event->connectionName, $job->getQueue(), processed: true);
 
         $runtime = $this->stopTimer($uuid);
+
+        if (isset($this->cancelled[$uuid])) {
+            unset($this->cancelled[$uuid]);
+
+            $this->safely(function () use ($uuid) {
+                MonitoredJob::query()->where('uuid', $uuid)->delete();
+                $this->retries->forget([$uuid]);
+            });
+
+            return;
+        }
 
         $this->safely(function () use ($job, $uuid, $runtime) {
             $query = MonitoredJob::query()->where('uuid', $uuid);

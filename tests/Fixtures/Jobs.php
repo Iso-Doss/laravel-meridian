@@ -205,3 +205,21 @@ class SecretJob implements ShouldBeEncrypted, ShouldQueue
         static::$handled[] = $this->token;
     }
 }
+
+class CancellableJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable, TracksProgress;
+
+    public static ?int $stoppedAt = null;
+
+    public function handle(): void
+    {
+        foreach (range(1, 5) as $step) {
+            if ($this->cancelled()) {
+                static::$stoppedAt = $step;
+
+                return;
+            }
+        }
+    }
+}
