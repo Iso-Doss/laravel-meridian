@@ -2,6 +2,36 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.10.0 - 2026-10-21
+
+Comfort and adoption: alerts to any webhook, CSV / JSON exports, richer metrics, six languages and a documentation site.
+
+📖 **Documentation**: https://iso-doss.github.io/laravel-meridian/
+
+### Added
+
+- **Webhooks**: send the alerts to Discord, Microsoft Teams, Google Chat, Slack or any URL, without any extra package: `Meridian::routeWebhookNotificationsTo($url)` or `MERIDIAN_NOTIFY_WEBHOOKS` (comma separated). The format is recognized from the URL (or forced with the second argument): Discord embeds, Teams Adaptive Cards (incoming webhooks and Workflows), Google Chat and Slack messages. Any other URL receives a JSON payload (`event`, `title`, `summary`, `url`, `app`, `environment`, `occurred_at`, `data`), signed with the `X-Meridian-Signature` header (HMAC SHA-256) when `MERIDIAN_NOTIFY_WEBHOOK_SECRET` is set. A failing webhook does not prevent the others.
+- **Exports**: « Export » downloads the jobs (with the filters of the list) or the error groups as **CSV** or **JSON** (`/meridian/jobs/export`, `/meridian/errors/export`). Streamed whatever their size; the CSV opens with its accents in Excel, and the cells a spreadsheet would run as formulas are neutralized.
+- **Richer metrics**:
+  - **p95 and p99** runtimes per job and per queue, besides the average and the maximum;
+  - the **trend** of the throughput, the failure rate and the runtime against the previous period of the same length (worse in red);
+  - a **heatmap of the jobs per hour** over the last seven days, in the visitor's timezone, the hours where 10 % or more of the jobs failed outlined.
+- **Four more languages**: Spanish, Portuguese, German and **Arabic, written from right to left**, in both interfaces. The six languages are offered by default (`locales` option).
+- **Documentation site** built with VitePress, with search: https://iso-doss.github.io/laravel-meridian/
+
+### Changed
+
+- The `locales` option now lists `['en', 'fr', 'es', 'pt', 'de', 'ar']`.
+- README: new sections and updated screenshots (metrics).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration. If you published `config/meridian.php`, add the new languages to `locales` to offer them, and the new `notifications.webhooks` and `notifications.webhook_secret` keys if you want them in the configuration. If you published the Blade views, republish them.
+
 ## v1.9.0 - 2026-10-21
 
 Completes the parity with Laravel Horizon: fast termination, cancelling running jobs, `meridian:purge` and `meridian:list`.
