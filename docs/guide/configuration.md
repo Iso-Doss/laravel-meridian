@@ -2,6 +2,17 @@
 
 After installing Meridian, its configuration lives in `config/meridian.php`. Each option is documented in the file itself.
 
+## Database
+
+Meridian stores its data in its own tables (`meridian_*`). By default they live on the application's default connection; set `MERIDIAN_DB_CONNECTION` to move them to another one, and keep the monitoring writes away from your main database.
+
+```ini
+MERIDIAN_DB_CONNECTION=monitoring
+MERIDIAN_PRIMARY_KEY=uuid   # "uuid" (default), "ulid" or "id"
+```
+
+`MERIDIAN_PRIMARY_KEY` sets the type of the `id` column created by the migrations: UUIDv7 by default, ULID, or an auto-incrementing integer. Choose it before running the migrations; see [Primary keys](./installation#primary-keys).
+
 ## Environments and supervisors
 
 The `environments` option lists, for each environment of your application, the supervisors to run. A supervisor manages a group of worker processes processing one or more queues. The supervisors of the current environment (`APP_ENV`) are started; a `'*'` environment is used when none matches.
