@@ -1,6 +1,7 @@
 import { Link, router, usePage } from '@inertiajs/react';
 import { RotateCcw } from 'lucide-react';
 import { ConfirmAction } from '@/components/confirm-action';
+import { ExportMenu } from '@/components/export-menu';
 import { Layout } from '@/components/layout';
 import { Card, CardHeader, CardTitle } from '@/components/ui/card';
 import { NativeSelect } from '@/components/ui/input';
@@ -16,14 +17,15 @@ interface Props {
     ready: boolean;
     queues: string[];
     filters: { queue: string };
+    export_url: string;
 }
 
 const shortClass = (name: string) => name.split('\\').pop() ?? name;
 
 /** The actions column stays visible when the table scrolls horizontally (small screens). */
-const STICKY = 'sticky right-0 z-10 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]';
+const STICKY = 'sticky end-0 z-10 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] rtl:shadow-[8px_0_8px_-8px_rgb(0_0_0/0.15)]';
 
-export default function ErrorsIndex({ groups, ready, queues, filters }: Props) {
+export default function ErrorsIndex({ groups, ready, queues, filters, export_url }: Props) {
     const { t, locale } = useTranslation();
     const { nav } = usePage<SharedProps>().props;
     useAutoRefresh(['groups', 'queues']);
@@ -32,7 +34,7 @@ export default function ErrorsIndex({ groups, ready, queues, filters }: Props) {
     const retryable = groups.some((group) => group.retry_url);
 
     return (
-        <Layout title={t('Errors')}>
+        <Layout title={t('Errors')} actions={groups.length > 0 && <ExportMenu url={export_url} query={filters.queue ? { queue: filters.queue } : {}} />}>
             {!ready && (
                 <div className="mb-6 rounded-lg border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
                     {t('Run the migrations of Meridian to group the failed jobs by error (php artisan vendor:publish --tag=meridian-migrations, then php artisan migrate).')}
@@ -68,10 +70,10 @@ export default function ErrorsIndex({ groups, ready, queues, filters }: Props) {
                         <TableRow>
                             <TableHead>{t('Error')}</TableHead>
                             <TableHead>{t('Jobs')}</TableHead>
-                            <TableHead className="text-right">{t('Occurrences')}</TableHead>
+                            <TableHead className="text-end">{t('Occurrences')}</TableHead>
                             <TableHead>{t('First seen')}</TableHead>
                             <TableHead>{t('Last seen')}</TableHead>
-                            {retryable && <TableHead className={cn(STICKY, 'bg-muted text-right')}>{t('Actions')}</TableHead>}
+                            {retryable && <TableHead className={cn(STICKY, 'bg-muted text-end')}>{t('Actions')}</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -108,7 +110,7 @@ export default function ErrorsIndex({ groups, ready, queues, filters }: Props) {
                                     </span>
                                     <div className="mt-1 text-xs text-muted-foreground">{group.queues.join(', ')}</div>
                                 </TableCell>
-                                <TableCell className="text-right font-medium tabular-nums">
+                                <TableCell className="text-end font-medium tabular-nums">
                                     <Link href={group.url} className="hover:underline">
                                         {formatNumber(group.count, locale)}
                                     </Link>
@@ -120,7 +122,7 @@ export default function ErrorsIndex({ groups, ready, queues, filters }: Props) {
                                     </Link>
                                 </TableCell>
                                 {retryable && (
-                                    <TableCell className={cn(STICKY, 'bg-card text-right')}>
+                                    <TableCell className={cn(STICKY, 'bg-card text-end')}>
                                         {group.retry_url && (
                                             <ConfirmAction
                                                 compact

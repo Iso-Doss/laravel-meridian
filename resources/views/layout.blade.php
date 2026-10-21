@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="{{ $locale }}">
+<html lang="{{ $locale }}" dir="{{ \IsoDoss\Meridian\Support\Translator::direction($locale) }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

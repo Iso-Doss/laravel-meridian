@@ -17,7 +17,19 @@ class Translator
     /**
      * Native names of the languages offered by the switchers.
      */
-    public const LANGUAGES = ['en' => 'English', 'fr' => 'Français'];
+    public const LANGUAGES = [
+        'en' => 'English',
+        'fr' => 'Français',
+        'es' => 'Español',
+        'pt' => 'Português',
+        'de' => 'Deutsch',
+        'ar' => 'العربية',
+    ];
+
+    /**
+     * Languages written from right to left.
+     */
+    public const RTL = ['ar', 'fa', 'he', 'ur'];
 
     /**
      * @var array<string, array<string, string>>
@@ -69,6 +81,14 @@ class Translator
         $language = substr($application, 0, 2);
 
         return in_array($language, $locales, true) ? $language : $locales[0];
+    }
+
+    /**
+     * The writing direction of a language: "rtl" or "ltr".
+     */
+    public static function direction(string $locale): string
+    {
+        return in_array($locale, self::RTL, true) ? 'rtl' : 'ltr';
     }
 
     /**

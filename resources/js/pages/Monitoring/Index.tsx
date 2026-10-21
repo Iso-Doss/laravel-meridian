@@ -81,10 +81,10 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
                     <TableHeader>
                         <TableRow>
                             <TableHead>{t('Tag')}</TableHead>
-                            <TableHead className="text-right">{t('Jobs')}</TableHead>
-                            <TableHead className="text-right">{t('Pending')}</TableHead>
-                            <TableHead className="text-right">{t('Failed')}</TableHead>
-                            {destroy_url && <TableHead className="text-right">{t('Actions')}</TableHead>}
+                            <TableHead className="text-end">{t('Jobs')}</TableHead>
+                            <TableHead className="text-end">{t('Pending')}</TableHead>
+                            <TableHead className="text-end">{t('Failed')}</TableHead>
+                            {destroy_url && <TableHead className="text-end">{t('Actions')}</TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -102,11 +102,11 @@ export default function MonitoringIndex({ tags, ready, store_url, destroy_url }:
                                         {tag.tag}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(tag.jobs, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(tag.pending, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(tag.failed, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(tag.jobs, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(tag.pending, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(tag.failed, locale)}</TableCell>
                                 {destroy_url && (
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-end">
                                         <ConfirmAction
                                             compact
                                             url={destroy_url}

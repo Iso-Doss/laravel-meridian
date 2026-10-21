@@ -145,7 +145,7 @@ it('shows the Blade interface in the language of the visitor', function () {
     $this->withCookie(Translator::COOKIE, 'fr')
         ->get('/meridian')
         ->assertOk()
-        ->assertSee('<html lang="fr">', false)
+        ->assertSee('<html lang="fr" dir="ltr">', false)
         ->assertSee('Tableau de bord')
         ->assertSee('Charge actuelle')
         ->assertSee('Thème')

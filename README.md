@@ -13,6 +13,8 @@
     <a href="https://packagist.org/packages/iso-doss/laravel-meridian"><img src="https://img.shields.io/packagist/l/iso-doss/laravel-meridian" alt="License"></a>
 </p>
 
+<p align="center"><b><a href="https://iso-doss.github.io/laravel-meridian/">📖 Read the documentation</a></b></p>
+
 ## Introduction
 
 Meridian gives the Laravel **database** queue driver what [Laravel Horizon](https://laravel.com/docs/horizon) gives Redis: a beautiful dashboard and code-driven configuration. Monitor the throughput, runtime, wait time and failures of your jobs, search them by tag, retry them in one click, and follow your batches and workers live.
@@ -26,7 +28,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 - **Horizon's features on the database driver**, without Redis and without depending on Horizon's internals: monitored tags, retry history, silenced jobs, metrics, long-wait notifications by e-mail, Slack or SMS.
 - **Beyond Horizon**: failed jobs grouped by cause and retried with corrected data, scheduled tasks monitoring, alerts on failure rates, missing workers and long jobs, job progress, read-only access and an audit log.
 - **Fits your tools**: Prometheus / OpenTelemetry metrics for Grafana or Datadog, a Laravel Pulse card, a Filament plugin, and `meridian:top` in the terminal.
-- **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English and French**.
+- **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English, French, Spanish, Portuguese, German and Arabic** (right to left).
 - **Nothing to build.** The compiled assets ship with the package: your application needs neither Node nor an Inertia setup, and never conflicts with its own.
 - **Production-ready**: works under a strict, nonce-based **Content-Security-Policy**, on MySQL, MariaDB, PostgreSQL and SQLite, with Laravel 12 and 13.
 
@@ -54,6 +56,7 @@ All of your worker configuration lives in a single, simple configuration file. `
   - [Audit log](#audit-log)
   - [Interfaces, themes and languages](#interfaces-themes-and-languages)
   - [Content-Security-Policy](#content-security-policy)
+  - [Export](#export)
   - [JSON API](#json-api)
 - [Tags](#tags)
   - [Monitored tags](#monitored-tags)
@@ -85,12 +88,13 @@ Horizon only works with Redis. If your application runs its queues on the `datab
 - **Search** by job class, tag (`App\Models\User:42`, or anything returned by a `tags()` method) or UUID.
 - **Actions**: retry one failed job, or all the failed jobs matching the filters of the list, with the history of each retry; cancel a pending or a running job; retry the failed jobs of a batch.
 - **Batches**: progress of your `Bus::batch()` batches and of their jobs.
-- **Metrics**: per job and per queue (processed, failure rate, average and max runtime, average wait), with a history of snapshots.
+- **Metrics**: per job and per queue (processed, failure rate, average, p95, p99 and max runtime, average wait, trend against the previous period), a heatmap of the jobs per hour, and a history of snapshots.
+- **Export** of the jobs and errors as CSV or JSON.
 - **Workers**: every `queue:work` process reports a heartbeat (status, memory, jobs processed), even without Meridian's supervisor.
 - **Supervisors**: `php artisan meridian` balances processes between queues (`auto`, `simple` or no balancing), with `meridian:pause`, `meridian:continue` and `meridian:terminate`, for all supervisors or one at a time.
-- **Alerts** by e-mail, Slack or SMS when a queue waits too long, fails too often, has no worker, or when a job runs for too long.
+- **Alerts** by e-mail, Slack, SMS or webhooks (Discord, Teams, Google Chat, any URL) when a queue waits too long, fails too often, has no worker, or when a job runs for too long.
 - **Read-only access and audit log**: choose who can retry, delete or cancel jobs, and see who did what, and when.
-- **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, English and French, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
+- **A modern interface**: React, Inertia and shadcn/ui, light, dark and system themes, six languages, live refresh. Its compiled assets ship with the package: your application needs neither Node, React nor an Inertia setup of its own.
 
 ### Meridian and the other packages
 
@@ -106,7 +110,7 @@ Other packages cover part of this ground. Meridian is built to cover all of it i
 | Prometheus metrics, Pulse card, Filament plugin | ✅ | ❌ | ❌ | Filament only |
 | Independent from Horizon's internals | ✅ | ✅ | ❌ (rebinds Horizon's services) | ✅ |
 | Standalone dashboard, no admin panel required | ✅ | ✅ | ✅ | ❌ (Filament, Nova…) |
-| Strict CSP, English and French, Blade or React | ✅ | ❌ | ❌ | Depends on the panel |
+| Strict CSP, six languages, Blade or React | ✅ | ❌ | ❌ | Depends on the panel |
 
 Choose Meridian if you want the full Horizon experience on the `database` driver, from the dashboard to the supervision of your workers, without Redis and without adding anything to your jobs.
 
@@ -405,7 +409,7 @@ Two interfaces ship with Meridian:
 - **Inertia** (default): React, Inertia and shadcn/ui. It has its own root view, Inertia middleware and asset version: your application's Inertia setup (shared props, SSR, root view) is never involved, even when it uses Inertia too.
 - **Blade**: a lightweight server-rendered interface, with the same pages.
 
-Both offer a light, dark or system theme (kept in the browser) and are translated in English and French: the language follows the application locale and can be changed from the interface (kept in a cookie). Restrict the offered languages with the `locales` option.
+Both offer a light, dark or system theme (kept in the browser) and are translated in English, French, Spanish, Portuguese, German and Arabic (written from right to left): the language follows the application locale and can be changed from the interface (kept in a cookie). Restrict the offered languages with the `locales` option.
 
 To use the Blade interface, set in your `.env`:
 
@@ -414,6 +418,10 @@ MERIDIAN_UI=blade
 ```
 
 or `'ui' => 'blade'` in a published `config/meridian.php` (republish it with `php artisan vendor:publish --tag=meridian-config --force` to get the keys added since your version), then `php artisan config:clear` if the configuration is cached. Both interfaces share the same URLs, route names, actions and JSON API.
+
+### Export
+
+The lists of jobs and the errors can be downloaded as **CSV** (for a spreadsheet) or **JSON**, with the filters of the list (status, queue, search, tag, error): « Export » at the top of the page, or `GET /meridian/jobs/export?status=failed&format=csv` and `GET /meridian/errors/export?format=json`. The exports are streamed, whatever their size, and the CSV cells that a spreadsheet would run as formulas are neutralized.
 
 ### Content-Security-Policy
 
@@ -537,6 +545,31 @@ public function boot(): void
 
 or in your `.env`: `MERIDIAN_NOTIFY_MAIL`, `MERIDIAN_NOTIFY_SLACK_WEBHOOK` (and `MERIDIAN_NOTIFY_SLACK_CHANNEL`), `MERIDIAN_NOTIFY_SMS`. Slack requires `laravel/slack-notification-channel` and SMS `laravel/vonage-notification-channel`.
 
+**Webhooks**: send the alerts to Discord, Microsoft Teams, Google Chat, Slack or any URL, without any extra package:
+
+```php
+Meridian::routeWebhookNotificationsTo('https://discord.com/api/webhooks/…');
+Meridian::routeWebhookNotificationsTo('https://acme.webhook.office.com/webhookb2/…');
+Meridian::routeWebhookNotificationsTo('https://ops.example.com/hooks/meridian'); // JSON
+```
+
+or `MERIDIAN_NOTIFY_WEBHOOKS` with comma separated URLs. Discord, Teams (incoming webhooks and Workflows), Google Chat and Slack are recognized from their URL and receive a message in their format; force it with the second argument (`json`, `discord`, `teams`, `google_chat` or `slack`). Any other URL receives JSON:
+
+```json
+{
+    "event": "failure_rate_exceeded",
+    "title": "High failure rate detected",
+    "summary": "6 of the 10 jobs processed on the \"emails\" queue …",
+    "url": "https://app.example.com/meridian/errors",
+    "app": "Acme Store",
+    "environment": "production",
+    "occurred_at": "2026-10-21T18:05:00+00:00",
+    "data": {"connection": "database", "queue": "emails", "failed": 6, "processed": 10, "minutes": 5}
+}
+```
+
+Set `MERIDIAN_NOTIFY_WEBHOOK_SECRET` to sign it: the `X-Meridian-Signature` header holds `sha256=` followed by the HMAC SHA-256 of the body with your secret. A webhook that fails does not prevent the others.
+
 The thresholds, in seconds, are set per `connection:queue` in the `waits` option. Like with Horizon, a queue not listed uses `'*'`, or 60 seconds when `'*'` is not set; `0` disables the notifications of a queue:
 
 ```php
@@ -576,7 +609,14 @@ The events live in `IsoDoss\Meridian\Events`: listen to them to send the alerts 
 
 ## Metrics
 
-The dashboard shows the slowest queue (highest average runtime) and the busiest one (most jobs processed) of the last hour. The metrics page shows, per job class and per queue, the jobs processed and failed, the failure rate, the average and max runtime and the average wait, over the last hour to the last seven days. Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
+The dashboard shows the slowest queue (highest average runtime) and the busiest one (most jobs processed) of the last hour. The metrics page shows, per job class and per queue, over the last hour to the last seven days:
+
+- the jobs processed and failed, the failure rate, the average wait;
+- the average, **p95**, **p99** and maximum runtime: p95 is the time under which 95 % of the jobs ran, a better view of what your users wait for than the average;
+- the **trend** of the throughput, the failure rate and the runtime compared with the previous period of the same length (a failure rate or a runtime going up is shown in red);
+- a **heatmap of the jobs per hour** over the last seven days, in your timezone, the hours where 10 % or more of the jobs failed outlined: spot the peaks and the nightly batches at a glance.
+
+Each job and queue also has its history of snapshots, stored every five minutes by `meridian:snapshot`.
 
 ### Prometheus and OpenTelemetry
 

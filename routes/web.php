@@ -22,6 +22,7 @@ Route::post('locale', [LocaleController::class, 'update'])->name('locale');
 
 // Jobs...
 Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(function () {
+    Route::get('export', 'export')->name('export');
     Route::get('{status?}', 'index')->whereIn('status', MonitoredJob::STATUSES)->name('index');
     Route::post('retry', 'retryAll')->name('retry-all');
     Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
@@ -39,6 +40,7 @@ Route::prefix('monitoring')->name('monitoring.')->controller(MonitoringControlle
 
 // Failed jobs grouped by cause...
 Route::get('errors', [ErrorsController::class, 'index'])->name('errors.index');
+Route::get('errors/export', [ErrorsController::class, 'export'])->name('errors.export');
 
 // Scheduled tasks...
 Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');

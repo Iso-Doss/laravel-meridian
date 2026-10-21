@@ -46,9 +46,9 @@ return [
 
     'ui' => env('MERIDIAN_UI', 'inertia'),
 
-    // Languages offered by the language switcher of the "inertia" interface.
+    // Languages offered by the language switchers: en, fr, es, pt, de, ar.
     // The default one is the application locale when available, else the first.
-    'locales' => ['en', 'fr'],
+    'locales' => ['en', 'fr', 'es', 'pt', 'de', 'ar'],
 
     // Number of seconds between two automatic refreshes of the dashboard (0 = off).
     'poll' => 5,
@@ -191,6 +191,11 @@ return [
         'slack_channel' => env('MERIDIAN_NOTIFY_SLACK_CHANNEL'),
         // A phone number (requires laravel/vonage-notification-channel).
         'sms' => env('MERIDIAN_NOTIFY_SMS'),
+        // Webhooks, comma separated: Discord, Microsoft Teams, Google Chat and
+        // Slack are recognized from their URL, any other URL receives JSON
+        // (signed with the "X-Meridian-Signature" header when a secret is set).
+        'webhooks' => env('MERIDIAN_NOTIFY_WEBHOOKS'),
+        'webhook_secret' => env('MERIDIAN_NOTIFY_WEBHOOK_SECRET'),
         // Minimum number of minutes between two notifications for the same queue.
         'cooldown' => 5,
     ],

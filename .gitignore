@@ -28,5 +28,9 @@ _ide_helper_models.php
 phpunit.xml
 phpstan.neon
 testbench.yaml
-/docs
 /coverage
+
+# Documentation site
+/docs/node_modules
+/docs/.vitepress/dist
+/docs/.vitepress/cache

@@ -2,7 +2,15 @@
 @use('IsoDoss\Meridian\Support\Format')
 
 @section('content')
-    <h1>{{ $t('Errors') }}</h1>
+    <h1>
+        {{ $t('Errors') }}
+        @if ($groups !== [])
+            <span class="filters actions">
+                <a class="btn" href="{{ route('meridian.errors.export', array_filter(['queue' => $queue, 'format' => 'csv'])) }}" download>⤓ CSV</a>
+                <a class="btn" href="{{ route('meridian.errors.export', array_filter(['queue' => $queue, 'format' => 'json'])) }}" download>⤓ JSON</a>
+            </span>
+        @endif
+    </h1>
 
     @unless ($ready)
         <div class="flash error">{{ $t('Run the migrations of Meridian to group the failed jobs by error (php artisan vendor:publish --tag=meridian-migrations, then php artisan migrate).') }}</div>

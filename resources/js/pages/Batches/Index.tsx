@@ -34,9 +34,9 @@ export default function BatchesIndex({ batches }: { batches: Batch[] }) {
                         <TableRow>
                             <TableHead>{t('Batch')}</TableHead>
                             <TableHead>{t('Progress')}</TableHead>
-                            <TableHead className="text-right">{t('Jobs')}</TableHead>
-                            <TableHead className="text-right">{t('Pending')}</TableHead>
-                            <TableHead className="text-right">{t('Failed')}</TableHead>
+                            <TableHead className="text-end">{t('Jobs')}</TableHead>
+                            <TableHead className="text-end">{t('Pending')}</TableHead>
+                            <TableHead className="text-end">{t('Failed')}</TableHead>
                             <TableHead>{t('Status')}</TableHead>
                             <TableHead>{t('Created')}</TableHead>
                         </TableRow>
@@ -62,9 +62,9 @@ export default function BatchesIndex({ batches }: { batches: Batch[] }) {
                                         <span className="text-xs text-muted-foreground tabular-nums">{batch.progress}%</span>
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(batch.total, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(batch.pending, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(batch.failed, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(batch.total, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(batch.pending, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(batch.failed, locale)}</TableCell>
                                 <TableCell>
                                     <StatusBadge status={batch.status === 'running' ? 'running' : BATCH_STATUS[batch.status]} />
                                 </TableCell>

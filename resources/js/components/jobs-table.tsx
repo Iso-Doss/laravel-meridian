@@ -31,7 +31,7 @@ export function Tags({ tags, limit = 4 }: { tags: string[]; limit?: number }) {
 }
 
 /** The actions column stays visible when the table scrolls horizontally (small screens). */
-const STICKY = 'sticky right-0 z-10 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)]';
+const STICKY = 'sticky end-0 z-10 shadow-[-8px_0_8px_-8px_rgb(0_0_0/0.15)] rtl:shadow-[8px_0_8px_-8px_rgb(0_0_0/0.15)]';
 
 export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
     const { t, locale } = useTranslation();
@@ -46,11 +46,11 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                         <TableHead>{t('Job')}</TableHead>
                         <TableHead>{t('Queue')}</TableHead>
                         <TableHead>{t('Status')}</TableHead>
-                        <TableHead className="text-right">{t('Attempts')}</TableHead>
+                        <TableHead className="text-end">{t('Attempts')}</TableHead>
                         <TableHead>{t('Queued')}</TableHead>
-                        <TableHead className="text-right">{t('Wait')}</TableHead>
-                        <TableHead className="text-right">{t('Runtime')}</TableHead>
-                        {retryable && <TableHead className={cn(STICKY, 'bg-muted text-right')}>{t('Actions')}</TableHead>}
+                        <TableHead className="text-end">{t('Wait')}</TableHead>
+                        <TableHead className="text-end">{t('Runtime')}</TableHead>
+                        {retryable && <TableHead className={cn(STICKY, 'bg-muted text-end')}>{t('Actions')}</TableHead>}
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -94,12 +94,12 @@ export function JobsTable({ jobs }: { jobs: Paginated<Job> }) {
                                     </div>
                                 )}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">{job.attempts}</TableCell>
+                            <TableCell className="text-end tabular-nums">{job.attempts}</TableCell>
                             <TableCell title={formatDateTime(job.queued_at, locale)}>{formatRelative(job.queued_at, locale)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{formatSeconds(job.wait)}</TableCell>
-                            <TableCell className="text-right tabular-nums">{formatRuntime(job.runtime, locale)}</TableCell>
+                            <TableCell className="text-end tabular-nums">{formatSeconds(job.wait)}</TableCell>
+                            <TableCell className="text-end tabular-nums">{formatRuntime(job.runtime, locale)}</TableCell>
                             {retryable && (
-                                <TableCell className={cn(STICKY, 'bg-card text-right')}>
+                                <TableCell className={cn(STICKY, 'bg-card text-end')}>
                                     {job.retry_url && (
                                         <ConfirmAction
                                             compact

@@ -2,6 +2,7 @@ import { Link, router, usePage } from '@inertiajs/react';
 import { RotateCcw, Search, X } from 'lucide-react';
 import { type FormEvent, useState } from 'react';
 import { ConfirmAction } from '@/components/confirm-action';
+import { ExportMenu } from '@/components/export-menu';
 import { JobsTable } from '@/components/jobs-table';
 import { Layout } from '@/components/layout';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -22,6 +23,7 @@ interface Props {
     counts: Record<JobStatus, number>;
     /** Null for read-only users. */
     retry_all_url: string | null;
+    export_url: string;
 }
 
 const TITLES: Record<'all' | JobStatus, string> = {
@@ -43,7 +45,7 @@ const TAB_LABELS: Record<'all' | JobStatus, string> = {
     silenced: 'Silenced',
 };
 
-export default function JobsIndex({ status, filters, error, jobs, queues, counts, retry_all_url }: Props) {
+export default function JobsIndex({ status, filters, error, jobs, queues, counts, retry_all_url, export_url }: Props) {
     const { t, locale } = useTranslation();
     const { nav } = usePage<SharedProps>().props;
     const [search, setSearch] = useState(filters.search);
@@ -62,24 +64,25 @@ export default function JobsIndex({ status, filters, error, jobs, queues, counts
         <Layout
             title={t(TITLES[current])}
             actions={
-                current === 'failed' &&
-                retry_all_url &&
-                jobs.meta.total > 0 && (
-                    <ConfirmAction
-                        url={retry_all_url}
-                        method="post"
-                        data={query({})}
-                        icon={RotateCcw}
-                        label={t('Retry all')}
-                        title={t('Retry :count failed job(s)?', { count: formatNumber(jobs.meta.total, locale) })}
-                        description={
-                            filters.queue || filters.search || filters.tag || filters.error
-                                ? t('Every failed job matching the current filters will be pushed back onto its queue.')
-                                : t('Every failed job will be pushed back onto its queue.')
-                        }
-                        confirmLabel={t('Retry all')}
-                    />
-                )
+                <>
+                    {jobs.meta.total > 0 && <ExportMenu url={export_url} query={{ ...query({}), ...(status ? { status } : {}) }} />}
+                    {current === 'failed' && retry_all_url && jobs.meta.total > 0 && (
+                        <ConfirmAction
+                            url={retry_all_url}
+                            method="post"
+                            data={query({})}
+                            icon={RotateCcw}
+                            label={t('Retry all')}
+                            title={t('Retry :count failed job(s)?', { count: formatNumber(jobs.meta.total, locale) })}
+                            description={
+                                filters.queue || filters.search || filters.tag || filters.error
+                                    ? t('Every failed job matching the current filters will be pushed back onto its queue.')
+                                    : t('Every failed job will be pushed back onto its queue.')
+                            }
+                            confirmLabel={t('Retry all')}
+                        />
+                    )}
+                </>
             }
         >
             <Card>
@@ -97,7 +100,7 @@ export default function JobsIndex({ status, filters, error, jobs, queues, counts
                                 )}
                             >
                                 {t(TAB_LABELS[tab])}
-                                {tab !== 'all' && <span className="ml-1.5 text-xs opacity-70 tabular-nums">{formatNumber(counts[tab], locale)}</span>}
+                                {tab !== 'all' && <span className="ms-1.5 text-xs opacity-70 tabular-nums">{formatNumber(counts[tab], locale)}</span>}
                             </Link>
                         ))}
                     </nav>
@@ -137,14 +140,14 @@ export default function JobsIndex({ status, filters, error, jobs, queues, counts
                             ))}
                         </NativeSelect>
                         <div className="relative">
-                            <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Search className="pointer-events-none absolute top-1/2 start-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 type="search"
                                 value={search}
                                 onChange={(event) => setSearch(event.target.value)}
                                 placeholder={t('Job, tag or UUID…')}
                                 aria-label={t('Search')}
-                                className="w-60 pl-8"
+                                className="w-60 ps-8"
                             />
                         </div>
                     </form>

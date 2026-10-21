@@ -5,6 +5,13 @@
 @section('content')
     <h1>
         {{ $t($titles[$status ?? 'all']) }}
+        @if ($jobs->total() > 0)
+            @php($exportQuery = array_filter(['status' => $status, 'queue' => request('queue'), 'search' => request('search'), 'tag' => request('tag'), 'error' => request('error')]))
+            <span class="filters actions">
+                <a class="btn" href="{{ route('meridian.jobs.export', $exportQuery + ['format' => 'csv']) }}" download>⤓ CSV</a>
+                <a class="btn" href="{{ route('meridian.jobs.export', $exportQuery + ['format' => 'json']) }}" download>⤓ JSON</a>
+            </span>
+        @endif
         @if ($status === 'failed' && $canManage && $jobs->total() > 0)
             <form class="inline actions" method="post" action="{{ route('meridian.jobs.retry-all') }}"
                   data-confirm="{{ $t('Retry :count failed job(s)?', ['count' => Format::integer($jobs->total(), $locale)]) }}">

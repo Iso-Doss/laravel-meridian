@@ -105,7 +105,7 @@ class Format
 
     public static function date(?DateTimeInterface $date, string $locale = 'en'): string
     {
-        return $date ? Carbon::instance($date)->format($locale === 'fr' ? 'd/m/Y H:i:s' : 'Y-m-d H:i:s') : '—';
+        return $date ? Carbon::instance($date)->format(in_array($locale, ['fr', 'es', 'pt'], true) ? 'd/m/Y H:i:s' : ($locale === 'de' ? 'd.m.Y H:i:s' : 'Y-m-d H:i:s')) : '—';
     }
 
     public static function time(int $timestamp): string
@@ -130,11 +130,15 @@ class Format
 
     protected static function decimalSeparator(string $locale): string
     {
-        return $locale === 'fr' ? ',' : '.';
+        return in_array($locale, ['fr', 'es', 'pt', 'de'], true) ? ',' : '.';
     }
 
     protected static function thousandsSeparator(string $locale): string
     {
-        return $locale === 'fr' ? "\u{202F}" : ',';
+        return match ($locale) {
+            'fr' => "\u{202F}",
+            'es', 'pt', 'de' => '.',
+            default => ',',
+        };
     }
 }

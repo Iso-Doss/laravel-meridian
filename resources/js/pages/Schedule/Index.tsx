@@ -61,7 +61,7 @@ export default function ScheduleIndex({ tasks, ready }: { tasks: ScheduledTask[]
                             <TableHead>{t('Task')}</TableHead>
                             <TableHead>{t('Status')}</TableHead>
                             <TableHead>{t('Last run')}</TableHead>
-                            <TableHead className="text-right">{t('Duration')}</TableHead>
+                            <TableHead className="text-end">{t('Duration')}</TableHead>
                             <TableHead>{t('Recent runs')}</TableHead>
                             <TableHead>{t('Next run')}</TableHead>
                         </TableRow>
@@ -93,7 +93,7 @@ export default function ScheduleIndex({ tasks, ready }: { tasks: ScheduledTask[]
                                 <TableCell title={task.last_run ? formatDateTime(task.last_run.started_at, locale) : undefined}>
                                     {task.last_run ? formatRelative(task.last_run.started_at, locale) : '—'}
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatRuntime(task.last_run?.runtime ?? null, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatRuntime(task.last_run?.runtime ?? null, locale)}</TableCell>
                                 <TableCell>
                                     <RecentRuns runs={task.recent} />
                                 </TableCell>

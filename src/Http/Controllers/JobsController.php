@@ -18,11 +18,13 @@ use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Support\Exporter;
 use IsoDoss\Meridian\Support\FailedJobRetrier;
 use IsoDoss\Meridian\Support\JobEditor;
 use IsoDoss\Meridian\Support\Migrations;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class JobsController extends Controller
 {
@@ -53,6 +55,7 @@ class JobsController extends Controller
             'queues' => $data['queues']->values(),
             'counts' => collect(MonitoredJob::STATUSES)->mapWithKeys(fn (string $s) => [$s => (int) ($data['counts'][$s] ?? 0)]),
             'retry_all_url' => Meridian::canManage($request) ? route('meridian.jobs.retry-all') : null,
+            'export_url' => route('meridian.jobs.export'),
         ]);
     }
 
@@ -193,6 +196,36 @@ class JobsController extends Controller
 
         return back()->with('meridian.success', Translator::get('Cancellation requested: the job stops at its next check, or its worker is stopped within :seconds seconds when Meridian supervises it.', [
             'seconds' => (int) config('meridian.cancel_timeout', 10),
+        ]));
+    }
+
+    /**
+     * Download the jobs matching the filters of the list as CSV or JSON.
+     */
+    public function export(Request $request): StreamedResponse
+    {
+        $status = in_array($request->query('status'), MonitoredJob::STATUSES, true) ? (string) $request->query('status') : null;
+        $json = $request->query('format') === 'json';
+        $query = $this->query($request, $status)->addSelect(['exception', 'worker']);
+
+        return Exporter::download('meridian-jobs'.($status ? "-{$status}" : ''), $json ? 'json' : 'csv', fn () => $query->lazyByIdDesc(500)->map(fn (MonitoredJob $job) => [
+            'uuid' => $job->uuid,
+            'job' => $job->name,
+            'connection' => $job->connection,
+            'queue' => $job->queue,
+            'status' => $job->status,
+            'attempts' => $job->attempts,
+            'retries' => $job->retries,
+            'tags' => $job->tags ?? [],
+            'batch_id' => $job->batch_id,
+            'worker' => $job->worker,
+            'queued_at' => $job->queued_at,
+            'started_at' => $job->reserved_at,
+            'completed_at' => $job->completed_at,
+            'failed_at' => $job->failed_at,
+            'wait_seconds' => $job->wait,
+            'runtime_ms' => $job->runtime,
+            'exception' => $json ? $job->exception : ($job->exception ? strtok($job->exception, "\n") : null),
         ]));
     }
 

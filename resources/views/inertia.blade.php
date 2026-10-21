@@ -1,6 +1,6 @@
 @use('IsoDoss\Meridian\Support\Assets')
 <!DOCTYPE html>
-<html lang="{{ $page['props']['meridian']['locale'] ?? 'en' }}">
+<html lang="{{ $page['props']['meridian']['locale'] ?? 'en' }}" dir="{{ $page['props']['meridian']['direction'] ?? 'ltr' }}">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">

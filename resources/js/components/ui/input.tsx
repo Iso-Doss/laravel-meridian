@@ -13,5 +13,5 @@ export function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
 }
 
 export function NativeSelect({ className, ...props }: ComponentProps<'select'>) {
-    return <select className={cn(field, 'pr-8', className)} {...props} />;
+    return <select className={cn(field, 'pe-8', className)} {...props} />;
 }

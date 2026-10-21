@@ -26,17 +26,29 @@ export function DropdownMenuRadioItem({ className, children, ...props }: Compone
     return (
         <Primitive.RadioItem
             className={cn(
-                'relative flex cursor-pointer items-center gap-2 rounded-md py-1.5 pr-2 pl-7 text-sm outline-none select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg]:size-4',
+                'relative flex cursor-pointer items-center gap-2 rounded-md py-1.5 pe-2 ps-7 text-sm outline-none select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg]:size-4',
                 className,
             )}
             {...props}
         >
-            <span className="absolute left-2 flex size-3.5 items-center justify-center">
+            <span className="absolute start-2 flex size-3.5 items-center justify-center">
                 <Primitive.ItemIndicator>
                     <span className="block size-1.5 rounded-full bg-current" />
                 </Primitive.ItemIndicator>
             </span>
             {children}
         </Primitive.RadioItem>
+    );
+}
+
+export function DropdownMenuItem({ className, ...props }: ComponentProps<typeof Primitive.Item>) {
+    return (
+        <Primitive.Item
+            className={cn(
+                'relative flex cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-sm outline-none select-none data-[highlighted]:bg-accent data-[highlighted]:text-accent-foreground [&_svg]:size-4',
+                className,
+            )}
+            {...props}
+        />
     );
 }

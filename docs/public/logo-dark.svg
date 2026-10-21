@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="72" viewBox="0 0 360 72" role="img" aria-label="Meridian">
+  <rect x="4" y="4" width="64" height="64" rx="16" fill="#8b85ff"/>
+  <g fill="none" stroke="#ffffff" stroke-width="3.2" stroke-linecap="round">
+    <circle cx="36" cy="36" r="18"/>
+    <path d="M18 36h36"/>
+    <path d="M36 18c6.5 5 6.5 31 0 36M36 18c-6.5 5-6.5 31 0 36"/>
+  </g>
+  <text x="88" y="48" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="38" font-weight="700" letter-spacing="-0.5" fill="#e6e9ef">Meridian</text>
+</svg>

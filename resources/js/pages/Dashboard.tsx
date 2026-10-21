@@ -132,11 +132,11 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                     <TableHeader>
                         <TableRow>
                             <TableHead>{t('Queue')}</TableHead>
-                            <TableHead className="text-right">{t('Pending')}</TableHead>
-                            <TableHead className="text-right">{t('Delayed')}</TableHead>
-                            <TableHead className="text-right">{t('Reserved')}</TableHead>
-                            <TableHead className="text-right">{t('Processes')}</TableHead>
-                            <TableHead className="text-right">{t('Wait')}</TableHead>
+                            <TableHead className="text-end">{t('Pending')}</TableHead>
+                            <TableHead className="text-end">{t('Delayed')}</TableHead>
+                            <TableHead className="text-end">{t('Reserved')}</TableHead>
+                            <TableHead className="text-end">{t('Processes')}</TableHead>
+                            <TableHead className="text-end">{t('Wait')}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -149,11 +149,11 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                                         {queue.queue}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(queue.pending, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(queue.delayed, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(queue.reserved, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{queue.processes}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatSeconds(queue.wait)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(queue.pending, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(queue.delayed, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(queue.reserved, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{queue.processes}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatSeconds(queue.wait)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -174,7 +174,7 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                             <TableHead>{t('Host')}</TableHead>
                             <TableHead>{t('Connection')}</TableHead>
                             <TableHead>{t('Queues')}</TableHead>
-                            <TableHead className="text-right">{t('Processes')}</TableHead>
+                            <TableHead className="text-end">{t('Processes')}</TableHead>
                             <TableHead>{t('Balancing')}</TableHead>
                             <TableHead>{t('Status')}</TableHead>
                         </TableRow>
@@ -197,7 +197,7 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                                         ))}
                                     </span>
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{supervisor.total_processes}</TableCell>
+                                <TableCell className="text-end tabular-nums">{supervisor.total_processes}</TableCell>
                                 <TableCell>{supervisor.balance ?? t('off')}</TableCell>
                                 <TableCell>
                                     <StatusBadge status={supervisor.status} />
@@ -222,8 +222,8 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                             <TableHead>{t('Supervisor')}</TableHead>
                             <TableHead>{t('Queue')}</TableHead>
                             <TableHead>{t('Status')}</TableHead>
-                            <TableHead className="text-right">{t('Jobs')}</TableHead>
-                            <TableHead className="text-right">{t('Memory')}</TableHead>
+                            <TableHead className="text-end">{t('Jobs')}</TableHead>
+                            <TableHead className="text-end">{t('Memory')}</TableHead>
                             <TableHead>{t('Started')}</TableHead>
                             <TableHead>{t('Last seen')}</TableHead>
                         </TableRow>
@@ -233,7 +233,7 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                         {workers.map((worker) => (
                             <TableRow key={worker.name}>
                                 <TableCell className="font-mono text-xs">
-                                    <Cpu className="mr-1.5 inline size-3.5 text-muted-foreground" />
+                                    <Cpu className="me-1.5 inline size-3.5 text-muted-foreground" />
                                     {worker.name}
                                 </TableCell>
                                 <TableCell>{worker.supervisor ?? '—'}</TableCell>
@@ -244,8 +244,8 @@ export default function Dashboard({ stats, workload, throughput, supervisors, wo
                                 <TableCell>
                                     <StatusBadge status={worker.status} />
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatNumber(worker.jobs_processed, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{formatBytes(worker.memory, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatNumber(worker.jobs_processed, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatBytes(worker.memory, locale)}</TableCell>
                                 <TableCell>{formatRelative(worker.started_at, locale)}</TableCell>
                                 <TableCell>{formatRelative(worker.last_seen_at, locale)}</TableCell>
                             </TableRow>

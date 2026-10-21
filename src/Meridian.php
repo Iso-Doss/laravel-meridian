@@ -29,7 +29,7 @@ class Meridian
     /**
      * Routes of the long wait notifications, set in a service provider.
      *
-     * @var array{mail?: string|array<int, string>, slack?: string, slack_channel?: string|null, sms?: string}
+     * @var array{mail?: string|array<int, string>, slack?: string, slack_channel?: string|null, sms?: string, webhooks?: array<int, array{url: string, format: string|null}>}
      */
     public static array $notificationRoutes = [];
 
@@ -69,9 +69,22 @@ class Meridian
     }
 
     /**
+     * Send the alerts to a webhook: Discord, Microsoft Teams, Google Chat and
+     * Slack are recognized from their URL, any other URL receives JSON.
+     *
+     * @param  string|null  $format  json, discord, teams, google_chat or slack (detected when null)
+     */
+    public static function routeWebhookNotificationsTo(string $url, ?string $format = null): self
+    {
+        static::$notificationRoutes['webhooks'][] = ['url' => $url, 'format' => $format];
+
+        return new self;
+    }
+
+    /**
      * The notification routes: those set in code, else those of the configuration.
      *
-     * @return array{mail: string|array<int, string>|null, slack: string|null, slack_channel: string|null, sms: string|null}
+     * @return array{mail: string|array<int, string>|null, slack: string|null, slack_channel: string|null, sms: string|null, webhooks: array<int, array{url: string, format: string|null}>}
      */
     public static function notificationRoutes(): array
     {
@@ -84,7 +97,27 @@ class Meridian
                 ? static::$notificationRoutes['slack_channel']
                 : (($config['slack_channel'] ?? null) ?: null),
             'sms' => static::$notificationRoutes['sms'] ?? ($config['sms'] ?? null) ?: null,
+            'webhooks' => static::$notificationRoutes['webhooks'] ?? static::configuredWebhooks($config['webhooks'] ?? null),
         ];
+    }
+
+    /**
+     * The webhooks of the configuration: a comma separated string (from the
+     * .env) or a list of URLs / ['url' => ..., 'format' => ...].
+     *
+     * @return array<int, array{url: string, format: string|null}>
+     */
+    protected static function configuredWebhooks(mixed $webhooks): array
+    {
+        $webhooks = is_string($webhooks) ? explode(',', $webhooks) : (array) $webhooks;
+
+        return collect($webhooks)
+            ->map(fn ($webhook) => is_array($webhook)
+                ? ['url' => trim((string) ($webhook['url'] ?? '')), 'format' => $webhook['format'] ?? null]
+                : ['url' => trim((string) $webhook), 'format' => null])
+            ->filter(fn (array $webhook) => $webhook['url'] !== '')
+            ->values()
+            ->all();
     }
 
     /**

@@ -23,7 +23,7 @@ export default function ScheduleShow({ task, runs, back_url }: { task: Scheduled
             actions={
                 <Button variant="outline" asChild>
                     <Link href={back_url}>
-                        <ArrowLeft /> {t('Schedule')}
+                        <ArrowLeft className="rtl:-scale-x-100" /> {t('Schedule')}
                     </Link>
                 </Button>
             }
@@ -40,8 +40,8 @@ export default function ScheduleShow({ task, runs, back_url }: { task: Scheduled
                         <TableRow>
                             <TableHead>{t('Started at')}</TableHead>
                             <TableHead>{t('Status')}</TableHead>
-                            <TableHead className="text-right">{t('Duration')}</TableHead>
-                            <TableHead className="text-right">{t('Exit code')}</TableHead>
+                            <TableHead className="text-end">{t('Duration')}</TableHead>
+                            <TableHead className="text-end">{t('Exit code')}</TableHead>
                             <TableHead>{t('Host')}</TableHead>
                             <TableHead>{t('Exception')}</TableHead>
                         </TableRow>
@@ -60,8 +60,8 @@ export default function ScheduleShow({ task, runs, back_url }: { task: Scheduled
                                 <TableCell>
                                     <StatusBadge status={run.status} />
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">{formatRuntime(run.runtime, locale)}</TableCell>
-                                <TableCell className="text-right tabular-nums">{run.exit_code ?? '—'}</TableCell>
+                                <TableCell className="text-end tabular-nums">{formatRuntime(run.runtime, locale)}</TableCell>
+                                <TableCell className="text-end tabular-nums">{run.exit_code ?? '—'}</TableCell>
                                 <TableCell>{run.host ?? '—'}</TableCell>
                                 <TableCell className="max-w-md truncate font-mono text-xs" title={run.exception ?? undefined}>
                                     {run.exception ? run.exception.split('\n')[0] : '—'}

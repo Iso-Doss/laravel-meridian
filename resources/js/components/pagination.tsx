@@ -26,22 +26,22 @@ export function Pagination({ paginator }: { paginator: Paginated<unknown> }) {
                 <Button variant="outline" size="sm" disabled={!links.prev} asChild={!!links.prev}>
                     {links.prev ? (
                         <Link href={links.prev} preserveScroll>
-                            <ChevronLeft /> {t('Previous')}
+                            <ChevronLeft className="rtl:-scale-x-100" /> {t('Previous')}
                         </Link>
                     ) : (
                         <>
-                            <ChevronLeft /> {t('Previous')}
+                            <ChevronLeft className="rtl:-scale-x-100" /> {t('Previous')}
                         </>
                     )}
                 </Button>
                 <Button variant="outline" size="sm" disabled={!links.next} asChild={!!links.next}>
                     {links.next ? (
                         <Link href={links.next} preserveScroll>
-                            {t('Next')} <ChevronRight />
+                            {t('Next')} <ChevronRight className="rtl:-scale-x-100" />
                         </Link>
                     ) : (
                         <>
-                            {t('Next')} <ChevronRight />
+                            {t('Next')} <ChevronRight className="rtl:-scale-x-100" />
                         </>
                     )}
                 </Button>

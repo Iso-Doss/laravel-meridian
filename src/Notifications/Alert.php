@@ -6,7 +6,10 @@ use Illuminate\Notifications\Messages\MailMessage;
 use Illuminate\Notifications\Messages\SlackMessage;
 use Illuminate\Notifications\Messages\VonageMessage;
 use Illuminate\Notifications\Notification;
+use Illuminate\Support\Str;
 use IsoDoss\Meridian\Meridian;
+use ReflectionObject;
+use ReflectionProperty;
 
 /**
  * A Meridian alert, sent by e-mail, Slack and / or SMS to the configured routes.
@@ -22,6 +25,27 @@ abstract class Alert extends Notification
      * What happened, in one sentence.
      */
     abstract public function summary(): string;
+
+    /**
+     * The name of the alert in the webhooks payloads, e.g. "long_wait_detected".
+     */
+    public function event(): string
+    {
+        return Str::snake(class_basename($this));
+    }
+
+    /**
+     * The details of the alert (its public properties) for the webhooks.
+     *
+     * @return array<string, mixed>
+     */
+    public function data(): array
+    {
+        return collect((new ReflectionObject($this))->getProperties(ReflectionProperty::IS_PUBLIC))
+            ->reject(fn (ReflectionProperty $property) => $property->isStatic() || in_array($property->getName(), ['id', 'locale'], true))
+            ->mapWithKeys(fn (ReflectionProperty $property) => [$property->getName() => $property->getValue($this)])
+            ->all();
+    }
 
     /**
      * The page of the dashboard to open.
@@ -44,6 +68,7 @@ abstract class Alert extends Notification
             $routes?->routeNotificationFor('mail', $this) ? 'mail' : null,
             $routes?->routeNotificationFor('slack', $this) && class_exists(SlackMessage::class) ? 'slack' : null,
             $routes?->routeNotificationFor('vonage', $this) && class_exists(VonageMessage::class) ? 'vonage' : null,
+            $routes?->routeNotificationFor(WebhookChannel::class, $this) ? WebhookChannel::class : null,
         ]));
     }
 

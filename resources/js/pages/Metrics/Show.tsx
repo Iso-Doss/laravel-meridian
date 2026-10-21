@@ -29,7 +29,7 @@ export default function MetricsShow({ name, back_url, snapshots }: { type: strin
             actions={
                 <Button variant="outline" size="sm" asChild>
                     <Link href={back_url}>
-                        <ArrowLeft /> {t('Metrics')}
+                        <ArrowLeft className="rtl:-scale-x-100" /> {t('Metrics')}
                     </Link>
                 </Button>
             }

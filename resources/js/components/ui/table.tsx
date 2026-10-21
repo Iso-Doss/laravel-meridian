@@ -24,7 +24,7 @@ export function TableRow({ className, ...props }: ComponentProps<'tr'>) {
 export function TableHead({ className, ...props }: ComponentProps<'th'>) {
     return (
         <th
-            className={cn('h-10 px-4 text-left align-middle text-xs font-medium whitespace-nowrap text-muted-foreground', className)}
+            className={cn('h-10 px-4 text-start align-middle text-xs font-medium whitespace-nowrap text-muted-foreground', className)}
             {...props}
         />
     );

@@ -133,11 +133,12 @@ it('uses the application locale by default', function () {
 
     $this->get('/meridian')->assertInertia(fn (Assert $page) => $page->where('meridian.locale', 'fr'));
 
-    app()->setLocale('de');
+    app()->setLocale('it');
 
     $this->get('/meridian')->assertInertia(fn (Assert $page) => $page
         ->where('meridian.locale', 'en')
-        ->where('meridian.locales', [['code' => 'en', 'label' => 'English'], ['code' => 'fr', 'label' => 'Français']])
+        ->where('meridian.locales.0', ['code' => 'en', 'label' => 'English'])
+        ->where('meridian.locales.5', ['code' => 'ar', 'label' => 'العربية'])
     );
 });
 
@@ -147,7 +148,7 @@ it('remembers the chosen language', function () {
         ->assertRedirect('/meridian/jobs')
         ->assertCookie(Translator::COOKIE, 'fr');
 
-    $this->post('/meridian/locale', ['locale' => 'de'])->assertSessionHasErrors('locale');
+    $this->post('/meridian/locale', ['locale' => 'it'])->assertSessionHasErrors('locale');
 });
 
 it('asks the browser to reload when the assets changed', function () {
@@ -209,7 +210,7 @@ it('keeps the Blade interface when configured', function () {
     $this->get('/meridian')->assertOk()->assertSee('Current workload')->assertDontSee('data-page="meridian"', false);
 });
 
-it('translates every text of both interfaces in French', function () {
+it('translates every text of both interfaces in every language', function (string $language) {
     $keys = collect(glob(__DIR__.'/../../resources/js/{,*/,*/*/}*.{ts,tsx}', GLOB_BRACE))
         ->flatMap(function (string $file) {
             $source = file_get_contents($file);
@@ -233,10 +234,42 @@ it('translates every text of both interfaces in French', function () {
         ->unique()
         ->values();
 
-    $missing = $keys->diff(array_keys(Translator::messages('fr')))->values()->all();
+    $missing = $keys->diff(array_keys(Translator::messages($language)))->values()->all();
 
     expect($keys)->not->toBeEmpty()
         ->and($missing)->toBe([]);
+})->with(['fr', 'es', 'pt', 'de', 'ar']);
+
+it('keeps the same texts and placeholders in every language', function () {
+    $reference = Translator::messages('fr');
+
+    foreach (['es', 'pt', 'de', 'ar'] as $language) {
+        $messages = Translator::messages($language);
+
+        expect(array_keys($messages))->toEqualCanonicalizing(array_keys($reference));
+
+        foreach ($messages as $key => $text) {
+            preg_match_all('/:[a-z]+/', $key, $expected);
+            preg_match_all('/:[a-z]+/', $text, $actual);
+
+            expect($actual[0])->toEqualCanonicalizing($expected[0], "[{$language}] {$key}");
+        }
+    }
+});
+
+it('writes Arabic from right to left', function () {
+    $this->withCookie(Translator::COOKIE, 'ar')->get('/meridian')
+        ->assertSee('dir="rtl"', false)
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('meridian.direction', 'rtl')
+            ->where('meridian.translations.Dashboard', 'لوحة التحكم')
+        );
+
+    config()->set('meridian.ui', 'blade');
+
+    $this->withCookie(Translator::COOKIE, 'de')->get('/meridian')
+        ->assertSee('<html lang="de" dir="ltr">', false)
+        ->assertSee('Warteschlangen');
 });
 
 class ApplicationInertiaMiddleware extends InertiaMiddleware

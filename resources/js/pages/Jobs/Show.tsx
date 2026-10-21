@@ -152,7 +152,7 @@ export default function JobShow({ job }: { job: JobDetails }) {
                                 <TableHead>{t('Retried at')}</TableHead>
                                 <TableHead>{t('Status')}</TableHead>
                                 <TableHead>{t('Finished at')}</TableHead>
-                                <TableHead className="text-right">{t('Runtime')}</TableHead>
+                                <TableHead className="text-end">{t('Runtime')}</TableHead>
                                 <TableHead>{t('Exception')}</TableHead>
                             </TableRow>
                         </TableHeader>
@@ -165,7 +165,7 @@ export default function JobShow({ job }: { job: JobDetails }) {
                                         <StatusBadge status={attempt.status} />
                                     </TableCell>
                                     <TableCell>{formatDateTime(attempt.finished_at, locale)}</TableCell>
-                                    <TableCell className="text-right tabular-nums">{formatRuntime(attempt.runtime, locale)}</TableCell>
+                                    <TableCell className="text-end tabular-nums">{formatRuntime(attempt.runtime, locale)}</TableCell>
                                     <TableCell className="max-w-md truncate font-mono text-xs" title={attempt.exception ?? undefined}>
                                         {attempt.exception ? attempt.exception.split('\n')[0] : '—'}
                                     </TableCell>

@@ -32,7 +32,7 @@ export function EditJobData({ url, fields, onDone }: { url: string; fields: Edit
                     <div key={field.name} className="grid gap-1 px-5 py-3 sm:grid-cols-[11rem_1fr]">
                         <label htmlFor={`field-${field.name}`} className="text-sm text-muted-foreground">
                             {field.name}
-                            <span className="ml-1.5 font-mono text-[11px] opacity-70">{field.type}</span>
+                            <span className="ms-1.5 font-mono text-[11px] opacity-70">{field.type}</span>
                         </label>
                         <div className="min-w-0">
                             {!field.editable ? (

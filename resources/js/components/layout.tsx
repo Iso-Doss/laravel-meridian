@@ -188,11 +188,17 @@ export function Layout({
     const { meridian } = usePage<SharedProps>().props;
     const [menuOpen, setMenuOpen] = useState(false);
 
+    // The language can change without a full page load.
+    useEffect(() => {
+        document.documentElement.lang = meridian.locale;
+        document.documentElement.dir = meridian.direction;
+    }, [meridian.locale, meridian.direction]);
+
     return (
         <div className="min-h-screen lg:grid lg:grid-cols-[15rem_1fr]">
             <Head title={title} />
 
-            <aside className="sticky top-0 hidden h-screen border-r bg-sidebar lg:block">
+            <aside className="sticky top-0 hidden h-screen border-e bg-sidebar lg:block">
                 <Sidebar />
             </aside>
 
@@ -206,7 +212,7 @@ export function Layout({
                         </Dialog.Trigger>
                         <Dialog.Portal>
                             <Dialog.Overlay className="fixed inset-0 z-40 bg-black/50" />
-                            <Dialog.Content className="fixed inset-y-0 left-0 z-50 w-64 border-r bg-sidebar shadow-lg">
+                            <Dialog.Content className="fixed inset-y-0 start-0 z-50 w-64 border-e bg-sidebar shadow-lg">
                                 <Dialog.Title className="sr-only">{t('Menu')}</Dialog.Title>
                                 <Sidebar onNavigate={() => setMenuOpen(false)} />
                             </Dialog.Content>
@@ -216,10 +222,10 @@ export function Layout({
                     <Activity className="hidden size-4 text-muted-foreground sm:block" />
                     <span className="truncate text-sm text-muted-foreground">{t('Database queues')}</span>
 
-                    <div className="ml-auto flex items-center gap-1">
+                    <div className="ms-auto flex items-center gap-1">
                         {!meridian.can_manage && (
                             <span
-                                className="mr-1 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground"
+                                className="me-1 inline-flex items-center gap-1 rounded-md border px-2 py-1 text-xs text-muted-foreground"
                                 title={t('You can browse Meridian but not act on the jobs.')}
                             >
                                 <Eye className="size-3.5" />

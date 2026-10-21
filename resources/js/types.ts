@@ -10,6 +10,8 @@ export interface SharedProps {
         name: string;
         poll: number;
         locale: string;
+        /** "rtl" for Arabic. */
+        direction: 'ltr' | 'rtl';
         locales: Locale[];
         translations: Record<string, string>;
         /** False for read-only users: no retry, delete, cancel or monitoring action. */

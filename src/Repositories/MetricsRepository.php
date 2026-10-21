@@ -118,11 +118,13 @@ class MetricsRepository
      * Aggregated statistics per job class or per queue.
      *
      * @param  'name'|'queue'  $groupBy
+     * @param  int|null  $until  End of the window (now by default), to compare with a previous period.
      * @return Collection<int, \stdClass> rows with key, processed, failed, runtime, max_runtime and wait
      */
-    public function breakdown(string $groupBy, int $minutes = 1440): Collection
+    public function breakdown(string $groupBy, int $minutes = 1440, ?int $until = null): Collection
     {
-        $since = time() - $minutes * 60;
+        $until ??= time() + 1;
+        $since = $until - $minutes * 60;
 
         return Meridian::table('jobs')
             ->select($groupBy.' as key')
@@ -131,10 +133,72 @@ class MetricsRepository
             ->selectRaw("AVG(CASE WHEN status IN ('completed', 'silenced') THEN runtime END) AS runtime")
             ->selectRaw('MAX(runtime) AS max_runtime')
             ->selectRaw('AVG(wait) AS wait')
-            ->where(fn ($q) => $q->where('completed_at', '>=', $since)->orWhere('failed_at', '>=', $since))
+            ->where(fn ($q) => $q->whereBetween('completed_at', [$since, $until - 1])->orWhereBetween('failed_at', [$since, $until - 1]))
             ->groupBy($groupBy)
             ->orderByDesc('processed')
             ->get();
+    }
+
+    /**
+     * Runtime percentiles (in milliseconds) of the jobs of a class or a queue
+     * completed during the last $minutes, e.g. [95 => 1200, 99 => 3400].
+     *
+     * @param  'name'|'queue'  $groupBy
+     * @param  array<int, int>  $percentiles
+     * @return array<int, int|null>
+     */
+    public function percentiles(string $groupBy, string $key, int $minutes, array $percentiles = [95, 99]): array
+    {
+        $query = fn () => Meridian::table('jobs')
+            ->where($groupBy, $key)
+            ->whereIn('status', MonitoredJob::SUCCEEDED)
+            ->where('completed_at', '>=', time() - $minutes * 60)
+            ->whereNotNull('runtime');
+
+        $count = $query()->count();
+        $values = [];
+
+        foreach ($percentiles as $percentile) {
+            // Nearest-rank method: the smallest value greater or equal to p% of the runtimes.
+            $values[$percentile] = $count === 0 ? null : (int) $query()
+                ->orderBy('runtime')
+                ->offset(max(0, (int) ceil($percentile / 100 * $count) - 1))
+                ->limit(1)
+                ->value('runtime');
+        }
+
+        return $values;
+    }
+
+    /**
+     * Jobs processed and failed per hour during the last $days days.
+     *
+     * @return array<int, array{time: int, processed: int, failed: int}>
+     */
+    public function hourly(int $days = 7): array
+    {
+        $start = (intdiv(time(), 3600) - $days * 24 + 1) * 3600;
+        $series = [];
+
+        for ($hour = $start; $hour <= time(); $hour += 3600) {
+            $series[$hour] = ['time' => $hour, 'processed' => 0, 'failed' => 0];
+        }
+
+        Meridian::table('jobs')
+            ->selectRaw('COALESCE(completed_at, failed_at) - (COALESCE(completed_at, failed_at) % 3600) AS hour_bucket')
+            ->selectRaw("SUM(CASE WHEN status IN ('completed', 'silenced') THEN 1 ELSE 0 END) AS processed_jobs")
+            ->selectRaw("SUM(CASE WHEN status = 'failed' THEN 1 ELSE 0 END) AS failed_jobs")
+            ->where(fn ($q) => $q->where('completed_at', '>=', $start)->orWhere('failed_at', '>=', $start))
+            ->groupBy('hour_bucket')
+            ->get()
+            ->each(function (object $row) use (&$series) {
+                if (isset($series[(int) $row->hour_bucket])) {
+                    $series[(int) $row->hour_bucket]['processed'] = (int) $row->processed_jobs;
+                    $series[(int) $row->hour_bucket]['failed'] = (int) $row->failed_jobs;
+                }
+            });
+
+        return array_values($series);
     }
 
     /**

@@ -33,6 +33,10 @@ class SendAlertNotification
             }
         }
 
+        if ($routes['webhooks'] !== []) {
+            $notifiable->route(Notifications\WebhookChannel::class, $routes['webhooks']);
+        }
+
         if ($notification === null || $notifiable->routes === []) {
             return;
         }

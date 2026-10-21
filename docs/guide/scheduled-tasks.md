@@ -1,0 +1,5 @@
+# Scheduled tasks
+
+The « Schedule » page lists the tasks of your scheduler with their cron expression, their last run, its duration, their recent runs and their next run. Meridian records every run of `schedule:run` (succeeded, failed with its exception or exit code, skipped, or running in background) and flags the tasks that **did not run when they were due** (more than `schedule_grace` minutes late, 5 by default) — when the scheduler is stopped, when a server is down or when a long task blocked the others. Open a task to see the history of its runs.
+
+Nothing to configure: the tasks are named by their `->name()` / `->description()`, else by their command (`reports:send`), else by their job or callback. Give your closures a name to tell them apart. The definitions of the tasks are refreshed by `schedule:run` and `meridian:snapshot`, and the runs are kept `trim.schedule` minutes (7 days). A failed or missed task fires an alert (see [Alerts](./notifications#alerts)). The tasks are also available as JSON (`GET /meridian/api/schedule`).

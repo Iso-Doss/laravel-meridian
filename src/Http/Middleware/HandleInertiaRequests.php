@@ -45,6 +45,7 @@ class HandleInertiaRequests extends Middleware
                 'name' => config('app.name'),
                 'poll' => (int) config('meridian.poll', 5),
                 'locale' => $locale,
+                'direction' => Translator::direction($locale),
                 'locales' => Translator::languages(),
                 'translations' => Translator::messages($locale),
                 'can_manage' => Meridian::canManage($request),
