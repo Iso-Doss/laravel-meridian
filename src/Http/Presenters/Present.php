@@ -98,7 +98,7 @@ class Present
             return null;
         }
 
-        $elapsed = max(0, time() - $job->reserved_at->getTimestamp());
+        $elapsed = max(0, now()->getTimestamp() - $job->reserved_at->getTimestamp());
 
         return (int) round($elapsed * (100 - $progress) / $progress);
     }

@@ -11,6 +11,9 @@ use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
  */
 class MeridianErrorsWidget extends Widget
 {
+    /**
+     * @var view-string
+     */
     protected string $view = 'meridian::filament.errors-widget';
 
     protected int|string|array $columnSpan = 'full';

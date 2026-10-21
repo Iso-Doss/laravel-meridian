@@ -28,6 +28,7 @@ it('resets the progress when the job runs again', function () {
 });
 
 it('shows the progress and the remaining time of the running jobs', function () {
+    $this->freezeSecond();
     ProgressJob::dispatch();
     $job = MonitoredJob::sole();
     $job->update(['status' => 'processing', 'reserved_at' => now()->subSeconds(30), 'progress' => 25, 'progress_message' => '250 / 1000']);
