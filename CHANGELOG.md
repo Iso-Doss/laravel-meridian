@@ -2,6 +2,33 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.9.0 - 2026-10-21
+
+Completes the parity with Laravel Horizon: fast termination, cancelling running jobs, `meridian:purge` and `meridian:list`.
+
+### Added
+
+- **Fast termination**: like Horizon's `fast_termination`, `'fast_termination' => true` makes `meridian:terminate` exit the master right away while its workers finish their current job on their own, so that a deployment starts the new master without waiting for the longest job. Disabled by default.
+- **Cancel a running job**: « Cancel job » now also works on a job being processed (shown as « Cancelling… »):
+  - a job using the `TracksProgress` trait stops cleanly when it checks `$this->cancelled()` (one query per second at most), and Meridian forgets it;
+  - otherwise, when it runs under `php artisan meridian`, the master stops the worker running it after `cancel_timeout` seconds (10 by default), removes the job from the queue and starts a new worker.
+  
+  A job run by a worker Meridian does not supervise, and that does not check `$this->cancelled()`, runs to completion. Every cancellation is recorded in the audit log.
+- **`php artisan meridian:purge`**: terminates the workers left behind by a master that was killed without terminating them (`--signal=SIGTERM`), and forgets the dead supervisors and workers of the machine. Only the `queue:work` processes of this application started for a configured supervisor are concerned.
+- **`php artisan meridian:list`**: lists the machines running Meridian (master, host, PID, supervisors, processes, status, start).
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+The new migration adds the `cancel_requested_at` column to `meridian_jobs` (the migrations you already published are skipped). Until it runs, running jobs cannot be cancelled and everything else works as before. Restart Meridian (`php artisan meridian:terminate`) after upgrading.
+
+If you published `config/meridian.php`, you may add the new `fast_termination` and `cancel_timeout` keys (defaults apply when they are missing). If you published the Blade views, republish them.
+
 ## v1.8.0 - 2026-10-21
 
 Retry with corrected data, scheduled tasks monitoring, and Meridian in the tools your team already uses: Prometheus / OpenTelemetry, Laravel Pulse, Filament and the terminal.
