@@ -24,6 +24,26 @@ class JobData
      */
     public static function describe(?string $payload): ?array
     {
+        $command = static::command($payload);
+
+        if ($command === null) {
+            return null;
+        }
+
+        if (is_string($command)) {
+            return ['properties' => [], 'error' => $command];
+        }
+
+        return ['properties' => static::properties($command[0]), 'error' => null];
+    }
+
+    /**
+     * Unserialize the command of a payload, decrypting it when needed.
+     *
+     * @return array{0: object, 1: bool}|string The command and whether it was encrypted, or an error.
+     */
+    public static function command(?string $payload): array|string|null
+    {
         $decoded = $payload ? json_decode($payload, true) : null;
         $command = $decoded['data']['command'] ?? null;
 
@@ -31,30 +51,27 @@ class JobData
             return null;
         }
 
-        try {
-            if (! str_starts_with($command, 'O:')) {
-                // ShouldBeEncrypted jobs, decrypted like the worker does.
-                $command = (string) Crypt::decrypt($command);
-            }
+        $encrypted = ! str_starts_with($command, 'O:');
 
-            $object = unserialize($command);
+        try {
+            $object = unserialize($encrypted ? (string) Crypt::decrypt($command) : $command);
         } catch (Throwable $e) {
-            return ['properties' => [], 'error' => $e->getMessage()];
+            return $e->getMessage();
         }
 
         if (! is_object($object) || $object instanceof \__PHP_Incomplete_Class) {
-            return ['properties' => [], 'error' => 'The job class cannot be loaded.'];
+            return 'The job class cannot be loaded.';
         }
 
-        return ['properties' => static::properties($object), 'error' => null];
+        return [$object, $encrypted];
     }
 
     /**
      * The properties declared by the job itself (not by the queue traits).
      *
-     * @return array<int, array{name: string, value: string}>
+     * @return array<string, ReflectionProperty>
      */
-    protected static function properties(object $object): array
+    public static function ownProperties(object $object): array
     {
         $ignored = collect(class_uses_recursive($object))
             ->flatMap(fn (string $trait) => array_map(
@@ -68,6 +85,16 @@ class JobData
         return collect((new ReflectionClass($object))->getProperties())
             ->reject(fn (ReflectionProperty $property) => $property->isStatic() || $ignored->has($property->getName()))
             ->filter(fn (ReflectionProperty $property) => $property->isInitialized($object))
+            ->keyBy(fn (ReflectionProperty $property) => $property->getName())
+            ->all();
+    }
+
+    /**
+     * @return array<int, array{name: string, value: string}>
+     */
+    protected static function properties(object $object): array
+    {
+        return collect(static::ownProperties($object))
             ->map(fn (ReflectionProperty $property) => [
                 'name' => $property->getName(),
                 'value' => static::format($property->getValue($object)),

@@ -12,6 +12,7 @@ use IsoDoss\Meridian\Models\Worker;
 use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobData;
+use IsoDoss\Meridian\Support\JobEditor;
 
 /**
  * Turns Meridian records into the props of the Inertia pages.
@@ -64,7 +65,26 @@ class Present
             'batch_url' => $job->batch_id ? route('meridian.batches.show', $job->batch_id) : null,
             'delete_url' => $job->status !== MonitoredJob::PROCESSING && static::canManage() ? route('meridian.jobs.destroy', $job->uuid) : null,
             'error_group' => static::errorGroup($job),
+            'edit' => static::edit($job),
         ]);
+    }
+
+    /**
+     * The form changing the data of a failed job before retrying it.
+     *
+     * @return array{url: string, fields: array<int, array{name: string, type: string, value: string, editable: bool}>}|null
+     */
+    protected static function edit(MonitoredJob $job): ?array
+    {
+        if ($job->status !== MonitoredJob::FAILED || ! Meridian::canEditJobs(request())) {
+            return null;
+        }
+
+        $fields = app(JobEditor::class)->fields($job);
+
+        return $fields && collect($fields)->contains('editable', true)
+            ? ['url' => route('meridian.jobs.retry-edited', $job->uuid), 'fields' => $fields]
+            : null;
     }
 
     /**

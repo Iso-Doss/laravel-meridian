@@ -13,15 +13,21 @@ use IsoDoss\Meridian\Events\FailureRateExceeded;
 use IsoDoss\Meridian\Events\LongRunningJobDetected;
 use IsoDoss\Meridian\Events\LongWaitDetected;
 use IsoDoss\Meridian\Events\NoWorkersRunning;
+use IsoDoss\Meridian\Events\ScheduleTaskFailed;
+use IsoDoss\Meridian\Events\ScheduleTaskMissed;
 use IsoDoss\Meridian\Http\Middleware\Authorize;
 use IsoDoss\Meridian\Http\Middleware\HandleInertiaRequests;
 use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
+use IsoDoss\Meridian\Listeners\RecordScheduledTasks;
 use IsoDoss\Meridian\Listeners\SendAlertNotification;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
 use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
+use Laravel\Pulse\Livewire\Card;
+use Livewire\Livewire;
+use Livewire\LivewireManager;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
@@ -40,6 +46,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 'create_meridian_job_retries_table',
                 'add_fingerprint_and_progress_to_meridian_jobs_table',
                 'create_meridian_audit_logs_table',
+                'create_meridian_schedule_tables',
             ])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
@@ -58,6 +65,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 Console\ClearCommand::class,
                 Console\ClearMetricsCommand::class,
                 Console\ListenCommand::class,
+                Console\TopCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
@@ -90,13 +98,22 @@ class MeridianServiceProvider extends PackageServiceProvider
         $this->app->singleton(RecordJobLifecycle::class);
         $this->app->singleton(JobRetryRepository::class);
         $this->app->singleton(AuditLogRepository::class);
+        $this->app->singleton(RecordScheduledTasks::class);
     }
 
     public function packageBooted(): void
     {
         Event::subscribe(WorkerHeartbeat::class);
         Event::subscribe(RecordJobLifecycle::class);
-        Event::listen([LongWaitDetected::class, FailureRateExceeded::class, NoWorkersRunning::class, LongRunningJobDetected::class], SendAlertNotification::class);
+        Event::subscribe(RecordScheduledTasks::class);
+        Event::listen([
+            LongWaitDetected::class,
+            FailureRateExceeded::class,
+            NoWorkersRunning::class,
+            LongRunningJobDetected::class,
+            ScheduleTaskFailed::class,
+            ScheduleTaskMissed::class,
+        ], SendAlertNotification::class);
 
         // Batched jobs are inserted with Queue::bulk(), which fires no JobQueued event.
         Event::listen(BatchDispatched::class, function () {
@@ -105,6 +122,7 @@ class MeridianServiceProvider extends PackageServiceProvider
 
         $this->registerRoutes();
         $this->registerSchedule();
+        $this->registerPulseCard();
         $this->shareTranslationsWithViews();
     }
 
@@ -130,6 +148,7 @@ class MeridianServiceProvider extends PackageServiceProvider
             'as' => 'meridian.',
         ], fn ($value) => $value !== null && $value !== ''), function () {
             $this->loadRoutesFrom(__DIR__.'/../routes/assets.php');
+            $this->loadRoutesFrom(__DIR__.'/../routes/prometheus.php');
         });
     }
 
@@ -195,6 +214,16 @@ class MeridianServiceProvider extends PackageServiceProvider
                 ->with('canManage', Meridian::canManage(request()))
                 ->with('t', fn (string $key, array $replace = []) => Translator::get($key, $replace, $locale));
         });
+    }
+
+    /**
+     * The Laravel Pulse card: <livewire:meridian cols="4" />.
+     */
+    protected function registerPulseCard(): void
+    {
+        if (class_exists(Card::class) && $this->app->bound(LivewireManager::class)) {
+            Livewire::component('meridian', Pulse\MeridianCard::class);
+        }
     }
 
     protected function registerSchedule(): void

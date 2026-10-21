@@ -6,6 +6,7 @@ use IsoDoss\Meridian\Http\Controllers\DashboardController;
 use IsoDoss\Meridian\Http\Controllers\ErrorsController;
 use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\MonitoringController;
+use IsoDoss\Meridian\Http\Controllers\ScheduleController;
 use IsoDoss\Meridian\Models\MonitoredJob;
 
 // Group attributes come from config("meridian.route.api"), names are prefixed with "meridian.api.".
@@ -27,6 +28,9 @@ Route::get('monitoring', [MonitoringController::class, 'apiIndex'])->name('monit
 
 // Failed jobs grouped by cause...
 Route::get('errors', [ErrorsController::class, 'apiIndex'])->name('errors.index');
+
+// Scheduled tasks...
+Route::get('schedule', [ScheduleController::class, 'apiIndex'])->name('schedule.index');
 
 // Audit log...
 Route::get('audit', [AuditLogController::class, 'apiIndex'])->name('audit.index');

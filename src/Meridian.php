@@ -22,6 +22,11 @@ class Meridian
     public static ?Closure $manageUsing = null;
 
     /**
+     * The callback that determines who can change the data of a failed job before retrying it.
+     */
+    public static ?Closure $editUsing = null;
+
+    /**
      * Routes of the long wait notifications, set in a service provider.
      *
      * @var array{mail?: string|array<int, string>, slack?: string, slack_channel?: string|null, sms?: string}
@@ -129,6 +134,40 @@ class Meridian
         }
 
         return true;
+    }
+
+    /**
+     * Register the callback that determines who can change the data of a
+     * failed job before retrying it.
+     */
+    public static function editJobs(Closure $callback): self
+    {
+        static::$editUsing = $callback;
+
+        return new self;
+    }
+
+    /**
+     * Determine if the given request can change the data of a failed job
+     * before retrying it: only people who can act on the jobs, and then the
+     * Meridian::editJobs() callback, else the "editMeridianJobs" gate when it
+     * is defined, else nobody outside the local environment.
+     */
+    public static function canEditJobs(Request $request): bool
+    {
+        if (! static::canManage($request)) {
+            return false;
+        }
+
+        if (static::$editUsing) {
+            return (bool) (static::$editUsing)($request);
+        }
+
+        if (Gate::has('editMeridianJobs')) {
+            return Gate::check('editMeridianJobs', [$request->user()]);
+        }
+
+        return app()->environment('local');
     }
 
     /**

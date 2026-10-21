@@ -18,6 +18,7 @@ class AuditLogRepository
      */
     public const ACTIONS = [
         'job.retried' => 'Job retried',
+        'job.edited' => 'Job edited and retried',
         'jobs.retried' => 'Failed jobs retried',
         'job.cancelled' => 'Job cancelled',
         'job.deleted' => 'Job deleted',

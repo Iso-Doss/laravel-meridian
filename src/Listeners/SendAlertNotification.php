@@ -19,6 +19,8 @@ class SendAlertNotification
             $event instanceof Events\FailureRateExceeded => new Notifications\FailureRateExceeded($event->connection, $event->queue, $event->failed, $event->processed, $event->minutes),
             $event instanceof Events\NoWorkersRunning => new Notifications\NoWorkersRunning($event->pending),
             $event instanceof Events\LongRunningJobDetected => new Notifications\LongRunningJobDetected($event->uuid, $event->name, $event->connection, $event->queue, $event->seconds),
+            $event instanceof Events\ScheduleTaskFailed => new Notifications\ScheduleTaskFailed($event->task, $event->error),
+            $event instanceof Events\ScheduleTaskMissed => new Notifications\ScheduleTaskMissed($event->task, $event->dueAt),
             default => null,
         };
 

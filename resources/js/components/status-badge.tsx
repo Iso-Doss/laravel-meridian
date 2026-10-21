@@ -15,6 +15,10 @@ const VARIANTS = {
     failed: 'destructive',
     cancelled: 'destructive',
     inactive: 'destructive',
+    success: 'success',
+    skipped: 'secondary',
+    missed: 'destructive',
+    never: 'outline',
 } as const;
 
 const LABELS: Record<keyof typeof VARIANTS, string> = {
@@ -31,6 +35,10 @@ const LABELS: Record<keyof typeof VARIANTS, string> = {
     failed: 'Failed',
     cancelled: 'Cancelled',
     inactive: 'Inactive',
+    success: 'Succeeded',
+    skipped: 'Skipped',
+    missed: 'Missed',
+    never: 'Never ran',
 };
 
 export function StatusBadge({ status }: { status: string }) {

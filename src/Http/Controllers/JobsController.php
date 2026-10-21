@@ -19,6 +19,7 @@ use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\QueueRepository;
 use IsoDoss\Meridian\Support\FailedJobRetrier;
+use IsoDoss\Meridian\Support\JobEditor;
 use IsoDoss\Meridian\Support\Migrations;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
@@ -78,6 +79,25 @@ class JobsController extends Controller
         }
 
         $this->audit->record('job.retried', $job->uuid, ['job' => $job->name, 'queue' => $job->connection.':'.$job->queue]);
+
+        return back()->with('meridian.success', Translator::get('The job has been pushed back onto the queue.'));
+    }
+
+    /**
+     * Change the data of a failed job, then retry it.
+     */
+    public function retryEdited(Request $request, string $uuid, JobEditor $editor): RedirectResponse
+    {
+        abort_unless(Meridian::canEditJobs($request), 403);
+
+        $job = MonitoredJob::query()->where('uuid', $uuid)->firstOrFail();
+        $changed = $editor->retry($job, (array) $request->input('data', []));
+
+        $this->audit->record('job.edited', $job->uuid, [
+            'job' => $job->name,
+            'queue' => $job->connection.':'.$job->queue,
+            'changed' => $changed === [] ? '—' : implode(', ', $changed),
+        ]);
 
         return back()->with('meridian.success', Translator::get('The job has been pushed back onto the queue.'));
     }

@@ -74,8 +74,8 @@ th.sticky-actions { background: var(--bg); }
 .badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--bg); color: var(--muted); border: 1px solid var(--border); }
 .badge.pending { background: var(--info-soft); color: var(--info); border-color: transparent; }
 .badge.processing, .badge.paused, .badge.working { background: var(--warn-soft); color: var(--warn); border-color: transparent; }
-.badge.completed, .badge.running, .badge.finished { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
-.badge.failed, .badge.inactive, .badge.cancelled { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
+.badge.completed, .badge.running, .badge.finished, .badge.success { background: var(--ok-soft); color: var(--ok); border-color: transparent; }
+.badge.failed, .badge.inactive, .badge.cancelled, .badge.missed { background: var(--bad-soft); color: var(--bad); border-color: transparent; }
 .tag { display: inline-block; padding: 0 6px; margin: 1px 2px 1px 0; border-radius: 4px; background: var(--code); font-size: 11.5px; color: var(--muted); }
 .tabs { display: flex; gap: 4px; flex-wrap: wrap; }
 .tabs a { padding: 5px 10px; border-radius: 7px; color: var(--muted); }
@@ -112,6 +112,16 @@ progress.bar::-moz-progress-bar { background: var(--accent); border-radius: 99px
 .readonly { display: inline-block; margin: 0 0 12px; padding: 2px 8px; border: 1px solid var(--border); border-radius: 6px; font-size: 12px; color: var(--muted); }
 .error-message { margin-top: 2px; overflow-wrap: anywhere; }
 .error-file { font-size: 11px; color: var(--muted); }
+.edit-data { border-bottom: 1px solid var(--border); }
+.edit-data > summary { margin: 12px 16px; list-style: none; display: inline-block; }
+.edit-data > summary::-webkit-details-marker { display: none; }
+.edit-data textarea, .edit-data input:not([type]), .edit-data select { width: 100%; font: inherit; font-size: 12px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--panel); color: var(--text); }
+.edit-data .flash { margin: 0 16px 12px; }
+.flash.warn { background: var(--warn-soft); color: var(--warn); }
+.field-error { color: var(--bad); font-size: 12px; margin-top: 4px; }
+.runs { display: inline-flex; gap: 4px; align-items: center; }
+.run { width: 10px; height: 10px; border-radius: 99px; background: var(--muted); opacity: .4; }
+.run.success { background: var(--ok); opacity: 1; } .run.failed { background: var(--bad); opacity: 1; } .run.running { background: var(--warn); opacity: 1; }
 .pagination { display: flex; justify-content: space-between; align-items: center; padding: 10px 16px; border-top: 1px solid var(--border); color: var(--muted); }
 @media (max-width: 860px) {
     .app { grid-template-columns: 1fr; }

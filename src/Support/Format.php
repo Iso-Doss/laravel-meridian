@@ -27,6 +27,10 @@ class Format
         'cancelled' => 'Cancelled',
         'silenced' => 'Silenced',
         'inactive' => 'Inactive',
+        'success' => 'Succeeded',
+        'skipped' => 'Skipped',
+        'missed' => 'Missed',
+        'never' => 'Never ran',
     ];
 
     public static function status(string $status): string

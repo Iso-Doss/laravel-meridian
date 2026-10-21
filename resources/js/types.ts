@@ -20,6 +20,7 @@ export interface SharedProps {
         jobs: Record<'all' | JobStatus, string>;
         monitoring: string;
         errors: string;
+        schedule: string;
         audit: string;
         batches: string;
         metrics: string;
@@ -77,6 +78,15 @@ export interface JobDetails extends Job {
     delete_url: string | null;
     /** The failed jobs with the same cause. */
     error_group: { count: number; url: string } | null;
+    /** The form changing the data of the failed job before retrying it, when allowed. */
+    edit: { url: string; fields: EditableField[] } | null;
+}
+
+export interface EditableField {
+    name: string;
+    type: 'string' | 'int' | 'float' | 'bool' | 'json' | 'object' | 'setting';
+    value: string;
+    editable: boolean;
 }
 
 export interface ErrorGroup {
@@ -168,4 +178,31 @@ export interface Batch {
     cancelled_at: number | null;
     url: string;
     retry_url: string | null;
+}
+
+export interface ScheduleRun {
+    status: 'running' | 'success' | 'failed' | 'skipped';
+    exit_code: number | null;
+    runtime: number | null;
+    started_at: number;
+    finished_at: number | null;
+    exception?: string | null;
+    host?: string | null;
+}
+
+export interface ScheduledTask {
+    id: number;
+    name: string;
+    expression: string;
+    timezone: string | null;
+    repeat_seconds: number | null;
+    background: boolean;
+    without_overlapping: boolean;
+    on_one_server: boolean;
+    next_run_at: number | null;
+    last_run: ScheduleRun | null;
+    recent: ScheduleRun[];
+    missed_at: number | null;
+    health: 'running' | 'success' | 'failed' | 'skipped' | 'missed' | 'never';
+    url?: string;
 }

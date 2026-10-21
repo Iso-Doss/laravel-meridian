@@ -37,6 +37,7 @@
             <a href="{{ route('meridian.jobs.index') }}" @class(['active' => $route === 'meridian.jobs.index' && ! request()->route('status')])>{{ $t('All jobs') }}</a>
             <div class="nav-title">{{ $t('Insights') }}</div>
             <a href="{{ route('meridian.errors.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.errors')])>{{ $t('Errors') }}</a>
+            <a href="{{ route('meridian.schedule.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.schedule')])>{{ $t('Schedule') }}</a>
             <a href="{{ route('meridian.monitoring.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.monitoring')])>{{ $t('Monitoring') }}</a>
             <a href="{{ route('meridian.batches.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.batches')])>{{ $t('Batches') }}</a>
             <a href="{{ route('meridian.metrics.index') }}" @class(['active' => str_starts_with((string) $route, 'meridian.metrics')])>{{ $t('Metrics') }}</a>

@@ -50,6 +50,14 @@ class Migrations
         return static::has('meridian_audit_logs');
     }
 
+    /**
+     * The scheduled tasks monitoring (v1.8.0).
+     */
+    public static function hasSchedule(): bool
+    {
+        return static::has('meridian_schedule_runs');
+    }
+
     public static function flush(): void
     {
         static::$checked = [];

@@ -57,6 +57,7 @@ class HandleInertiaRequests extends Middleware
                 ),
                 'monitoring' => route('meridian.monitoring.index'),
                 'errors' => route('meridian.errors.index'),
+                'schedule' => route('meridian.schedule.index'),
                 'audit' => route('meridian.audit.index'),
                 'batches' => route('meridian.batches.index'),
                 'metrics' => route('meridian.metrics.index'),

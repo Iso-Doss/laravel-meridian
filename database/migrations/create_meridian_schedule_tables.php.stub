@@ -1,0 +1,54 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+
+return new class extends Migration
+{
+    public function getConnection(): ?string
+    {
+        return config('meridian.database');
+    }
+
+    public function up(): void
+    {
+        $schema = Schema::connection($this->getConnection());
+
+        if (! $schema->hasTable('meridian_schedule_tasks')) {
+            $schema->create('meridian_schedule_tasks', function (Blueprint $table) {
+                $table->id();
+                $table->string('name')->unique();
+                $table->string('expression', 100);
+                $table->string('timezone', 64)->nullable();
+                $table->unsignedSmallInteger('repeat_seconds')->nullable();
+                $table->boolean('background')->default(false);
+                $table->boolean('without_overlapping')->default(false);
+                $table->boolean('on_one_server')->default(false);
+                $table->unsignedInteger('next_run_at')->nullable();
+                $table->unsignedInteger('first_seen_at');
+                $table->unsignedInteger('last_seen_at')->index();
+            });
+        }
+
+        if (! $schema->hasTable('meridian_schedule_runs')) {
+            $schema->create('meridian_schedule_runs', function (Blueprint $table) {
+                $table->id();
+                $table->string('task')->index();
+                $table->string('status', 20);
+                $table->integer('exit_code')->nullable();
+                $table->unsignedInteger('runtime')->nullable()->comment('milliseconds');
+                $table->longText('exception')->nullable();
+                $table->string('host')->nullable();
+                $table->unsignedInteger('started_at')->index();
+                $table->unsignedInteger('finished_at')->nullable();
+            });
+        }
+    }
+
+    public function down(): void
+    {
+        Schema::connection($this->getConnection())->dropIfExists('meridian_schedule_runs');
+        Schema::connection($this->getConnection())->dropIfExists('meridian_schedule_tasks');
+    }
+};

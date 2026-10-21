@@ -18,6 +18,7 @@ class TestCase extends Orchestra
 
         Meridian::$authUsing = fn () => true;
         Meridian::$manageUsing = null;
+        Meridian::$editUsing = null;
         Meridian::$notificationRoutes = [];
         Migrations::flush();
 
@@ -28,6 +29,7 @@ class TestCase extends Orchestra
         (include __DIR__.'/../database/migrations/create_meridian_job_retries_table.php.stub')->up();
         (include __DIR__.'/../database/migrations/add_fingerprint_and_progress_to_meridian_jobs_table.php.stub')->up();
         (include __DIR__.'/../database/migrations/create_meridian_audit_logs_table.php.stub')->up();
+        (include __DIR__.'/../database/migrations/create_meridian_schedule_tables.php.stub')->up();
     }
 
     protected function getPackageProviders($app)

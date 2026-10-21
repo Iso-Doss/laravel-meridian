@@ -115,6 +115,7 @@ return [
         'workers' => 60,      // stale worker / supervisor heartbeats
         'monitored' => 10080, // jobs carrying a monitored tag (7 days)
         'audit' => 43200,     // audit log entries (30 days)
+        'schedule' => 10080,  // runs of the scheduled tasks (7 days)
     ],
 
     /*
@@ -145,6 +146,8 @@ return [
     | failures: number of failed jobs of a queue during the window (0 = off).
     | no_workers: jobs are waiting but no worker is running.
     | long_running: a job has been running for more seconds than this (0 = off).
+    | schedule_failures: a scheduled task failed.
+    | schedule_missed: a scheduled task did not run when it was due.
     |
     */
 
@@ -155,7 +158,29 @@ return [
         'failures' => 0,
         'no_workers' => true,
         'long_running' => 0,
+        'schedule_failures' => true,
+        'schedule_missed' => true,
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Prometheus / OpenTelemetry
+    |--------------------------------------------------------------------------
+    |
+    | GET /meridian/prometheus exposes the metrics in the Prometheus text
+    | format, for Prometheus, the OpenTelemetry Collector, Grafana or Datadog.
+    | Scrapers send the token as "Authorization: Bearer <token>"; without a
+    | token, the dashboard authorization applies (enough in local only).
+    |
+    */
+
+    'prometheus' => [
+        'enabled' => env('MERIDIAN_PROMETHEUS', false),
+        'token' => env('MERIDIAN_PROMETHEUS_TOKEN'),
+    ],
+
+    // Minutes after which a scheduled task that did not start is « missed ».
+    'schedule_grace' => 5,
 
     'notifications' => [
         // Or, like Horizon, in a service provider: Meridian::routeMailNotificationsTo(),

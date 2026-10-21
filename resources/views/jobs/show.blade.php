@@ -76,8 +76,39 @@
     @endif
 
     @if ($data = \IsoDoss\Meridian\Support\JobData::describe($job->payload))
+        @php($fields = $job->status === MonitoredJob::FAILED && \IsoDoss\Meridian\Meridian::canEditJobs(request()) ? app(\IsoDoss\Meridian\Support\JobEditor::class)->fields($job) : null)
         <div class="panel">
             <div class="panel-head"><h2>{{ $t('Data') }}</h2></div>
+            @if ($fields && collect($fields)->contains('editable', true))
+                <details class="edit-data" @if ($errors->any()) open @endif>
+                    <summary class="btn">✎ {{ $t('Edit and retry') }}</summary>
+                    <form method="post" action="{{ route('meridian.jobs.retry-edited', $job->uuid) }}">
+                        @csrf
+                        <p class="flash warn">{{ $t('Change the values that made the job fail, then retry it. Models, enums, dates and other objects are kept as they are.') }}</p>
+                        <dl class="meta">
+                            @foreach ($fields as $field)
+                                <dt><label for="field-{{ $field['name'] }}" class="mono">{{ $field['name'] }}</label> <span class="muted mono">{{ $field['type'] }}</span></dt>
+                                <dd>
+                                    @if (! $field['editable'])
+                                        <span class="mono muted">{{ $field['value'] }}</span>
+                                    @elseif ($field['type'] === 'bool')
+                                        <select id="field-{{ $field['name'] }}" name="data[{{ $field['name'] }}]">
+                                            @foreach (['true', 'false'] as $choice)<option value="{{ $choice }}" @selected(old('data.'.$field['name'], $field['value']) === $choice)>{{ $choice }}</option>@endforeach
+                                        </select>
+                                    @elseif ($field['type'] === 'json' || str_contains($field['value'], "\n") || strlen($field['value']) > 80)
+                                        <textarea id="field-{{ $field['name'] }}" name="data[{{ $field['name'] }}]" class="mono" rows="{{ min(12, max(2, substr_count($field['value'], "\n") + 1)) }}">{{ old('data.'.$field['name'], $field['value']) }}</textarea>
+                                    @else
+                                        <input id="field-{{ $field['name'] }}" name="data[{{ $field['name'] }}]" class="mono" value="{{ old('data.'.$field['name'], $field['value']) }}">
+                                    @endif
+                                    @error('data.'.$field['name'])<div class="field-error">{{ $message }}</div>@enderror
+                                </dd>
+                            @endforeach
+                        </dl>
+                        @error('data')<div class="field-error">{{ $message }}</div>@enderror
+                        <div class="panel-body"><button class="btn primary">↻ {{ $t('Retry with these values') }}</button></div>
+                    </form>
+                </details>
+            @endif
             @if ($data['error'])
                 <div class="panel-body muted">{{ $t('The data of this job cannot be read: :error', ['error' => $data['error']]) }}</div>
             @elseif ($data['properties'] === [])

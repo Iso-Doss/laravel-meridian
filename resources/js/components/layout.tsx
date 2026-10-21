@@ -5,6 +5,7 @@ import {
     Bookmark,
     BarChart3,
     Bug,
+    CalendarClock,
     CheckCircle2,
     Clock,
     Globe,
@@ -61,6 +62,7 @@ function useNavigation(): { title: string; items: NavItem[] }[] {
             title: 'Insights',
             items: [
                 { label: 'Errors', href: nav.errors, icon: Bug },
+                { label: 'Schedule', href: nav.schedule, icon: CalendarClock },
                 { label: 'Monitoring', href: nav.monitoring, icon: Bookmark },
                 { label: 'Batches', href: nav.batches, icon: Layers },
                 { label: 'Metrics', href: nav.metrics, icon: BarChart3 },

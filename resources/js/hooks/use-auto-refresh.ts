@@ -38,19 +38,19 @@ export function useAutoRefreshSetting(): [boolean, (enabled: boolean) => void] {
     return [enabled, setEnabled];
 }
 
-/** Reload the page props every "meridian.poll" seconds while enabled. */
-export function useAutoRefresh(only?: string[]): void {
+/** Reload the page props every "meridian.poll" seconds while enabled (and while "active"). */
+export function useAutoRefresh(only?: string[], active: boolean = true): void {
     const { poll } = usePage<SharedProps>().props.meridian;
     const [enabled] = useAutoRefreshSetting();
     const { start, stop } = usePoll(Math.max(1, poll) * 1000, only ? { only } : {}, { autoStart: false });
 
     useEffect(() => {
-        if (enabled && poll > 0) {
+        if (enabled && active && poll > 0) {
             start();
         } else {
             stop();
         }
 
         return stop;
-    }, [enabled, poll, start, stop]);
+    }, [enabled, active, poll, start, stop]);
 }

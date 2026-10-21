@@ -7,9 +7,11 @@ use IsoDoss\Meridian\Events\FailureRateExceeded;
 use IsoDoss\Meridian\Events\LongRunningJobDetected;
 use IsoDoss\Meridian\Events\LongWaitDetected;
 use IsoDoss\Meridian\Events\NoWorkersRunning;
+use IsoDoss\Meridian\Events\ScheduleTaskMissed;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Models\Worker;
 use IsoDoss\Meridian\Repositories\QueueRepository;
+use IsoDoss\Meridian\Repositories\ScheduleRepository;
 
 /**
  * The health checks run by meridian:snapshot. Each problem fires an event
@@ -17,7 +19,7 @@ use IsoDoss\Meridian\Repositories\QueueRepository;
  */
 class Alerts
 {
-    public function __construct(protected QueueRepository $queues) {}
+    public function __construct(protected QueueRepository $queues, protected ScheduleRepository $schedule) {}
 
     /**
      * Run every check.
@@ -31,6 +33,7 @@ class Alerts
             $this->checkFailureRates(),
             $this->checkWorkers(),
             $this->checkLongRunningJobs(),
+            $this->checkSchedule(),
         );
     }
 
@@ -155,6 +158,31 @@ class Alerts
             event(new LongRunningJobDetected($job->uuid, $job->name, $job->connection, $job->queue, $seconds));
 
             $fired[] = "Long running job [{$job->name}] ({$job->uuid}): {$seconds}s.";
+        }
+
+        return $fired;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    public function checkSchedule(): array
+    {
+        if (! config('meridian.alerts.schedule_missed', true)) {
+            return [];
+        }
+
+        $fired = [];
+
+        foreach ($this->schedule->missed() as $task) {
+            // Once per missed run.
+            if (! Cache::add('meridian:alert:schedule-missed:'.sha1($task['name']).':'.$task['due_at'], true, 86400)) {
+                continue;
+            }
+
+            event(new ScheduleTaskMissed($task['name'], $task['due_at']));
+
+            $fired[] = "Scheduled task [{$task['name']}] did not run at ".date('Y-m-d H:i', $task['due_at']).'.';
         }
 
         return $fired;

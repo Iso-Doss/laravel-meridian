@@ -9,6 +9,7 @@ use IsoDoss\Meridian\Http\Controllers\JobsController;
 use IsoDoss\Meridian\Http\Controllers\LocaleController;
 use IsoDoss\Meridian\Http\Controllers\MetricsController;
 use IsoDoss\Meridian\Http\Controllers\MonitoringController;
+use IsoDoss\Meridian\Http\Controllers\ScheduleController;
 use IsoDoss\Meridian\Models\MonitoredJob;
 
 // Group attributes come from config("meridian.route.web"), names are prefixed with "meridian.".
@@ -25,6 +26,7 @@ Route::prefix('jobs')->name('jobs.')->controller(JobsController::class)->group(f
     Route::post('retry', 'retryAll')->name('retry-all');
     Route::get('{uuid}', 'show')->whereUuid('uuid')->name('show');
     Route::post('{uuid}/retry', 'retry')->whereUuid('uuid')->name('retry');
+    Route::post('{uuid}/retry-edited', 'retryEdited')->whereUuid('uuid')->name('retry-edited');
     Route::delete('{uuid}', 'destroy')->whereUuid('uuid')->name('destroy');
 });
 
@@ -37,6 +39,10 @@ Route::prefix('monitoring')->name('monitoring.')->controller(MonitoringControlle
 
 // Failed jobs grouped by cause...
 Route::get('errors', [ErrorsController::class, 'index'])->name('errors.index');
+
+// Scheduled tasks...
+Route::get('schedule', [ScheduleController::class, 'index'])->name('schedule.index');
+Route::get('schedule/{id}', [ScheduleController::class, 'show'])->whereNumber('id')->name('schedule.show');
 
 // Audit log...
 Route::get('audit', [AuditLogController::class, 'index'])->name('audit.index');

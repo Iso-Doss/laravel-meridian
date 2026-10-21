@@ -7,6 +7,8 @@
         "database",
         "horizon",
         "monitoring",
+        "scheduler",
+        "prometheus",
         "meridian"
     ],
     "homepage": "https://github.com/Iso-Doss/laravel-meridian",
@@ -28,8 +30,10 @@
         "symfony/process": "^7.0||^8.0"
     },
     "require-dev": {
+        "filament/filament": "^4.0||^5.0",
         "larastan/larastan": "^3.0",
         "laravel/pint": "^1.14",
+        "laravel/pulse": "^1.4",
         "laravel/slack-notification-channel": "^3.0",
         "laravel/vonage-notification-channel": "^3.0",
         "nunomaduro/collision": "^8.8",
@@ -44,8 +48,10 @@
     "suggest": {
         "ext-pcntl": "Required to pause / continue / gracefully terminate workers.",
         "ext-posix": "Required to signal worker processes.",
-        "laravel/slack-notification-channel": "Required to send the long wait notifications to Slack.",
-        "laravel/vonage-notification-channel": "Required to send the long wait notifications by SMS."
+        "filament/filament": "To show Meridian in a Filament panel (MeridianPlugin).",
+        "laravel/pulse": "To show Meridian in a Laravel Pulse card.",
+        "laravel/slack-notification-channel": "Required to send the alerts to Slack.",
+        "laravel/vonage-notification-channel": "Required to send the alerts by SMS."
     },
     "autoload": {
         "psr-4": {

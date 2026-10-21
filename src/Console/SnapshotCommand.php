@@ -4,6 +4,7 @@ namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
 use IsoDoss\Meridian\Repositories\MetricsRepository;
+use IsoDoss\Meridian\Repositories\ScheduleRepository;
 use IsoDoss\Meridian\Support\Alerts;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 
@@ -29,6 +30,9 @@ class SnapshotCommand extends Command
         if ($imported > 0) {
             $this->components->info("Imported {$imported} job(s) pushed without event (bulk / pushRaw).");
         }
+
+        // The schedule is defined in console only: keep the dashboard's copy up to date.
+        app(ScheduleRepository::class)->sync();
 
         foreach ($alerts->check() as $alert) {
             $this->components->warn($alert);

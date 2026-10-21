@@ -1,11 +1,13 @@
 import { Link } from '@inertiajs/react';
-import { RotateCcw, Trash2 } from 'lucide-react';
-import type { ReactNode } from 'react';
+import { PencilLine, RotateCcw, Trash2 } from 'lucide-react';
+import { type ReactNode, useState } from 'react';
 import { ConfirmAction } from '@/components/confirm-action';
+import { EditJobData } from '@/components/edit-job-data';
 import { JobProgress } from '@/components/job-progress';
 import { Tags } from '@/components/jobs-table';
 import { Layout } from '@/components/layout';
 import { StatusBadge } from '@/components/status-badge';
+import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { useAutoRefresh } from '@/hooks/use-auto-refresh';
@@ -24,7 +26,9 @@ function Row({ label, children }: { label: string; children: ReactNode }) {
 
 export default function JobShow({ job }: { job: JobDetails }) {
     const { t, locale } = useTranslation();
-    useAutoRefresh(['job']);
+    const [editing, setEditing] = useState(false);
+    // No refresh while the data is being edited: it would reset the form.
+    useAutoRefresh(['job'], !editing);
 
     const pending = job.status === 'pending';
 
@@ -165,8 +169,15 @@ export default function JobShow({ job }: { job: JobDetails }) {
                 <Card className="mt-6">
                     <CardHeader>
                         <CardTitle>{t('Data')}</CardTitle>
+                        {job.edit && !editing && (
+                            <Button variant="outline" size="sm" onClick={() => setEditing(true)}>
+                                <PencilLine /> {t('Edit and retry')}
+                            </Button>
+                        )}
                     </CardHeader>
-                    {job.data.error ? (
+                    {job.edit && editing ? (
+                        <EditJobData url={job.edit.url} fields={job.edit.fields} onDone={() => setEditing(false)} />
+                    ) : job.data.error ? (
                         <CardContent>
                             <p className="text-sm text-muted-foreground">
                                 {t('The data of this job cannot be read: :error', { error: job.data.error })}

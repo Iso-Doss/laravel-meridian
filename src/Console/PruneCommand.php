@@ -8,6 +8,7 @@ use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Repositories\MonitoredTagRepository;
+use IsoDoss\Meridian\Repositories\ScheduleRepository;
 
 class PruneCommand extends Command
 {
@@ -36,8 +37,9 @@ class PruneCommand extends Command
         $supervisors = Meridian::table('supervisors')->where('last_seen_at', '<', $stale)->delete();
 
         $audit = app(AuditLogRepository::class)->prune($now - (int) config('meridian.trim.audit', 43200) * 60);
+        $schedule = app(ScheduleRepository::class)->prune($now - (int) config('meridian.trim.schedule', 10080) * 60);
 
-        $this->components->info("Pruned {$completed} completed jobs, {$failed} failed jobs, {$metrics} metrics, ".($workers + $supervisors).' stale heartbeats'.($audit ? ", {$audit} audit log entries" : '').'.');
+        $this->components->info("Pruned {$completed} completed jobs, {$failed} failed jobs, {$metrics} metrics, ".($workers + $supervisors).' stale heartbeats'.($audit ? ", {$audit} audit log entries" : '').($schedule ? ", {$schedule} scheduled task runs" : '').'.');
 
         return self::SUCCESS;
     }
