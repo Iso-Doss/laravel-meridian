@@ -2,6 +2,50 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.12.0 - 2026-10-22
+
+Know where every job comes from, keep secrets out of the stored payloads, and check an installation in one command.
+
+📖 **Documentation**: https://iso-doss.github.io/laravel-meridian/
+
+### Added
+
+- **Job origin**: every job records who dispatched it:
+  - the HTTP request (method, path and route name, never the query string, which may carry tokens) and the signed-in user;
+  - the artisan command (its name only, not its options);
+  - the scheduled task;
+  - or the job that dispatched it.
+
+  The job page shows it under « Dispatched by », with a link to the parent job and its status, and lists the jobs a job dispatched (« Dispatched jobs »), to follow a chain of jobs back to the request that started it. Nothing to change in your code.
+- **Redaction of sensitive data**: before storing a payload, Meridian replaces with `[redacted]` the values of the keys and job properties matching the new `redact` option (`*password*`, `*secret*`, `*token*`, `*api_key*`, `authorization`, `card_number`, `cvv`, `cvc` by default; case, `_` and `-` ignored, `*` wildcard).
+  - The serialized job is rewritten **without being unserialized**: no code of your application runs.
+  - Encrypted jobs (`ShouldBeEncrypted`) are stored as they are.
+  - The jobs keep their real values: retrying or editing a job starts from the original payload of the failed jobs table, and the redacted fields are never shown nor editable.
+- **`php artisan meridian:doctor`** checks the database, the migrations, the queue tables, the supervisors, the scheduler, the redaction and the access to the dashboard, and tells how to fix each problem. It exits with an error code when something must be fixed, for a deployment script.
+
+### Changed
+
+- The CI also runs the test suite on **MySQL 8.4 and PostgreSQL 17** (Laravel 12 and 13), besides SQLite.
+- The job screenshot and the documentation (dashboard, commands, installation, contributing, upgrading) are updated.
+
+### Fixed
+
+- Searching the jobs for a text that is not a UUID (`customer:42`) failed on PostgreSQL.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+php artisan vendor:publish --tag=meridian-migrations
+php artisan migrate
+```
+
+- The new migration adds the origin columns to `meridian_jobs`; until it runs, the origin is simply not shown.
+- Redaction is on by default, even with a published configuration. To change the keys, add the `redact` option to your `config/meridian.php`; set it to `[]` to store the payloads untouched.
+- A job whose payload was redacted and which is no longer in the failed jobs table cannot be retried from Meridian.
+- If you published the Blade views, republish them.
+- Then run `php artisan meridian:doctor` to check the installation.
+
 ## v1.11.0 - 2026-10-21
 
 Configurable primary keys, UUID by default, and migrations that can run again safely.
