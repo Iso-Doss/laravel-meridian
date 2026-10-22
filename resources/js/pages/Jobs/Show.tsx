@@ -99,6 +99,26 @@ export default function JobShow({ job }: { job: JobDetails }) {
                             </Link>
                         </Row>
                     )}
+                    {job.origin && (
+                        <Row label={t('Dispatched by')}>
+                            <span className="me-2 rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground">
+                                {{ http: t('HTTP request'), console: t('Command'), schedule: t('Scheduled task'), job: t('Job') }[job.origin.type]}
+                            </span>
+                            {job.origin.parent ? (
+                                <Link href={job.origin.parent.url} className="font-mono text-primary hover:underline">
+                                    {job.origin.label}
+                                </Link>
+                            ) : (
+                                <span className="font-mono">{job.origin.label}</span>
+                            )}
+                            {job.origin.parent?.status && (
+                                <span className="ms-2 inline-block align-middle">
+                                    <StatusBadge status={job.origin.parent.status} />
+                                </span>
+                            )}
+                            {job.origin.user && <span className="text-muted-foreground"> · {job.origin.user}</span>}
+                        </Row>
+                    )}
                     <Row label={t('Attempts')}>
                         {job.attempts}
                         {job.retries > 0 && <span className="text-muted-foreground"> · {t('retried manually :count time(s)', { count: job.retries })}</span>}
@@ -120,6 +140,39 @@ export default function JobShow({ job }: { job: JobDetails }) {
                     )}
                 </dl>
             </Card>
+
+            {job.children.count > 0 && (
+                <Card className="mt-6">
+                    <CardHeader>
+                        <CardTitle>{t('Dispatched jobs')}</CardTitle>
+                        <CardDescription>{t(':count job(s) dispatched by this job', { count: job.children.count })}</CardDescription>
+                    </CardHeader>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>{t('Job')}</TableHead>
+                                <TableHead>{t('Status')}</TableHead>
+                                <TableHead>{t('Queued at')}</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {job.children.jobs.map((child) => (
+                                <TableRow key={child.uuid}>
+                                    <TableCell>
+                                        <Link href={child.url} className="font-mono text-primary hover:underline">
+                                            {child.name}
+                                        </Link>
+                                    </TableCell>
+                                    <TableCell>
+                                        <StatusBadge status={child.status} />
+                                    </TableCell>
+                                    <TableCell>{formatDateTime(child.queued_at, locale)}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                </Card>
+            )}
 
             {job.exception && (
                 <Card className="mt-6 border-destructive/30">

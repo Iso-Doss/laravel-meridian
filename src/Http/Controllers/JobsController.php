@@ -78,7 +78,7 @@ class JobsController extends Controller
         abort_unless($job->status === MonitoredJob::FAILED, 422, 'Only failed jobs can be retried.');
 
         if (! $retrier->retry($job)) {
-            return back()->with('meridian.error', Translator::get('This job cannot be retried: its payload was not stored.'));
+            return back()->with('meridian.error', Translator::get('This job cannot be retried: its payload was not stored or was redacted.'));
         }
 
         $this->audit->record('job.retried', $job->uuid, ['job' => $job->name, 'queue' => $job->connection.':'.$job->queue]);
@@ -138,7 +138,7 @@ class JobsController extends Controller
         }
 
         if ($result['skipped'] > 0) {
-            $redirect->with('meridian.error', Translator::get(':count job(s) could not be retried: their payload was not stored.', ['count' => $result['skipped']]));
+            $redirect->with('meridian.error', Translator::get(':count job(s) could not be retried: their payload was not stored or was redacted.', ['count' => $result['skipped']]));
         } elseif ($result['retried'] === 0) {
             $redirect->with('meridian.error', Translator::get('There is no failed job to retry.'));
         }

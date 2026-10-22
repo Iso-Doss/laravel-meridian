@@ -5,7 +5,10 @@ namespace IsoDoss\Meridian\Models;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Str;
 use IsoDoss\Meridian\Support\PrimaryKey;
+use IsoDoss\Meridian\Support\Redactor;
+use Throwable;
 
 /**
  * @property int|string $id
@@ -28,6 +31,10 @@ use IsoDoss\Meridian\Support\PrimaryKey;
  * @property int|null $progress
  * @property string|null $progress_message
  * @property int|null $cancel_requested_at
+ * @property string|null $origin_type
+ * @property string|null $origin
+ * @property string|null $origin_user
+ * @property string|null $parent_uuid
  * @property Carbon $queued_at
  * @property Carbon $available_at
  * @property Carbon|null $reserved_at
@@ -127,6 +134,26 @@ class MonitoredJob extends Model
     }
 
     /**
+     * The payload to push the job back onto its queue: the original one of
+     * the failed jobs table when it is still there, else the one Meridian
+     * stored, unless values were redacted from it.
+     */
+    public function retryablePayload(): ?string
+    {
+        try {
+            $failed = app('queue.failer')->find($this->uuid);
+        } catch (Throwable) {
+            $failed = null;
+        }
+
+        if (is_object($failed) && is_string($failed->payload ?? null)) {
+            return $failed->payload;
+        }
+
+        return Redactor::redacted($this->payload) ? null : $this->payload;
+    }
+
+    /**
      * Decoded payload, pretty printed (with the serialized command left as is).
      */
     public function prettyPayload(): ?string
@@ -167,7 +194,8 @@ class MonitoredJob extends Model
 
         $query->where(function (Builder $query) use ($term) {
             $query->where('name', 'like', '%'.$term.'%')
-                ->orWhere('uuid', $term)
+                // PostgreSQL rejects a malformed value for its uuid column.
+                ->when(Str::isUuid($term), fn (Builder $query) => $query->orWhere('uuid', $term))
                 ->orWhereRaw("tags LIKE ? ESCAPE '!'", ['%'.static::likeEscape(trim((string) json_encode($term), '"')).'%']);
         });
     }

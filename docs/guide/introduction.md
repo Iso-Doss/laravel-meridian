@@ -9,7 +9,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 - **Nothing to change in your jobs.** Every job is recorded from Laravel's own queue events: no trait, no interface, no base class. Batches, `Queue::bulk()` and `pushRaw()` jobs included.
 - **A real supervisor, not only a dashboard.** `php artisan meridian` starts, restarts and auto-scales your `queue:work` processes (`auto`, `simple` or `log` strategies), with per-supervisor pause and resume, memory limit and graceful termination.
 - **Horizon's features on the database driver**, without Redis and without depending on Horizon's internals: monitored tags, retry history, silenced jobs, metrics, long-wait notifications by e-mail, Slack or SMS.
-- **Beyond Horizon**: failed jobs grouped by cause and retried with corrected data, scheduled tasks monitoring, alerts on failure rates, missing workers and long jobs, job progress, read-only access and an audit log.
+- **Beyond Horizon**: failed jobs grouped by cause and retried with corrected data, the origin of every job (request, command, task or parent job), scheduled tasks monitoring, alerts on failure rates, missing workers and long jobs, job progress, redaction of the sensitive data, read-only access and an audit log.
 - **Fits your tools**: Prometheus / OpenTelemetry metrics for Grafana or Datadog, a Laravel Pulse card, a Filament plugin, and `meridian:top` in the terminal.
 - **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English, French, Spanish, Portuguese, German and Arabic** (right to left).
 - **Nothing to build.** The compiled assets ship with the package: your application needs neither Node nor an Inertia setup, and never conflicts with its own.
@@ -75,7 +75,7 @@ Choose Meridian if you want the full Horizon experience on the `database` driver
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="../../art/job-dark.png">
-                <img src="../../art/job-light.png" alt="A failed job with its exception, the link to the jobs failing with the same error, its retry history and data">
+                <img src="../../art/job-light.png" alt="A failed job with the request that dispatched it, its exception, the link to the jobs failing with the same error, its retry history and data">
             </picture>
             <p align="center"><b>Job details</b>: exception, same errors, retry history, readable data</p>
         </td>

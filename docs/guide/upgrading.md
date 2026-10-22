@@ -13,6 +13,7 @@ php artisan migrate
 
 | Version | Migration | Notes |
 | --- | --- | --- |
+| v1.12.0 | Yes | Origin of the jobs (new `meridian_jobs` columns). Payloads are now redacted (`redact` option): add it to a published configuration. |
 | v1.11.0 | — | New installations use UUID primary keys (`MERIDIAN_PRIMARY_KEY`). Existing tables keep their integer keys, nothing to change. |
 | v1.10.0 | — | Add the new languages to `locales` if you published the configuration. |
 | v1.9.0 | Yes | Cancellation of running jobs (`cancel_requested_at` column). |

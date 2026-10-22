@@ -13,6 +13,7 @@ use IsoDoss\Meridian\Repositories\ErrorGroupRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\JobData;
 use IsoDoss\Meridian\Support\JobEditor;
+use IsoDoss\Meridian\Support\JobOrigin;
 use IsoDoss\Meridian\Support\Migrations;
 
 /**
@@ -68,6 +69,8 @@ class Present
             'delete_url' => static::canManage() && static::deletable($job) ? route('meridian.jobs.destroy', $job->uuid) : null,
             'error_group' => static::errorGroup($job),
             'edit' => static::edit($job),
+            'origin' => JobOrigin::describe($job),
+            'children' => JobOrigin::children($job),
         ]);
     }
 

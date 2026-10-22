@@ -18,9 +18,11 @@ use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\Models\MonitoredJob;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\ExceptionSummary;
+use IsoDoss\Meridian\Support\JobOrigin;
 use IsoDoss\Meridian\Support\JobPayload;
 use IsoDoss\Meridian\Support\Migrations;
 use IsoDoss\Meridian\Support\PrimaryKey;
+use IsoDoss\Meridian\Support\Redactor;
 use IsoDoss\Meridian\Support\Tags;
 use Throwable;
 
@@ -107,11 +109,11 @@ class RecordJobLifecycle
                 'tags' => json_encode(Tags::for($job)),
                 'batch_id' => JobPayload::batchId($job),
                 'job_id' => $event->id === null ? null : (string) $event->id,
-                'payload' => config('meridian.store_payload') ? $event->payload : null,
+                'payload' => Redactor::store($event->payload),
                 'queued_at' => $now,
                 'available_at' => $this->availableAt($event->delay, $now),
                 'updated_at' => $now,
-            ])], ['uuid'], ['job_id', 'status', 'available_at', 'updated_at']);
+            ] + (Migrations::hasOrigin() ? JobOrigin::current() : []))], ['uuid'], ['job_id', 'status', 'available_at', 'updated_at']);
         });
     }
 
@@ -313,7 +315,7 @@ class RecordJobLifecycle
             'batch_id' => JobPayload::batchId($command),
             'job_id' => (string) $job->getJobId(),
             'worker' => Meridian::processName(),
-            'payload' => config('meridian.store_payload') ? $job->getRawBody() : null,
+            'payload' => Redactor::store($job->getRawBody()),
             'exception' => $exception,
             'queued_at' => $payload['createdAt'] ?? $now,
             'available_at' => $now,

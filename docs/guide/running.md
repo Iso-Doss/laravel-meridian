@@ -22,6 +22,7 @@ php artisan meridian
 | `meridian:purge` | Terminate the workers left by a master that was killed, and forget the dead processes of this machine (`--signal=SIGTERM`) |
 | `meridian:snapshot` | Store a metrics snapshot, import the jobs pushed without event, check the wait times |
 | `meridian:prune` | Delete old completed and failed jobs, metrics and stale heartbeats |
+| `meridian:doctor` | Check the installation: migrations, queue tables, supervisors, scheduler, redaction and dashboard access, with how to fix each problem |
 | `meridian:forget {uuid}` / `meridian:forget --all` | Delete a failed job, or all of them, from Meridian and from the failed jobs table |
 | `meridian:clear {connection?} --queue=` | Delete the jobs waiting on a queue (asks for confirmation in production, `--force` to skip it) |
 | `meridian:clear-metrics` | Delete every metrics snapshot |

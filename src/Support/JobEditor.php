@@ -33,18 +33,22 @@ class JobEditor
      */
     public function fields(MonitoredJob $job): ?array
     {
-        if ($job->status !== MonitoredJob::FAILED || ! $job->payload) {
-            return null;
-        }
-
-        $command = JobData::command($job->payload);
+        $payload = $job->status === MonitoredJob::FAILED ? $job->retryablePayload() : null;
+        $command = JobData::command($payload);
 
         if (! is_array($command)) {
             return null;
         }
 
+        $redactor = new Redactor;
+
         return collect(JobData::ownProperties($command[0]))
-            ->map(function (ReflectionProperty $property) use ($command) {
+            ->map(function (ReflectionProperty $property) use ($command, $redactor) {
+                // The original payload holds the secrets: never show them.
+                if ($redactor->sensitive($property->getName())) {
+                    return ['name' => $property->getName(), 'type' => 'redacted', 'value' => Redactor::MARKER, 'editable' => false];
+                }
+
                 $value = $property->getValue($command[0]);
                 $setting = in_array($property->getName(), self::SETTINGS, true);
                 $type = $setting ? null : static::typeOf($value);
@@ -70,9 +74,10 @@ class JobEditor
      */
     public function retry(MonitoredJob $job, array $input): array
     {
-        $command = JobData::command($job->payload);
+        $original = $job->status === MonitoredJob::FAILED ? $job->retryablePayload() : null;
+        $command = JobData::command($original);
 
-        if ($job->status !== MonitoredJob::FAILED || ! is_array($command)) {
+        if (! is_array($command)) {
             throw ValidationException::withMessages(['data' => Translator::get('This job cannot be edited.')]);
         }
 
@@ -84,7 +89,7 @@ class JobEditor
         foreach ($input as $name => $text) {
             $property = $properties[$name] ?? null;
             $current = $property?->getValue($object);
-            $type = $property && ! in_array($name, self::SETTINGS, true) ? static::typeOf($current) : null;
+            $type = $property && ! in_array($name, self::SETTINGS, true) && ! (new Redactor)->sensitive((string) $name) ? static::typeOf($current) : null;
 
             if ($property === null || $type === null || ! is_scalar($text ?? '')) {
                 continue;
@@ -114,7 +119,7 @@ class JobEditor
             throw ValidationException::withMessages($errors);
         }
 
-        $payload = json_decode((string) $job->payload, true);
+        $payload = json_decode((string) $original, true);
         $payload['attempts'] = 0;
         $payload['data']['command'] = $encrypted ? Crypt::encrypt(serialize($object)) : serialize($object);
         $raw = (string) json_encode($payload);
@@ -127,7 +132,7 @@ class JobEditor
             'retries' => $job->retries + 1,
             'failed_at' => null,
             'available_at' => now(),
-            'payload' => config('meridian.store_payload') ? $raw : $job->payload,
+            'payload' => Redactor::store($raw),
         ]);
         app(JobRetryRepository::class)->retried([$job->uuid]);
 

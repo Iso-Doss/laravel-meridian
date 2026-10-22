@@ -20,6 +20,7 @@ use IsoDoss\Meridian\Http\Middleware\HandleInertiaRequests;
 use IsoDoss\Meridian\Listeners\RecordJobLifecycle;
 use IsoDoss\Meridian\Listeners\RecordScheduledTasks;
 use IsoDoss\Meridian\Listeners\SendAlertNotification;
+use IsoDoss\Meridian\Listeners\TrackJobOrigin;
 use IsoDoss\Meridian\Listeners\WorkerHeartbeat;
 use IsoDoss\Meridian\Repositories\AuditLogRepository;
 use IsoDoss\Meridian\Repositories\JobRetryRepository;
@@ -48,6 +49,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 'create_meridian_audit_logs_table',
                 'create_meridian_schedule_tables',
                 'add_cancel_requested_at_to_meridian_jobs_table',
+                'add_origin_to_meridian_jobs_table',
             ])
             ->publishesServiceProvider('MeridianServiceProvider')
             ->hasCommands([
@@ -69,6 +71,7 @@ class MeridianServiceProvider extends PackageServiceProvider
                 Console\TopCommand::class,
                 Console\PurgeCommand::class,
                 Console\ListCommand::class,
+                Console\DoctorCommand::class,
             ])
             ->hasInstallCommand(function (InstallCommand $command) {
                 $command
@@ -109,6 +112,7 @@ class MeridianServiceProvider extends PackageServiceProvider
         Event::subscribe(WorkerHeartbeat::class);
         Event::subscribe(RecordJobLifecycle::class);
         Event::subscribe(RecordScheduledTasks::class);
+        Event::subscribe(TrackJobOrigin::class);
         Event::listen([
             LongWaitDetected::class,
             FailureRateExceeded::class,

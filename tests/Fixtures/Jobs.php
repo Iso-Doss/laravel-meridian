@@ -223,3 +223,36 @@ class CancellableJob implements ShouldQueue
         }
     }
 }
+
+class LoginJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public $tries = 1;
+
+    public static bool $fails = true;
+
+    public static array $handled = [];
+
+    public function __construct(public string $email, protected string $password, public array $options = []) {}
+
+    public function handle(): void
+    {
+        static::$handled[] = [$this->email, $this->password];
+
+        if (static::$fails) {
+            throw new RuntimeException('Login refused');
+        }
+    }
+}
+
+class ParentJob implements ShouldQueue
+{
+    use Dispatchable, InteractsWithQueue, Queueable;
+
+    public function handle(): void
+    {
+        SuccessfulJob::dispatch();
+        SuccessfulJob::dispatch();
+    }
+}

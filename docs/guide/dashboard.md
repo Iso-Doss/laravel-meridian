@@ -44,6 +44,20 @@ or call `Meridian::manage(fn (Request $request) => ...)`. The read-only users br
 
 The « Audit log » page lists who retried, deleted or cancelled a job, retried a batch or a group of failed jobs, monitored a tag, and who paused, resumed, terminated or cleared Meridian from the command line, with the date, the IP address and the details of each action. Users are named by their `email`, else their `name`, else their identifier; Artisan commands appear as « Console ». The entries are kept `trim.audit` minutes (30 days by default) and are also available as JSON (`GET /meridian/api/audit`).
 
+## Job origin
+
+Each job records who dispatched it: the HTTP request (method, path and route name, never the query string, which may carry tokens) and the signed-in user, the artisan command (its name only, not its options), the scheduled task, or the job that dispatched it. The job page shows it under « Dispatched by », with a link to the parent job and its status, and lists the jobs a job dispatched (« Dispatched jobs »), to follow a chain of jobs back to the request that started it. Nothing to change in your code; the jobs recorded before the migration of v1.12.0 have no origin.
+
+## Sensitive data
+
+Before storing a payload, Meridian replaces with `[redacted]` the values of the keys and job properties whose name matches the `redact` option: passwords, secrets, tokens, API keys, `authorization`, card numbers and CVV by default. Case, `_` and `-` are ignored (`api_key` matches `apiKey`) and `*` is a wildcard.
+
+```php
+'redact' => ['*password*', '*secret*', '*token*', '*api_key*', 'authorization', 'card_number', 'cvv', 'cvc', 'iban'],
+```
+
+The serialized job is rewritten without being unserialized: no code of your application runs. Encrypted jobs (`ShouldBeEncrypted`) are stored as they are, since they are already unreadable. The jobs keep their real values: retrying a job or editing its data starts from the original payload of the failed jobs table, and the redacted fields are never shown nor editable. A job whose payload was redacted and which is no longer in the failed jobs table cannot be retried from Meridian. Set `'redact' => []` to store the payloads untouched, or `store_payload` to `false` to store none.
+
 ## Interfaces, themes and languages
 
 Two interfaces ship with Meridian:

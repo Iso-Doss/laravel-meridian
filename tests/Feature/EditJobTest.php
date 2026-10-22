@@ -85,6 +85,7 @@ it('refuses invalid values', function () {
 });
 
 it('edits encrypted jobs and keeps them encrypted', function () {
+    config()->set('meridian.redact', []);
     Meridian::editJobs(fn () => true);
     SecretJob::dispatch('expired');
     $this->work();

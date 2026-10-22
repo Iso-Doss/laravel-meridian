@@ -26,7 +26,7 @@ All of your worker configuration lives in a single, simple configuration file. `
 - **Nothing to change in your jobs.** Every job is recorded from Laravel's own queue events: no trait, no interface, no base class. Batches, `Queue::bulk()` and `pushRaw()` jobs included.
 - **A real supervisor, not only a dashboard.** `php artisan meridian` starts, restarts and auto-scales your `queue:work` processes (`auto`, `simple` or `log` strategies), with per-supervisor pause and resume, memory limit and graceful termination.
 - **Horizon's features on the database driver**, without Redis and without depending on Horizon's internals: monitored tags, retry history, silenced jobs, metrics, long-wait notifications by e-mail, Slack or SMS.
-- **Beyond Horizon**: failed jobs grouped by cause and retried with corrected data, scheduled tasks monitoring, alerts on failure rates, missing workers and long jobs, job progress, read-only access and an audit log.
+- **Beyond Horizon**: failed jobs grouped by cause and retried with corrected data, the origin of every job (request, command, task or parent job), scheduled tasks monitoring, alerts on failure rates, missing workers and long jobs, job progress, redaction of the sensitive data, read-only access and an audit log.
 - **Fits your tools**: Prometheus / OpenTelemetry metrics for Grafana or Datadog, a Laravel Pulse card, a Filament plugin, and `meridian:top` in the terminal.
 - **Two interfaces**: a modern React / Inertia / shadcn/ui one, or a lightweight Blade one, in light, dark or system theme, in **English, French, Spanish, Portuguese, German and Arabic** (right to left).
 - **Nothing to build.** The compiled assets ship with the package: your application needs neither Node nor an Inertia setup, and never conflicts with its own.
@@ -43,6 +43,7 @@ All of your worker configuration lives in a single, simple configuration file. `
   - [Meridian and the other packages](#meridian-and-the-other-packages)
 - [Screenshots](#screenshots)
 - [Installation](#installation)
+  - [Primary keys](#primary-keys)
 - [Configuration](#configuration)
   - [Environments and supervisors](#environments-and-supervisors)
   - [Balancing strategies](#balancing-strategies)
@@ -54,6 +55,8 @@ All of your worker configuration lives in a single, simple configuration file. `
   - [Dashboard authorization](#dashboard-authorization)
   - [Read-only access](#read-only-access)
   - [Audit log](#audit-log)
+  - [Job origin](#job-origin)
+  - [Sensitive data](#sensitive-data)
   - [Interfaces, themes and languages](#interfaces-themes-and-languages)
   - [Content-Security-Policy](#content-security-policy)
   - [Export](#export)
@@ -128,7 +131,7 @@ Choose Meridian if you want the full Horizon experience on the `database` driver
         <td width="50%">
             <picture>
                 <source media="(prefers-color-scheme: dark)" srcset="art/job-dark.png">
-                <img src="art/job-light.png" alt="A failed job with its exception, the link to the jobs failing with the same error, its retry history and data">
+                <img src="art/job-light.png" alt="A failed job with the request that dispatched it, its exception, the link to the jobs failing with the same error, its retry history and data">
             </picture>
             <p align="center"><b>Job details</b>: exception, same errors, retry history, readable data</p>
         </td>
@@ -217,6 +220,14 @@ php artisan make:queue-failed-table
 php artisan make:queue-batches-table
 php artisan migrate
 ```
+
+Then check the installation:
+
+```bash
+php artisan meridian:doctor
+```
+
+It checks the database, the migrations, the queue tables, the supervisors, the scheduler, the redaction of the payloads and the access to the dashboard, and tells how to fix each problem (it exits with an error code when something must be fixed, for a deployment script).
 
 Meridian registers `meridian:snapshot` (every five minutes) and `meridian:prune` (hourly) in the scheduler: make sure it runs (`php artisan schedule:work` locally, a cron entry in production), or disable this with `meridian.schedule = false` and schedule them yourself.
 
@@ -334,6 +345,7 @@ php artisan meridian
 | `meridian:purge` | Terminate the workers left by a master that was killed, and forget the dead processes of this machine (`--signal=SIGTERM`) |
 | `meridian:snapshot` | Store a metrics snapshot, import the jobs pushed without event, check the wait times |
 | `meridian:prune` | Delete old completed and failed jobs, metrics and stale heartbeats |
+| `meridian:doctor` | Check the installation: migrations, queue tables, supervisors, scheduler, redaction and dashboard access, with how to fix each problem |
 | `meridian:forget {uuid}` / `meridian:forget --all` | Delete a failed job, or all of them, from Meridian and from the failed jobs table |
 | `meridian:clear {connection?} --queue=` | Delete the jobs waiting on a queue (asks for confirmation in production, `--force` to skip it) |
 | `meridian:clear-metrics` | Delete every metrics snapshot |
@@ -411,6 +423,20 @@ or call `Meridian::manage(fn (Request $request) => ...)`. The read-only users br
 ### Audit log
 
 The « Audit log » page lists who retried, deleted or cancelled a job, retried a batch or a group of failed jobs, monitored a tag, and who paused, resumed, terminated or cleared Meridian from the command line, with the date, the IP address and the details of each action. Users are named by their `email`, else their `name`, else their identifier; Artisan commands appear as « Console ». The entries are kept `trim.audit` minutes (30 days by default) and are also available as JSON (`GET /meridian/api/audit`).
+
+### Job origin
+
+Each job records who dispatched it: the HTTP request (method, path and route name, never the query string, which may carry tokens) and the signed-in user, the artisan command (its name only, not its options), the scheduled task, or the job that dispatched it. The job page shows it under « Dispatched by », with a link to the parent job and its status, and lists the jobs a job dispatched (« Dispatched jobs »), to follow a chain of jobs back to the request that started it. Nothing to change in your code; the jobs recorded before the migration of v1.12.0 have no origin.
+
+### Sensitive data
+
+Before storing a payload, Meridian replaces with `[redacted]` the values of the keys and job properties whose name matches the `redact` option: passwords, secrets, tokens, API keys, `authorization`, card numbers and CVV by default. Case, `_` and `-` are ignored (`api_key` matches `apiKey`) and `*` is a wildcard.
+
+```php
+'redact' => ['*password*', '*secret*', '*token*', '*api_key*', 'authorization', 'card_number', 'cvv', 'cvc', 'iban'],
+```
+
+The serialized job is rewritten without being unserialized: no code of your application runs. Encrypted jobs (`ShouldBeEncrypted`) are stored as they are, since they are already unreadable. The jobs keep their real values: retrying a job or editing its data starts from the original payload of the failed jobs table, and the redacted fields are never shown nor editable. A job whose payload was redacted and which is no longer in the failed jobs table cannot be retried from Meridian. Set `'redact' => []` to store the payloads untouched, or `store_payload` to `false` to store none.
 
 ### Interfaces, themes and languages
 
@@ -715,6 +741,13 @@ Every release and its upgrade notes are listed in the [changelog](CHANGELOG.md).
 ```bash
 composer test
 composer analyse
+```
+
+The tests run on SQLite by default. To run them on MySQL or PostgreSQL, as the CI does:
+
+```bash
+DB_CONNECTION=mysql DB_DATABASE=meridian_test DB_USERNAME=root DB_PASSWORD=secret composer test
+DB_CONNECTION=pgsql DB_DATABASE=meridian_test DB_USERNAME=postgres DB_PASSWORD=secret composer test
 ```
 
 The interface lives in `resources/js` (React, TypeScript, Tailwind CSS v4, shadcn/ui) and is compiled into `dist/`, which is committed. The CI checks that `dist/` matches the sources.

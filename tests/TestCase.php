@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 use Inertia\ServiceProvider as InertiaServiceProvider;
 use IsoDoss\Meridian\Meridian;
 use IsoDoss\Meridian\MeridianServiceProvider;
+use IsoDoss\Meridian\Support\JobOrigin;
 use IsoDoss\Meridian\Support\Migrations;
 use Orchestra\Testbench\TestCase as Orchestra;
 
@@ -21,6 +22,12 @@ class TestCase extends Orchestra
         Meridian::$editUsing = null;
         Meridian::$notificationRoutes = [];
         Migrations::flush();
+        JobOrigin::flush();
+
+        // MySQL and PostgreSQL keep their tables between the tests.
+        if (static::connection() !== 'testing') {
+            Schema::dropAllTables();
+        }
 
         $this->createQueueTables();
 
@@ -31,6 +38,7 @@ class TestCase extends Orchestra
         (include __DIR__.'/../database/migrations/create_meridian_audit_logs_table.php.stub')->up();
         (include __DIR__.'/../database/migrations/create_meridian_schedule_tables.php.stub')->up();
         (include __DIR__.'/../database/migrations/add_cancel_requested_at_to_meridian_jobs_table.php.stub')->up();
+        (include __DIR__.'/../database/migrations/add_origin_to_meridian_jobs_table.php.stub')->up();
     }
 
     protected function getPackageProviders($app)
@@ -41,7 +49,19 @@ class TestCase extends Orchestra
     public function getEnvironmentSetUp($app)
     {
         config()->set('app.key', 'base64:'.base64_encode(str_repeat('a', 32)));
-        config()->set('database.default', 'testing');
+        // DB_CONNECTION=mysql or pgsql runs the tests on that database (see the CI).
+        foreach (['mysql' => 3306, 'pgsql' => 5432] as $driver => $port) {
+            config()->set("database.connections.{$driver}", array_merge(config("database.connections.{$driver}", []), [
+                'driver' => $driver,
+                'host' => env('DB_HOST', '127.0.0.1'),
+                'port' => env('DB_PORT', $port),
+                'database' => env('DB_DATABASE', 'meridian_test'),
+                'username' => env('DB_USERNAME', $driver === 'mysql' ? 'root' : 'postgres'),
+                'password' => env('DB_PASSWORD', ''),
+            ]));
+        }
+
+        config()->set('database.default', static::connection());
         config()->set('queue.default', 'database');
         config()->set('queue.connections.database', [
             'driver' => 'database',
@@ -51,14 +71,24 @@ class TestCase extends Orchestra
         ]);
         config()->set('queue.failed', [
             'driver' => 'database-uuids',
-            'database' => 'testing',
+            'database' => static::connection(),
             'table' => 'failed_jobs',
         ]);
-        config()->set('queue.batching', ['database' => 'testing', 'table' => 'job_batches']);
+        config()->set('queue.batching', ['database' => static::connection(), 'table' => 'job_batches']);
 
         // assertInertia() checks that every rendered page component exists.
         config()->set('inertia.pages.paths', [__DIR__.'/../resources/js/pages']);
         config()->set('inertia.pages.extensions', ['tsx']);
+    }
+
+    /**
+     * The connection of the tests: SQLite in memory, unless DB_CONNECTION says otherwise.
+     */
+    public static function connection(): string
+    {
+        $connection = env('DB_CONNECTION');
+
+        return in_array($connection, ['mysql', 'pgsql'], true) ? $connection : 'testing';
     }
 
     protected function createQueueTables(): void

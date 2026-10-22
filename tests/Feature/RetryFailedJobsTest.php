@@ -52,7 +52,7 @@ it('reports the jobs that cannot be retried', function () {
 
     $this->post('/meridian/jobs/retry')
         ->assertSessionHas('meridian.success', '1 failed job(s) pushed back onto the queue.')
-        ->assertSessionHas('meridian.error', '1 job(s) could not be retried: their payload was not stored.');
+        ->assertSessionHas('meridian.error', '1 job(s) could not be retried: their payload was not stored or was redacted.');
 
     expect(MonitoredJob::where('status', 'failed')->sole()->queue)->toBe('emails');
 });

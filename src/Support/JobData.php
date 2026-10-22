@@ -51,6 +51,10 @@ class JobData
             return null;
         }
 
+        if ($command === Redactor::MARKER) {
+            return 'The data of this job was redacted.';
+        }
+
         $encrypted = ! str_starts_with($command, 'O:');
 
         try {

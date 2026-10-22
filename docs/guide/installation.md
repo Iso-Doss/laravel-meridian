@@ -18,6 +18,14 @@ php artisan make:queue-batches-table
 php artisan migrate
 ```
 
+Then check the installation:
+
+```bash
+php artisan meridian:doctor
+```
+
+It checks the database, the migrations, the queue tables, the supervisors, the scheduler, the redaction of the payloads and the access to the dashboard, and tells how to fix each problem (it exits with an error code when something must be fixed, for a deployment script).
+
 Meridian registers `meridian:snapshot` (every five minutes) and `meridian:prune` (hourly) in the scheduler: make sure it runs (`php artisan schedule:work` locally, a cron entry in production), or disable this with `meridian.schedule = false` and schedule them yourself.
 
 ### Primary keys

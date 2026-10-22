@@ -29,6 +29,15 @@
             <dt>{{ $t('Queue') }}</dt><dd>{{ $job->connection }}:{{ $job->queue }} @if($job->job_id)<span class="muted">(jobs.id {{ $job->job_id }})</span>@endif</dd>
             <dt>{{ $t('Tags') }}</dt><dd>@forelse ($job->tags ?? [] as $tag)<a class="tag" href="{{ route('meridian.jobs.index', ['tag' => $tag]) }}">{{ $tag }}</a>@empty<span class="muted">—</span>@endforelse</dd>
             @if ($job->batch_id)<dt>{{ $t('Batch') }}</dt><dd><a class="mono" href="{{ route('meridian.batches.show', $job->batch_id) }}">{{ $job->batch_id }}</a></dd>@endif
+            @if ($origin = \IsoDoss\Meridian\Support\JobOrigin::describe($job))
+                <dt>{{ $t('Dispatched by') }}</dt>
+                <dd>
+                    <span class="badge">{{ $t(\IsoDoss\Meridian\Support\JobOrigin::TYPES[$origin['type']] ?? $origin['type']) }}</span>
+                    @if ($origin['parent'])<a class="mono" href="{{ $origin['parent']['url'] }}">{{ $origin['label'] }}</a>@else<span class="mono">{{ $origin['label'] }}</span>@endif
+                    @if ($origin['parent'] && $origin['parent']['status'])<span class="badge {{ $origin['parent']['status'] }}">{{ $t(Format::status($origin['parent']['status'])) }}</span>@endif
+                    @if ($origin['user'])<span class="muted">· {{ $origin['user'] }}</span>@endif
+                </dd>
+            @endif
             <dt>{{ $t('Attempts') }}</dt><dd>{{ $job->attempts }} @if($job->retries)<span class="muted">· {{ $t('retried manually :count time(s)', ['count' => $job->retries]) }}</span>@endif</dd>
             <dt>{{ $t('Queued at') }}</dt><dd>{{ Format::date($job->queued_at, $locale) }}</dd>
             @if ($job->available_at->ne($job->queued_at))<dt>{{ $t('Available at') }}</dt><dd>{{ Format::date($job->available_at, $locale) }}</dd>@endif
@@ -42,6 +51,27 @@
             @endif
         </dl>
     </div>
+
+    @php($children = \IsoDoss\Meridian\Support\JobOrigin::children($job))
+    @if ($children['count'] > 0)
+        <div class="panel">
+            <div class="panel-head"><h2>{{ $t('Dispatched jobs') }}</h2><span class="muted">{{ $t(':count job(s) dispatched by this job', ['count' => $children['count']]) }}</span></div>
+            <div class="table-wrap">
+                <table>
+                    <thead><tr><th>{{ $t('Job') }}</th><th>{{ $t('Status') }}</th><th>{{ $t('Queued at') }}</th></tr></thead>
+                    <tbody>
+                    @foreach ($children['jobs'] as $child)
+                        <tr>
+                            <td><a class="mono" href="{{ $child['url'] }}">{{ $child['name'] }}</a></td>
+                            <td><span class="badge {{ $child['status'] }}">{{ $t(Format::status($child['status'])) }}</span></td>
+                            <td>{{ $child['queued_at'] ? Format::date(\Illuminate\Support\Carbon::createFromTimestamp($child['queued_at']), $locale) : '—' }}</td>
+                        </tr>
+                    @endforeach
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    @endif
 
     @if ($job->exception)
         <div class="panel">

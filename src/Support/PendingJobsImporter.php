@@ -72,7 +72,7 @@ class PendingJobsImporter
                     'tags' => json_encode(Tags::for($command)),
                     'batch_id' => JobPayload::batchId($command),
                     'job_id' => (string) $row->id,
-                    'payload' => config('meridian.store_payload') ? $row->payload : null,
+                    'payload' => Redactor::store($row->payload),
                     'queued_at' => (int) ($payload['createdAt'] ?? $row->created_at),
                     'available_at' => (int) $row->available_at,
                     'reserved_at' => $row->reserved_at,

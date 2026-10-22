@@ -66,6 +66,14 @@ class Migrations
         return static::has('meridian_jobs', 'cancel_requested_at');
     }
 
+    /**
+     * The origin of the jobs (v1.12.0).
+     */
+    public static function hasOrigin(): bool
+    {
+        return static::has('meridian_jobs', 'parent_uuid');
+    }
+
     public static function flush(): void
     {
         static::$checked = [];

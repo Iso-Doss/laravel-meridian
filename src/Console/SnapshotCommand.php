@@ -3,6 +3,7 @@
 namespace IsoDoss\Meridian\Console;
 
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Cache;
 use IsoDoss\Meridian\Repositories\MetricsRepository;
 use IsoDoss\Meridian\Repositories\ScheduleRepository;
 use IsoDoss\Meridian\Support\Alerts;
@@ -13,6 +14,8 @@ class SnapshotCommand extends Command
     protected $signature = 'meridian:snapshot {--minutes=5 : Size of the snapshot window}';
 
     protected $description = 'Store a metrics snapshot and check the health of the queues';
+
+    public const LAST_RUN = 'meridian:snapshot:last-run';
 
     public function handle(MetricsRepository $metrics, Alerts $alerts, PendingJobsImporter $importer): int
     {
@@ -33,6 +36,9 @@ class SnapshotCommand extends Command
 
         // The schedule is defined in console only: keep the dashboard's copy up to date.
         app(ScheduleRepository::class)->sync();
+
+        // Tells meridian:doctor that the scheduler runs.
+        rescue(fn () => Cache::forever(self::LAST_RUN, time()), report: false);
 
         foreach ($alerts->check() as $alert) {
             $this->components->warn($alert);

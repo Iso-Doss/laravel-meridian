@@ -86,11 +86,30 @@ export interface JobDetails extends Job {
     error_group: { count: number; url: string } | null;
     /** The form changing the data of the failed job before retrying it, when allowed. */
     edit: { url: string; fields: EditableField[] } | null;
+    /** Who dispatched the job (from v1.12.0). */
+    origin: JobOrigin | null;
+    /** The jobs this job dispatched, the latest first. */
+    children: { count: number; jobs: ChildJob[] };
+}
+
+export interface JobOrigin {
+    type: 'http' | 'console' | 'schedule' | 'job';
+    label: string;
+    user: string | null;
+    parent: { uuid: string; name: string; status: string | null; url: string } | null;
+}
+
+export interface ChildJob {
+    uuid: string;
+    name: string;
+    status: JobStatus;
+    queued_at: number | null;
+    url: string;
 }
 
 export interface EditableField {
     name: string;
-    type: 'string' | 'int' | 'float' | 'bool' | 'json' | 'object' | 'setting';
+    type: 'string' | 'int' | 'float' | 'bool' | 'json' | 'object' | 'setting' | 'redacted';
     value: string;
     editable: boolean;
 }

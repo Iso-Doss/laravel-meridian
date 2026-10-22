@@ -5,6 +5,13 @@ composer test
 composer analyse
 ```
 
+The tests run on SQLite by default. To run them on MySQL or PostgreSQL, as the CI does:
+
+```bash
+DB_CONNECTION=mysql DB_DATABASE=meridian_test DB_USERNAME=root DB_PASSWORD=secret composer test
+DB_CONNECTION=pgsql DB_DATABASE=meridian_test DB_USERNAME=postgres DB_PASSWORD=secret composer test
+```
+
 The interface lives in `resources/js` (React, TypeScript, Tailwind CSS v4, shadcn/ui) and is compiled into `dist/`, which is committed. The CI checks that `dist/` matches the sources.
 
 ```bash

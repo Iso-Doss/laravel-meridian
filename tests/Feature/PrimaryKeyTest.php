@@ -24,7 +24,7 @@ const MERIDIAN_TABLES = [
 const MERIDIAN_STUBS = [
     'create_meridian_tables', 'create_meridian_monitored_tags_table', 'create_meridian_job_retries_table',
     'add_fingerprint_and_progress_to_meridian_jobs_table', 'create_meridian_audit_logs_table',
-    'create_meridian_schedule_tables', 'add_cancel_requested_at_to_meridian_jobs_table',
+    'create_meridian_schedule_tables', 'add_cancel_requested_at_to_meridian_jobs_table', 'add_origin_to_meridian_jobs_table',
 ];
 
 /**

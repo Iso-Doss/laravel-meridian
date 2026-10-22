@@ -96,6 +96,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Redacted values
+    |--------------------------------------------------------------------------
+    |
+    | The values of these keys and job properties are replaced by
+    | "[redacted]" in the stored payloads. Case, "_" and "-" are ignored
+    | ("api_key" also matches "apiKey"), and "*" is a wildcard. Encrypted
+    | jobs (ShouldBeEncrypted) are stored as they are.
+    |
+    */
+
+    'redact' => [
+        '*password*',
+        '*secret*',
+        '*token*',
+        '*api_key*',
+        'authorization',
+        'card_number',
+        'cvv',
+        'cvc',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Silenced jobs
     |--------------------------------------------------------------------------
     |

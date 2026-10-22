@@ -78,7 +78,8 @@ class FailedJobRetrier
                 continue;
             }
 
-            if (! $job->payload) {
+            // A redacted payload would push the job back without its secrets.
+            if (! $job->payload || Redactor::redacted($job->payload)) {
                 $skipped++;
 
                 continue;
