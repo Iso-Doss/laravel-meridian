@@ -759,7 +759,7 @@ npm run typecheck
 npm test
 ```
 
-Texts go through `t('English text')` in React and `$t('English text')` in Blade; add their French translation to `lang/fr.json` (a test fails when one is missing).
+Texts go through `t('English text')` in React and `$t('English text')` in Blade; add their translation to each file of `lang/` (`fr`, `es`, `pt`, `de`, `ar`), keeping the `:placeholders` (a test fails when one is missing).
 
 ## Security Vulnerabilities
 

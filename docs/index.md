@@ -24,6 +24,8 @@ features:
       details: Pending, processing, completed and failed jobs with their tags, data, exception, wait and runtime, from Laravel's own queue events. Batches and bulk jobs included.
     - title: A real supervisor
       details: php artisan meridian starts, restarts and auto-scales your queue:work processes per queue, with pause, continue, fast termination and memory limits, like Horizon.
+    - title: Where every job comes from
+      details: The HTTP request and user, the artisan command, the scheduled task or the parent job that dispatched each job, and the jobs it dispatched in turn.
     - title: Errors grouped by cause
       details: Failed jobs grouped by exception and line, retried in one click, or retried after correcting their data.
     - title: Scheduled tasks
@@ -35,5 +37,5 @@ features:
     - title: Two interfaces, six languages
       details: React / Inertia / shadcn or Blade, light and dark themes, in English, French, Spanish, Portuguese, German and Arabic.
     - title: Production-ready
-      details: Read-only access, audit log, strict Content-Security-Policy, MySQL, MariaDB, PostgreSQL and SQLite, Laravel 12 and 13.
+      details: Secrets redacted from the stored payloads, read-only access, audit log, strict Content-Security-Policy, meridian:doctor, tested on MySQL, PostgreSQL and SQLite, Laravel 12 and 13.
 ---
