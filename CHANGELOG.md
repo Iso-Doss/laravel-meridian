@@ -2,6 +2,30 @@
 
 All notable changes to `laravel-meridian` will be documented in this file.
 
+## v1.12.1 - 2026-11-13
+
+Fixes `php artisan view:cache` and `php artisan optimize` in applications without Filament or Laravel Pulse.
+
+### Fixed
+
+- **`view:cache` / `optimize` failed without Filament**: Laravel compiles every view of a package, and the Filament widget view of Meridian was among them. Applications without Filament stopped with:
+
+  ```
+  Unable to locate a class or view for component [filament-widgets::widget]
+  ```
+
+  and applications without Pulse with the same error on a `pulse::` component.
+
+  The views of the Filament widgets and of the Pulse card now live outside the main views and are registered only when the Filament widgets or Pulse service provider is loaded. New tests make sure the main views never use a component of an optional package and that every view can be cached.
+
+### Upgrade
+
+```bash
+composer update iso-doss/laravel-meridian
+```
+
+No migration, nothing to change. If you published the views of Meridian (`vendor:publish --tag=meridian-views`), delete `resources/views/vendor/meridian/filament` and `resources/views/vendor/meridian/pulse` from your application: these copies would still be cached.
+
 ## v1.12.0 - 2026-10-22
 
 Know where every job comes from, keep secrets out of the stored payloads, and check an installation in one command.
