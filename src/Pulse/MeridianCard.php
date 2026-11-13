@@ -16,7 +16,7 @@ class MeridianCard extends Card
 {
     public function render(): Renderable
     {
-        return view('meridian::pulse.card', [
+        return view('meridian-pulse::card', [
             'stats' => app(DashboardController::class)->stats(),
             'queues' => app(QueueRepository::class)->workload(),
             'errors' => app(ErrorGroupRepository::class)->groups(limit: 5),

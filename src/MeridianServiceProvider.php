@@ -2,6 +2,8 @@
 
 namespace IsoDoss\Meridian;
 
+use Filament\Widgets\Widget;
+use Filament\Widgets\WidgetsServiceProvider;
 use Illuminate\Bus\Events\BatchDispatched;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Support\Facades\Event;
@@ -27,6 +29,7 @@ use IsoDoss\Meridian\Repositories\JobRetryRepository;
 use IsoDoss\Meridian\Support\PendingJobsImporter;
 use IsoDoss\Meridian\Support\Translator;
 use Laravel\Pulse\Livewire\Card;
+use Laravel\Pulse\PulseServiceProvider;
 use Livewire\Livewire;
 use Livewire\LivewireManager;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
@@ -129,7 +132,7 @@ class MeridianServiceProvider extends PackageServiceProvider
 
         $this->registerRoutes();
         $this->registerSchedule();
-        $this->registerPulseCard();
+        $this->registerIntegrations();
         $this->shareTranslationsWithViews();
     }
 
@@ -224,12 +227,27 @@ class MeridianServiceProvider extends PackageServiceProvider
     }
 
     /**
-     * The Laravel Pulse card: <livewire:meridian cols="4" />.
+     * The Laravel Pulse card (<livewire:meridian cols="4" />) and the views of the Filament widgets.
+     *
+     * The views of the integrations live outside resources/views and are
+     * registered only when Pulse or Filament is installed: "php artisan
+     * view:cache" compiles every registered view, and their <x-pulse::…> and
+     * <x-filament…> components do not exist without these packages.
      */
-    protected function registerPulseCard(): void
+    protected function registerIntegrations(): void
     {
-        if (class_exists(Card::class) && $this->app->bound(LivewireManager::class)) {
-            Livewire::component('meridian', Pulse\MeridianCard::class);
+        // Loaded providers, not only installed packages: a package excluded
+        // from discovery registers no Blade components either.
+        if (class_exists(Card::class) && $this->app->providerIsLoaded(PulseServiceProvider::class)) {
+            View::addNamespace('meridian-pulse', __DIR__.'/../resources/integrations/pulse');
+
+            if ($this->app->bound(LivewireManager::class)) {
+                Livewire::component('meridian', Pulse\MeridianCard::class);
+            }
+        }
+
+        if (class_exists(Widget::class) && $this->app->providerIsLoaded(WidgetsServiceProvider::class)) {
+            View::addNamespace('meridian-filament', __DIR__.'/../resources/integrations/filament');
         }
     }
 
